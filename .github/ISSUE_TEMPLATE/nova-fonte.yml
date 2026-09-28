@@ -1,0 +1,15 @@
+name: Sugerir fonte pública
+description: Uma base aberta que poderia virar receita ou coletor
+labels: ["fonte-nova"]
+body:
+  - type: input
+    id: url
+    attributes: {label: Endereço oficial da base}
+    validations: {required: true}
+  - type: textarea
+    id: base
+    attributes: {label: "Por que é pública (lei, portal de dados abertos, licença)"}
+    validations: {required: true}
+  - type: textarea
+    id: colunas
+    attributes: {label: Colunas que ligam a telefone, e-mail, CNPJ ou CEP}

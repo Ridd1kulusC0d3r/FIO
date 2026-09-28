@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F.I.O. Lab</title>
+<style>
+:root{--bg:#F3F5F4;--pn:#FFFFFF;--pn2:#E9EEEC;--tx:#17212B;--mu:#5B6770;--bd:#D2D9D6;
+--ac:#0E7C6B;--acf:#FFFFFF;--ok:#0A7A5A;--wa:#8A5A00;--er:#B4232E;--sh:0 1px 2px rgba(23,33,43,.06),0 4px 14px rgba(23,33,43,.05)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0F1514;--pn:#161F1D;
+--pn2:#1D2826;--tx:#E6EEEB;--mu:#95A39E;--bd:#2B3734;--ac:#3CC2A8;--acf:#0F1514;--ok:#7FE0CC;
+--wa:#F2C572;--er:#F08A8F;--sh:none}}
+:root[data-theme=dark]{--bg:#0F1514;--pn:#161F1D;--pn2:#1D2826;--tx:#E6EEEB;--mu:#95A39E;
+--bd:#2B3734;--ac:#3CC2A8;--acf:#0F1514;--ok:#7FE0CC;--wa:#F2C572;--er:#F08A8F;--sh:none}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 -apple-system,BlinkMacSystemFont,
+"Segoe UI",Inter,Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--bd);
+background:var(--pn);position:sticky;top:0;z-index:5}
+header b{font-size:15px;letter-spacing:-.01em}header .v{color:var(--mu);font-size:12px}
+header .sp{flex:1}
+#tarefa{font-size:12.5px;color:var(--mu);max-width:50vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app{display:grid;grid-template-columns:250px 1fr;min-height:calc(100% - 49px)}
+aside{border-right:1px solid var(--bd);background:var(--pn);padding:12px;display:flex;flex-direction:column;gap:8px}
+aside h4{margin:10px 4px 4px;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
+.caso{padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.caso:hover{background:var(--pn2)}.caso.on{background:var(--pn2);border-color:var(--bd)}
+.caso small{display:block;color:var(--mu);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+main{padding:16px;min-width:0}
+.btn{border:1px solid var(--bd);background:var(--pn);border-radius:8px;padding:7px 12px;cursor:pointer;color:inherit;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--pn2)}.btn.p{background:var(--ac);border-color:var(--ac);color:var(--acf);font-weight:600}
+.btn.s{padding:4px 9px;font-size:12.5px}
+input,select,textarea{border:1px solid var(--bd);background:var(--pn);border-radius:8px;padding:7px 9px;min-width:0}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.card{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:14px;box-shadow:var(--sh);margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;border:1px solid var(--bd);color:var(--mu)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--bd);margin:14px 0 12px;overflow-x:auto}
+.tab{padding:8px 12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--mu);white-space:nowrap}
+.tab.on{color:var(--tx);border-color:var(--ac);font-weight:600}
+h2{margin:0 0 2px;font-size:19px;letter-spacing:-.01em}.mu{color:var(--mu)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);font-weight:600}
+.scroll{overflow-x:auto}.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
+.grafo{display:grid;grid-template-columns:1fr 300px;gap:12px}
+svg#g{width:100%;height:560px;background:var(--pn);border:1px solid var(--bd);border-radius:12px;touch-action:none}
+#det{max-height:560px;overflow:auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.kpi{background:var(--pn2);border-radius:10px;padding:10px}.kpi b{display:block;font-size:20px}
+.kpi span{font-size:11.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.nv{display:inline-block;padding:0 7px;border-radius:99px;font-size:11px;font-weight:600;color:#fff}
+.ok{color:var(--ok)}.er{color:var(--er)}.wa{color:var(--wa)}
+dialog{border:1px solid var(--bd);border-radius:14px;background:var(--pn);color:var(--tx);width:min(560px,94vw);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+label{display:block;font-size:12.5px;color:var(--mu);margin:10px 0 4px}
+dialog input,dialog select,dialog textarea{width:100%}
+pre{white-space:pre-wrap;background:var(--pn2);padding:10px;border-radius:8px;font-size:12px;max-height:340px;overflow:auto}
+.vazio{padding:40px 10px;text-align:center;color:var(--mu)}
+@media(max-width:860px){.app{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--bd)}
+.grafo{grid-template-columns:1fr}svg#g{height:420px}main{padding:12px}}
+</style>
+</head>
+<body>
+<header><b>F.I.O. Lab</b><span class="v" id="versao"></span><span class="chip">edição BR</span>
+<span class="sp"></span><span id="tarefa"></span>
+<button class="btn s" id="tema" title="alternar tema">◐</button></header>
+<div class="app">
+<aside>
+  <button class="btn p" id="novo">+ Novo caso</button>
+  <h4>Casos</h4><div id="casos"></div>
+  <h4>Bancada</h4>
+  <div class="caso" data-v="inicio">Primeiros passos<small>exemplo e conexões</small></div>
+  <div class="caso" data-v="ferr">Ferramentas BR<small>telefone, documentos</small></div>
+  <div class="caso" data-v="aval">Avaliação sintética<small>precisão das heurísticas</small></div>
+  <div class="caso" data-v="plug">Plugins e fontes<small>inventário do lab</small></div>
+</aside>
+<main id="main"></main>
+</div>
+
+<dialog id="dlg"><form method="dialog" id="fnovo">
+<h2>Novo caso</h2><p class="mu" style="margin:4px 0 0">Sem base legal e finalidade específica nenhum coletor roda.</p>
+<label>Identificador</label><input name="id" required pattern="[A-Za-z0-9._-]{1,64}" placeholder="CASO-2026-020">
+<label>Título</label><input name="titulo" required>
+<label>Base legal</label><select name="base_legal" id="bases"></select>
+<label>Finalidade (específica)</label><textarea name="finalidade" required minlength="10" style="min-height:60px;font-family:inherit"></textarea>
+<label>Responsável</label><input name="responsavel" required>
+<label>Escopo autorizado (um por linha)</label><textarea name="escopo" placeholder="+5531988887777&#10;exemplo.com.br"></textarea>
+<div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" value="x">Cancelar</button>
+<button class="btn p" value="ok">Criar caso</button></div><p id="erroNovo" class="er"></p></form></dialog>
+
+<script>
+"use strict";
+const T=(location.hash.match(/t=([^&]+)/)||[])[1]||sessionStorage.getItem("fio_t")||"";
+try{sessionStorage.setItem("fio_t",T)}catch(e){}
+history.replaceState(null,"",location.pathname);
+const $=s=>document.querySelector(s), esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const CORES={telefone:"#3b82f6",pessoa:"#f59e0b",organizacao:"#10b981",email:"#a855f7",dominio:"#06b6d4",
+url:"#94a3b8",faixa:"#64748b",cep:"#ef4444",municipio:"#f97316",documento:"#e11d48",diario:"#0ea5e9",
+sancao:"#dc2626","cpf-parcial":"#fb7185",prestadora:"#84cc16"};
+const NIV={alta:"#10b981",media:"#f59e0b",baixa:"#f97316",indiciaria:"#94a3b8"};
+let EST=null, CASO=null, ABA="grafo", DADOS=null;
+
+async function api(p,opt={}){const r=await fetch("/api"+p,{...opt,headers:{"X-FIO-Token":T,"Content-Type":"application/json",...(opt.headers||{})}});
+ const j=await r.json().catch(()=>({erro:"resposta invalida"}));if(!r.ok)throw new Error(j.erro||r.status);return j}
+const post=(p,b)=>api(p,{method:"POST",body:JSON.stringify(b)});
+
+$("#tema").onclick=()=>{const d=document.documentElement,a=d.dataset.theme;
+ d.dataset.theme=a==="dark"?"light":a==="light"?"":"dark";try{localStorage.setItem("fio_tema",d.dataset.theme)}catch(e){}};
+try{document.documentElement.dataset.theme=localStorage.getItem("fio_tema")||""}catch(e){}
+
+async function init(){
+ if(!T){$("#main").innerHTML='<div class="vazio">Token ausente. Abra o endereço impresso no terminal por <code>fio lab bancada</code>.</div>';return}
+ try{EST=await api("/estado")}catch(e){$("#main").innerHTML=`<div class="vazio er">${esc(e.message)}</div>`;return}
+ $("#versao").textContent="v"+EST.versao;
+ $("#bases").innerHTML=Object.entries(EST.bases_legais).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
+ await listarCasos();boasVindas();
+ document.querySelectorAll("aside .caso[data-v]").forEach(el=>el.onclick=()=>{marcar(el);vista(el.dataset.v)});
+}
+function marcar(el){document.querySelectorAll("aside .caso").forEach(x=>x.classList.remove("on"));el.classList.add("on")}
+function boasVindas(){$("#main").innerHTML=`<div class="card" style="max-width:760px">
+ <h2>Bem-vindo ao F.I.O. Lab</h2><p class="mu">O programa organiza, num mapa, o que fontes públicas dizem sobre números de telefone, empresas e pessoas, e registra cada passo para que o trabalho possa ser conferido depois.</p>
+ <ol style="padding-left:20px;line-height:1.9"><li><b>Veja um exemplo pronto.</b> Monte o caso de demonstração (tudo fictício, não usa internet).</li>
+ <li><b>Confira sua conexão.</b> Veja quais fontes online o programa alcança da sua rede.</li>
+ <li><b>Abra seu caso.</b> Use “+ Novo caso” e informe a base legal e a finalidade.</li></ol>
+ <div class="row" style="margin-top:8px"><button class="btn p" id="bvdemo">Montar caso de demonstração</button><button class="btn" id="bvdiag">Verificar conexões</button></div>
+ <div id="bvout" style="margin-top:12px"></div></div>`;
+ $("#bvdemo").onclick=async()=>{$("#bvdemo").textContent="Montando…";try{const r=await post("/demo",{});await listarCasos();abrir(r.caso)}catch(e){alert(e.message)}};
+ $("#bvdiag").onclick=()=>diagnostico($("#bvout"))}
+async function diagnostico(alvo){alvo.innerHTML='<span class="mu">Testando as fontes… (até 1 minuto)</span>';const r=await api("/diagnostico");
+ alvo.innerHTML=`<table><tr><th>fonte</th><th>situação</th><th>o que fazer</th></tr>${r.map(x=>`<tr><td>${esc(x.fonte)}</td><td class="${x.ok?"ok":x.ok===false?"er":"mu"}">${x.ok?"✓ conectado":x.ok===false?"✗ sem acesso":"— sem chave"}${x.ms?` <span class="mu">${x.ms} ms</span>`:""}</td><td class="mu">${esc(x.dica)}</td></tr>`).join("")}</table>
+ <p class="mu">As fontes offline (plano de numeração, cadastro da Receita baixado, documentos) funcionam sempre.</p>`}
+async function listarCasos(){const cs=await api("/casos");
+ $("#casos").innerHTML=cs.length?cs.map(c=>`<div class="caso" data-id="${esc(c.id)}">${esc(c.id)}<small>${esc(c.titulo)}</small></div>`).join(""):'<div class="mu" style="padding:4px 8px">nenhum caso</div>';
+ document.querySelectorAll("#casos .caso").forEach(el=>el.onclick=()=>{marcar(el);abrir(el.dataset.id)})}
+
+$("#novo").onclick=()=>{$("#erroNovo").textContent="";$("#dlg").showModal()};
+$("#fnovo").onsubmit=async ev=>{if(ev.submitter?.value!=="ok")return;ev.preventDefault();
+ const f=Object.fromEntries(new FormData(ev.target));f.escopo=f.escopo.split(/\n/);
+ try{await post("/casos",f);$("#dlg").close();await listarCasos();abrir(f.id)}catch(e){$("#erroNovo").textContent=e.message}};
+
+/* ------------------------------------------------------------- caso */
+async function abrir(id){CASO=id;const info=await api("/casos/"+encodeURIComponent(id));const c=info.caso;
+ const cols=Object.values(EST.inventario.coletores).flat();
+ $("#main").innerHTML=`<div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start">
+ <div><h2>${esc(c.titulo)}</h2><div class="mu">${esc(c.id)} · ${esc(c.base_legal_texto)} ${c.expirado?'<span class="er">· EXPIRADO</span>':''}</div>
+ <div class="mu" style="font-size:12.5px">escopo até ${esc(c.expira_em)} · ${c.escopo.length} identificador(es) autorizados</div></div>
+ <div class="row"><a class="btn s" target="_blank" href="/api/casos/${encodeURIComponent(id)}/relatorio?modelo=tecnico&t=${T}">Relatório técnico</a>
+ <a class="btn s" target="_blank" href="/api/casos/${encodeURIComponent(id)}/relatorio?modelo=laudo&t=${T}">Laudo</a>
+ <a class="btn s" target="_blank" href="/api/casos/${encodeURIComponent(id)}/relatorio?modelo=relint&t=${T}">RELINT</a></div></div>
+ <div class="kpis"><div class="kpi"><b>${info.entidades}</b><span>entidades</span></div><div class="kpi"><b>${info.vinculos}</b><span>vínculos</span></div>
+ <div class="kpi"><b>${info.ledger}</b><span>registros de custódia</span></div><div class="kpi"><b>${c.quesitos.length}</b><span>quesitos</span></div></div></div>
+ <div class="card"><div class="row"><select id="atipo">${["telefone","email","dominio","cnpj","cep","pessoa","organizacao","documento"].map(t=>`<option>${t}</option>`).join("")}</select>
+ <input id="avalor" placeholder="(31) 98888-7777" style="flex:1;min-width:180px"><button class="btn" id="aadd">Adicionar alvo</button></div>
+ <details style="margin-top:10px"><summary class="mu" style="cursor:pointer">Executar pipeline</summary>
+ <div class="row" style="margin-top:8px"><label style="margin:0">profundidade</label><input id="pprof" type="number" min="0" max="3" value="1" style="width:64px">
+ <label style="margin:0"><input type="checkbox" id="poff"> só offline</label><label style="margin:0"><input type="checkbox" id="pexp"> expandir escopo</label></div>
+ <div class="row" style="margin-top:8px">${cols.map(k=>`<label style="margin:0" class="chip"><input type="checkbox" class="pcol" value="${k.nome}" checked> ${k.nome}${k.rede?" ⇅":""}</label>`).join("")}</div>
+ <div class="row" style="margin-top:10px"><button class="btn p" id="prun">Rodar pipeline</button><span class="mu" id="pmsg"></span></div></details></div>
+ <div class="tabs">${["grafo","vínculos","agrupamentos","observações","custódia","experimentos","quesitos"].map(t=>`<div class="tab" data-t="${t}">${t}</div>`).join("")}</div><div id="aba"></div>`;
+ $("#aadd").onclick=async()=>{try{await post(`/casos/${id}/alvos`,{tipo:$("#atipo").value,valor:$("#avalor").value});abrir(id)}catch(e){alert(e.message)}};
+ $("#prun").onclick=async()=>{const b={profundidade:+$("#pprof").value,offline:$("#poff").checked,expandir_escopo:$("#pexp").checked,
+  coletores:[...document.querySelectorAll(".pcol:checked")].map(x=>x.value)};
+  const r=await post(`/casos/${id}/pipeline`,b);$("#pmsg").textContent="tarefa #"+r.tarefa+" na fila";acompanhar(r.tarefa,()=>abrir(id))};
+ document.querySelectorAll(".tab").forEach(el=>el.onclick=()=>{ABA=el.dataset.t;aba()});
+ DADOS=await api(`/casos/${id}/grafo`);aba()}
+
+async function acompanhar(tid,fim){const t=await api("/tarefas/"+tid);
+ $("#tarefa").innerHTML=`#${tid} ${esc(t.estado)} ${esc((t.progresso||"").split("\n").pop())}`;
+ if(t.estado==="fila"||t.estado==="rodando")return setTimeout(()=>acompanhar(tid,fim),900);
+ $("#tarefa").innerHTML=`#${tid} <span class="${t.estado==="concluida"?"ok":"er"}">${esc(t.estado)}</span>`;fim&&fim(t)}
+
+async function aba(){document.querySelectorAll(".tab").forEach(el=>el.classList.toggle("on",el.dataset.t===ABA));const A=$("#aba"),d=DADOS;
+ if(ABA==="grafo"){A.innerHTML='<div class="grafo"><svg id="g"></svg><div class="card" id="det"><span class="mu">Toque num nó para ver atributos, fontes e vínculos.</span></div></div>';desenhar(d)}
+ if(ABA==="vínculos")A.innerHTML=`<div class="card scroll"><table><tr><th>entidade</th><th>relação</th><th>vinculada a</th><th>confiança</th><th>fontes</th></tr>${d.tabela.map(l=>
+  `<tr><td class="mono">${esc(l.entidade)}<div class="mu">${esc(l.tipo)}</div></td><td>${esc(l.relacao)}</td><td class="mono">${esc(l.vinculada_a)}<div class="mu">${esc(l.tipo_vinculo)}</div></td>
+  <td><b>${l.confianca}</b> <span class="nv" style="background:${NIV[l.nivel]}">${l.nivel}</span><div class="mu">${esc(l.admiralty)}</div></td><td>${esc(l.coletores)}</td></tr>`).join("")}</table></div>`;
+ if(ABA==="agrupamentos")A.innerHTML=(d.clusters.map(c=>`<div class="card"><b>${esc(c.tipo)}</b> · <span class="mono">${esc(c.chave)}</span> <span class="chip">força ${c.forca}</span>
+  <p>${esc(c.explicacao)}</p><p class="mu">Ressalva: ${esc(c.ressalva)}</p><div class="mono mu">${c.membros.map(esc).join(" · ")}</div></div>`).join("")||'<div class="vazio">Nenhum agrupamento.</div>')
+  +(d.pontes.length?`<div class="card"><b>Pontes entre alvos</b><table>${d.pontes.slice(0,40).map(p=>`<tr><td class="mono">${esc(p.de)}</td><td class="mono">${esc(p.para)}</td><td>${p.saltos} salto(s)</td><td>elo ${p.elo_mais_fraco}</td><td>${p.intermediarios.map(i=>esc(i.rotulo)).join(" → ")||"direto"}</td></tr>`).join("")}</table></div>`:"");
+ if(ABA==="observações")A.innerHTML=(d.observacoes||[]).map(o=>`<div class="card"><span class="chip ${o.gravidade==="alta"?"er":o.gravidade==="atencao"?"wa":""}">${esc(o.gravidade)}</span> <b>${esc(o.tipo)}</b> <span class="mu">· ${esc(o.analisador)}</span><p>${esc(o.texto)}</p></div>`).join("")||'<div class="vazio">Sem observações. Rode o pipeline para executar os analisadores.</div>';
+ if(ABA==="custódia"){const l=await api(`/casos/${CASO}/ledger`);A.innerHTML=`<div class="card"><b class="${l.integro?"ok":"er"}">${l.integro?"Cadeia íntegra":"CADEIA COMPROMETIDA"}</b> <span class="mu">· ${l.registros.length} registros exibidos</span>${l.problemas.map(p=>`<div class="er">${esc(p)}</div>`).join("")}</div>
+  <div class="card scroll"><table><tr><th>#</th><th>UTC</th><th>ação</th><th>coletor</th><th>alvo</th><th>resumo</th><th>hash</th></tr>${l.registros.slice().reverse().map(r=>`<tr><td>${r.seq}</td><td class="mono">${esc(r.ts)}</td><td>${esc(r.acao)}</td><td>${esc(r.coletor)}</td><td class="mono">${esc(r.alvo)}</td><td>${esc(r.resumo)}</td><td class="mono">${esc(r.hash.slice(0,12))}</td></tr>`).join("")}</table></div>`}
+ if(ABA==="experimentos"){const xs=await api(`/casos/${CASO}/experimentos`);A.innerHTML=xs.length?`<div class="card scroll"><table><tr><th></th><th>experimento</th><th>estado</th><th>duração</th><th>entidades</th><th>vínculos</th><th>requisições</th><th>grafo</th></tr>${xs.slice().reverse().map(x=>`<tr><td><input type="checkbox" class="xsel" value="${x.id}"></td><td class="mono">${esc(x.id)}<div class="mu">${esc(x.descricao)}</div></td><td>${esc(x.estado)}</td><td>${x.duracao_s}s</td><td>${x.metricas.entidades}</td><td>${x.metricas.vinculos}</td><td>${x.metricas.requisicoes} <span class="mu">(${x.metricas.cache} cache)</span></td><td class="mono">${esc(x.grafo_sha256.slice(0,12))}</td></tr>`).join("")}</table>
+  <div class="row" style="margin-top:10px"><button class="btn" id="xcmp">Comparar 2 selecionados</button></div><pre id="xout" hidden></pre></div>`:'<div class="vazio">Nenhum experimento ainda.</div>';
+  const b=$("#xcmp");if(b)b.onclick=async()=>{const s=[...document.querySelectorAll(".xsel:checked")].map(x=>x.value);if(s.length!==2)return alert("selecione exatamente dois");
+   const r=await api(`/casos/${CASO}/comparar?a=${s[1]}&b=${s[0]}`);const o=$("#xout");o.hidden=false;o.textContent=JSON.stringify(r,null,2)}}
+ if(ABA==="quesitos"){const info=await api("/casos/"+CASO);const qs=info.caso.quesitos;A.innerHTML=`<div class="card"><div class="row"><input id="qtxt" placeholder="Quesito: os números X e Y pertencem ao mesmo grupo empresarial?" style="flex:1"><button class="btn" id="qadd">Adicionar</button></div></div>`+
+  qs.map(q=>`<div class="card"><b>Quesito ${q.n}.</b> ${esc(q.texto)}<textarea data-n="${q.n}" class="qres" placeholder="Resposta técnica, com grau de confiança" style="font-family:inherit;margin-top:8px">${esc(q.resposta)}</textarea><button class="btn s qsalvar" data-n="${q.n}">Salvar resposta</button></div>`).join("");
+  $("#qadd").onclick=async()=>{await post(`/casos/${CASO}/quesitos`,{texto:$("#qtxt").value});aba()};
+  document.querySelectorAll(".qsalvar").forEach(b=>b.onclick=async()=>{await post(`/casos/${CASO}/quesitos`,{n:+b.dataset.n,resposta:document.querySelector(`.qres[data-n="${b.dataset.n}"]`).value});b.textContent="salvo ✓"})}}
+
+/* ------------------------------------------------------------ grafo */
+function desenhar(d){const svg=$("#g"),W=svg.clientWidth||800,H=svg.clientHeight||560;svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+ const nos=d.entidades.slice(0,320).map((e,i)=>({...e,x:W/2+Math.cos(i)*W/3*Math.random(),y:H/2+Math.sin(i)*H/3*Math.random(),vx:0,vy:0}));
+ const idx=Object.fromEntries(nos.map((n,i)=>[n.id,i]));const ar=d.arestas.filter(a=>a.origem in idx&&a.destino in idx);
+ const grau={};ar.forEach(a=>{grau[a.origem]=(grau[a.origem]||0)+1;grau[a.destino]=(grau[a.destino]||0)+1});
+ const NS="http://www.w3.org/2000/svg",mk=(t,at)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);return e};
+ svg.innerHTML="";const gl=mk("g",{}),gn=mk("g",{});svg.append(gl,gn);
+ const linhas=ar.map(a=>{const l=mk("line",{stroke:NIV[a.nivel]||"#94a3b8","stroke-width":1+a.confianca*2.4,"stroke-opacity":.55});
+  if(a.confianca<.35)l.setAttribute("stroke-dasharray","5 4");gl.append(l);return l});
+ const circ=nos.map(n=>{const r=5+Math.min(12,(grau[n.id]||0)*1.4)+(n.alvo_primario?4:0);n.r=r;
+  const g=mk("g",{style:"cursor:pointer"});const c=mk("circle",{r,fill:CORES[n.tipo]||"#94a3b8",stroke:n.alvo_primario?"currentColor":"none","stroke-width":2.5});
+  const t=mk("text",{"font-size":10,"text-anchor":"middle",fill:"currentColor","fill-opacity":.75,dy:r+11});t.textContent=(n.rotulo||n.valor).slice(0,26);
+  g.append(c,t);gn.append(g);g.onpointerdown=ev=>{arr=n;g.setPointerCapture(ev.pointerId);detalhe(n,d)};return g});
+ let arr=null,alfa=1;svg.onpointermove=ev=>{if(!arr)return;const p=svg.createSVGPoint();p.x=ev.clientX;p.y=ev.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());arr.x=q.x;arr.y=q.y;alfa=Math.max(alfa,.3)};
+ svg.onpointerup=()=>arr=null;const k=Math.sqrt(W*H/Math.max(nos.length,1))*.7;
+ (function passo(){if(alfa>.02){for(let i=0;i<nos.length;i++)for(let j=i+1;j<nos.length;j++){const a=nos[i],b=nos[j];let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||.01;
+   if(d2>90000)continue;const f=k*k/d2*.05*alfa;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}
+  ar.forEach(e=>{const a=nos[idx[e.origem]],b=nos[idx[e.destino]],dx=b.x-a.x,dy=b.y-a.y,dd=Math.sqrt(dx*dx+dy*dy)||1,f=(dd-k)/dd*.06*alfa;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f});
+  nos.forEach(n=>{n.vx+=(W/2-n.x)*.002*alfa;n.vy+=(H/2-n.y)*.002*alfa;if(n!==arr){n.x+=n.vx;n.y+=n.vy}n.vx*=.6;n.vy*=.6;n.x=Math.max(14,Math.min(W-14,n.x));n.y=Math.max(14,Math.min(H-20,n.y))});alfa*=.985}
+  ar.forEach((e,i)=>{const a=nos[idx[e.origem]],b=nos[idx[e.destino]];linhas[i].setAttribute("x1",a.x);linhas[i].setAttribute("y1",a.y);linhas[i].setAttribute("x2",b.x);linhas[i].setAttribute("y2",b.y)});
+  nos.forEach((n,i)=>circ[i].setAttribute("transform",`translate(${n.x},${n.y})`));if(document.body.contains(svg))requestAnimationFrame(passo)})()}
+
+function detalhe(n,d){const lig=d.arestas.filter(a=>a.origem===n.id||a.destino===n.id).sort((a,b)=>b.confianca-a.confianca);
+ $("#det").innerHTML=`<span class="chip">${esc(n.tipo)}</span><h3 class="mono" style="margin:6px 0">${esc(n.rotulo||n.valor)}</h3>
+ <table>${Object.entries(n.atributos).filter(([k,v])=>v!==null&&v!==""&&!["dorks","variantes"].includes(k)).map(([k,v])=>`<tr><td class="mu">${esc(k)}</td><td class="mono">${esc(typeof v==="object"?JSON.stringify(v):v)}</td></tr>`).join("")}</table>
+ <h4 style="margin:12px 0 4px">Vínculos (${lig.length})</h4>${lig.map(a=>{const o=a.origem===n.id?a.destino:a.origem;return `<div style="margin:6px 0"><span class="nv" style="background:${NIV[a.nivel]}">${a.confianca}</span> ${esc(a.relacao)} <span class="mono">${esc(o.split(":").slice(1).join(":"))}</span><div class="mu" style="font-size:12px">${a.fontes.map(f=>esc(f.coletor+" "+f.admiralty)).join(", ")}</div></div>`}).join("")}`}
+
+/* ------------------------------------------------------- ferramentas */
+async function vista(v){CASO=null;const M=$("#main");if(v==="inicio")return boasVindas();
+ if(v==="ferr"){M.innerHTML=`<div class="card"><h2>Telefone</h2><p class="mu">Análise estrutural offline: nada sai da máquina.</p><div class="row"><input id="fn" placeholder="0 21 31 9 8888-7777" style="flex:1"><button class="btn p" id="fnb">Analisar</button></div><pre id="fno" hidden></pre></div>
+  <div class="card"><h2>Documentos BR</h2><div class="row"><select id="dt">${["cpf","cpf-parcial","cnpj","cep","placa","titulo","pis","renavam"].map(x=>`<option>${x}</option>`).join("")}</select><input id="dv" placeholder="12.ABC.345/01DE-35" style="flex:1"><button class="btn" id="dvb">Validar</button></div>
+  <label>ou cole um texto para extrair CPF, CNPJ (inclusive alfanumérico), CEP e placas</label><textarea id="dx"></textarea><button class="btn" id="dxb" style="margin-top:8px">Extrair</button><pre id="do" hidden></pre></div>`;
+  $("#fnb").onclick=async()=>{const r=await post("/numero",{valor:$("#fn").value});$("#fno").hidden=false;$("#fno").textContent=JSON.stringify(r,null,2)};
+  $("#dvb").onclick=async()=>{const r=await post("/documento",{tipo:$("#dt").value,valor:$("#dv").value});$("#do").hidden=false;$("#do").textContent=JSON.stringify(r,null,2)};
+  $("#dxb").onclick=async()=>{const r=await post("/documento",{texto:$("#dx").value});$("#do").hidden=false;$("#do").textContent=JSON.stringify(r,null,2)}}
+ if(v==="aval"){const ult=await api("/avaliacao");M.innerHTML=`<div class="card"><h2>Avaliação sintética</h2><p class="mu">Gera mundos fictícios com gabarito e armadilhas (contabilidade, bloco-isca, sequência-isca, número reciclado, laranja, parente) e mede precisão/revocação de cada heurística. Execução sempre offline.</p>
+  <div class="row"><label style="margin:0">sementes</label><input id="as" value="1,2,3,4,5"><label style="margin:0">grupos</label><input id="ag" type="number" value="12" style="width:70px"><button class="btn p" id="ab">Rodar</button></div></div><div id="ares"></div>`;
+  const tab=a=>{if(!a||!a.heuristicas)return"";const f=x=>`${x.media.toFixed(3)} <span class="mu">± ${x.desvio.toFixed(3)}</span>`;
+   return `<div class="card scroll"><b>Heurísticas isoladas</b> <span class="mu">(${a.sementes.length} mundos)</span><table><tr><th>heurística</th><th>precisão</th><th>revocação</th><th>F1</th></tr>${Object.entries(a.heuristicas).sort((x,y)=>y[1].f1.media-x[1].f1.media).map(([k,m])=>`<tr><td>${esc(k)}</td><td>${f(m.precisao)}</td><td>${f(m.revocacao)}</td><td>${f(m.f1)}</td></tr>`).join("")}</table>
+   <b style="display:block;margin-top:14px">Modelo combinado</b><table><tr><th>configuração</th><th>precisão</th><th>revocação</th><th>F1</th></tr>${Object.entries(a.combinado).map(([k,m])=>`<tr><td class="mono">${esc(k)}</td><td>${f(m.precisao)}</td><td>${f(m.revocacao)}</td><td>${f(m.f1)}</td></tr>`).join("")}</table></div>`};
+  $("#ares").innerHTML=tab(ult);$("#ab").onclick=async()=>{const r=await post("/avaliar",{sementes:$("#as").value,grupos:+$("#ag").value});acompanhar(r.tarefa,async t=>{$("#ares").innerHTML=tab(t.resultado?.agregado)})}}
+ if(v==="plug"){const inv=(await api("/estado")).inventario;M.innerHTML=Object.entries(inv.coletores).map(([e,cs])=>`<div class="card"><h2 style="font-size:15px">Estágio: ${esc(e)}</h2><table><tr><th>coletor</th><th>grau</th><th>modo</th><th>reserva</th></tr>${cs.map(c=>`<tr><td><b>${esc(c.nome)}</b><div class="mu">${esc(c.descricao)}</div><div class="mu">${esc(c.origem)}</div></td><td class="mono">${esc(c.admiralty)}</td><td>${c.rede?"rede":"offline"}${c.segredo?`<div class="mu">requer ${esc(c.segredo)}</div>`:""}</td><td class="mu">${esc(c.reserva)}</td></tr>`).join("")}</table></div>`).join("")
+  +`<div class="card"><h2 style="font-size:15px">Conexão com as fontes</h2><button class="btn" id="pdiag">Verificar conexões</button><div id="pdout" style="margin-top:10px"></div></div>`
+  +`<div class="card"><h2 style="font-size:15px">Analisadores</h2><table>${inv.analisadores.map(a=>`<tr><td><b>${esc(a.nome)}</b></td><td>${esc(a.descricao)}</td><td class="mu">${esc(a.origem)}</td></tr>`).join("")}</table></div>`;$("#pdiag").onclick=()=>diagnostico($("#pdout"))}}
+init();
+</script>
+</body></html>

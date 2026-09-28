@@ -1,0 +1,20 @@
+{
+  "id": "anp-postos",
+  "titulo": "ANP - revendedores de combustiveis (exemplo de receita propria)",
+  "fonte": "https://dados.gov.br/ (conjunto da ANP)",
+  "admiralty": "B2",
+  "tipo": "registro",
+  "entidade": "organizacao",
+  "relacao": "telefone_de_revendedor",
+  "colunas": {
+    "chave": ["cnpj", "codigo_simp"],
+    "rotulo": ["razao_social", "nome_fantasia"],
+    "telefone": ["telefone", "fone"],
+    "email": ["email"],
+    "cnpj": ["cnpj"],
+    "cep": ["cep"],
+    "uf": ["uf", "estado_sigla"],
+    "municipio": ["municipio"]
+  },
+  "reserva": "Nomes de coluna ilustrativos: confira o cabecalho do arquivo baixado e ajuste as listas de candidatos."
+}

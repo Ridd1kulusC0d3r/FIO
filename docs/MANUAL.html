@@ -1,0 +1,355 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Manual do F.I.O. Lab</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Zilla+Slab:wght@600;700&display=swap"><style>:root{
+  --papel:#F3F5F4; --sup:#FFFFFF; --sup2:#E9EEEC; --tinta:#17212B; --texto:#2C3740; --mudo:#5B6770;
+  --linha:#D2D9D6; --fio:#0E7C6B; --fio-suave:#E1F0EC; --fio-tinta:#0A5E51;
+  --aviso:#8A5A00; --aviso-fundo:#FFF4E0; --aviso-borda:#E3B45B; --erro:#B4232E; --erro-fundo:#FBEAEA;
+  --cod:#EEF2F0; --cod-tinta:#1D2A33; --sombra:0 1px 2px rgba(23,33,43,.06),0 4px 14px rgba(23,33,43,.05);
+  --f-display:"Zilla Slab",Rockwell,"Roboto Slab",Georgia,serif;
+  --f-texto:"Atkinson Hyperlegible",Verdana,"Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--papel:#0F1514;--sup:#161F1D;--sup2:#1D2826;--tinta:#E6EEEB;--texto:#CBD6D2;--mudo:#95A39E;
+  --linha:#2B3734;--fio:#3CC2A8;--fio-suave:#15302B;--fio-tinta:#7FE0CC;--aviso:#F2C572;--aviso-fundo:#2A2212;
+  --aviso-borda:#7A5A1C;--erro:#F08A8F;--erro-fundo:#2E1718;--cod:#1B2523;--cod-tinta:#DDE7E3;--sombra:none}}
+:root[data-theme="dark"]{
+  color-scheme:dark;--papel:#0F1514;--sup:#161F1D;--sup2:#1D2826;--tinta:#E6EEEB;--texto:#CBD6D2;--mudo:#95A39E;
+  --linha:#2B3734;--fio:#3CC2A8;--fio-suave:#15302B;--fio-tinta:#7FE0CC;--aviso:#F2C572;--aviso-fundo:#2A2212;
+  --aviso-borda:#7A5A1C;--erro:#F08A8F;--erro-fundo:#2E1718;--cod:#1B2523;--cod-tinta:#DDE7E3;--sombra:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--texto);font:17px/1.65 var(--f-texto);-webkit-text-size-adjust:100%}
+.pagina{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 90px;display:grid;
+  grid-template-columns:230px minmax(0,1fr);gap:48px}
+nav.indice{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:14.5px;
+  max-height:calc(100vh - 40px);overflow:auto}
+nav.indice b{display:block;font:700 12px/1 var(--f-texto);letter-spacing:.09em;text-transform:uppercase;color:var(--fio);margin:4px 0 12px}
+nav.indice ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--linha)}
+nav.indice a{display:block;padding:5px 12px;color:var(--mudo);text-decoration:none;margin-left:-2px;border-left:2px solid transparent}
+nav.indice a:hover,nav.indice a:focus-visible{color:var(--tinta);border-left-color:var(--fio)}
+main{min-width:0;max-width:760px}
+h1,h2,h3{font-family:var(--f-display);color:var(--tinta);text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(34px,5vw,50px);font-weight:700;margin:0 0 12px;letter-spacing:-.01em}
+h2{font-size:30px;font-weight:700;margin:72px 0 10px;scroll-margin-top:20px}
+h3{font-size:21px;font-weight:600;margin:34px 0 8px}
+p{margin:12px 0}
+a{color:var(--fio-tinta);text-underline-offset:3px}
+.chapeu{font:700 12.5px/1 var(--f-texto);letter-spacing:.1em;text-transform:uppercase;color:var(--fio);margin:0 0 14px}
+.lide{font-size:20px;line-height:1.55;color:var(--texto);max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--mudo);font-size:14px;margin:18px 0 6px}
+.meta span{display:inline-flex;gap:6px;align-items:center}
+.meta i{width:8px;height:8px;border-radius:50%;background:var(--fio);display:inline-block}
+figure{margin:26px 0}
+.quadro{background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:18px;box-shadow:var(--sombra)}
+.rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch}
+svg.diagrama{display:block;width:100%;height:auto;min-width:640px;color:var(--mudo);font-family:var(--f-texto)}
+figcaption{font-size:14.5px;color:var(--mudo);margin-top:10px;max-width:68ch}
+.d-caixa{fill:var(--sup);stroke:var(--linha);stroke-width:1.2}.d-caixa-acc{stroke:var(--fio);stroke-width:2}
+.d-tit{fill:var(--tinta);font-weight:700;font-family:var(--f-display)}.d-txt{fill:var(--texto);font-size:13.5px}
+.d-rot{fill:var(--mudo);font-size:12.5px}.d-eyebrow{fill:var(--fio);font-size:12px;font-weight:700;letter-spacing:.08em}
+.d-selo{fill:var(--fio);font-size:11.5px;font-weight:700}.d-seta{stroke:var(--mudo);stroke-width:1.6}
+.d-seta-acc{stroke:var(--fio)}.d-anota{stroke:var(--fio);stroke-width:1.2;stroke-dasharray:3 4}
+.d-faixa{fill:var(--fio-suave);stroke:var(--fio);stroke-width:1.2}.d-portao{fill:var(--aviso-fundo);stroke:var(--aviso-borda);stroke-width:1.2}
+.d-no{fill:var(--fio)}.d-no-t{fill:var(--sup);font-weight:700;font-size:14px}.d-alvo{stroke:var(--tinta);stroke-width:3}
+.d-bloq{stroke:var(--erro);stroke-width:1.6;stroke-dasharray:5 4}.d-rot-bloq{fill:var(--erro)}
+/* o fio: sequencia de passos amarrada por uma linha */
+ol.fio{list-style:none;counter-reset:passo;margin:22px 0;padding:0 0 0 46px;position:relative}
+ol.fio::before{content:"";position:absolute;left:16px;top:10px;bottom:10px;width:2px;background:var(--fio);opacity:.55}
+ol.fio>li{counter-increment:passo;position:relative;margin:0 0 22px}
+ol.fio>li::before{content:counter(passo);position:absolute;left:-46px;top:0;width:34px;height:34px;border-radius:50%;
+  background:var(--sup);border:2px solid var(--fio);color:var(--fio-tinta);font:700 15px/30px var(--f-texto);text-align:center}
+ol.fio>li>b:first-child{display:block;color:var(--tinta);font-size:18px;margin-bottom:2px}
+.abas{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 4px}
+.abas button{font:600 15px var(--f-texto);padding:8px 16px;border-radius:999px;border:1.5px solid var(--linha);
+  background:var(--sup);color:var(--texto);cursor:pointer}
+.abas button[aria-selected="true"]{background:var(--fio);border-color:var(--fio);color:var(--sup)}
+.abas button:focus-visible,.copiar:focus-visible{outline:3px solid var(--fio);outline-offset:2px}
+.cmd{position:relative;background:var(--cod);color:var(--cod-tinta);border-radius:10px;margin:10px 0;
+  font:14.5px/1.55 var(--f-mono);padding:12px 84px 12px 14px;overflow-x:auto;white-space:pre}
+.copiar{position:absolute;right:8px;top:8px;font:600 12.5px var(--f-texto);padding:4px 10px;border-radius:7px;
+  border:1px solid var(--linha);background:var(--sup);color:var(--texto);cursor:pointer}
+code{font:0.88em var(--f-mono);background:var(--cod);padding:1px 6px;border-radius:5px;color:var(--cod-tinta)}
+kbd{font:600 .85em var(--f-texto);border:1px solid var(--linha);border-bottom-width:2px;border-radius:5px;padding:0 6px;background:var(--sup)}
+.nota{border-radius:12px;padding:14px 16px;margin:18px 0;font-size:16px}
+.nota b:first-child{display:block;margin-bottom:2px}
+.nota.aviso{background:var(--aviso-fundo);border:1px solid var(--aviso-borda);color:var(--tinta)}
+.nota.aviso b:first-child{color:var(--aviso)}
+.nota.dica{background:var(--fio-suave);border:1px solid var(--fio);color:var(--tinta)}
+.nota.dica b:first-child{color:var(--fio-tinta)}
+.nota.nao{background:var(--erro-fundo);border:1px solid var(--erro);color:var(--tinta)}
+.nota.nao b:first-child{color:var(--erro)}
+.tela{border:1px solid var(--linha);border-radius:12px;overflow:hidden;background:var(--sup);box-shadow:var(--sombra)}
+.tela img{display:block;width:100%;height:auto}
+.tela .barra{display:flex;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--linha);background:var(--sup2);
+  font:12.5px var(--f-mono);color:var(--mudo)}
+.tela .barra i{width:10px;height:10px;border-radius:50%;background:var(--linha);display:inline-block}
+ol.marcas{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:8px}
+ol.marcas li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;font-size:16px}
+ol.marcas li span{width:26px;height:26px;border-radius:50%;background:#0E7C6B;color:#fff;font:700 13.5px/26px var(--f-texto);text-align:center}
+.lado{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:22px;align-items:start}
+.lado .tela{max-width:250px}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--linha);vertical-align:top}
+th{font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mudo);font-weight:700}
+td:first-child{font-weight:700;color:var(--tinta)}
+.num{font-variant-numeric:tabular-nums}
+.ok{color:var(--fio-tinta);font-weight:700}.ruim{color:var(--erro);font-weight:700}
+details.faq{border-bottom:1px solid var(--linha);padding:4px 0}
+details.faq summary{cursor:pointer;padding:12px 0;font-weight:700;color:var(--tinta);list-style:none;display:flex;gap:10px}
+details.faq summary::before{content:"+";color:var(--fio);font-weight:700;width:14px}
+details.faq[open] summary::before{content:"–"}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq>div{padding:0 0 12px 24px}
+dl.glossario{display:grid;grid-template-columns:200px 1fr;gap:10px 22px;margin:18px 0}
+dl.glossario dt{font-weight:700;color:var(--tinta)}
+dl.glossario dd{margin:0}
+.cartoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.cartao{background:var(--sup);border:1px solid var(--linha);border-radius:12px;padding:16px}
+.cartao h4{margin:0 0 6px;font:700 18px var(--f-display);color:var(--tinta)}
+.cartao p{margin:6px 0 0;font-size:15px}
+.cartao .quando{font:700 12px var(--f-texto);letter-spacing:.08em;text-transform:uppercase;color:var(--fio)}
+footer{margin-top:80px;padding-top:18px;border-top:1px solid var(--linha);color:var(--mudo);font-size:14px}
+@media (max-width:900px){
+  .pagina{grid-template-columns:1fr;gap:0}
+  nav.indice{position:static;max-height:none;margin-bottom:10px}
+  nav.indice ol{border-left:0;display:flex;flex-wrap:wrap;gap:6px}
+  nav.indice a{border:1px solid var(--linha);border-radius:999px;padding:4px 11px;margin:0;font-size:13.5px;background:var(--sup)}
+  .lado{grid-template-columns:1fr}.lado .tela{max-width:280px}
+  .cartoes{grid-template-columns:1fr}
+  dl.glossario{grid-template-columns:1fr;gap:2px}dl.glossario dd{margin-bottom:12px}
+}
+@media (max-width:520px){body{font-size:16.5px}.pagina{padding-inline:16px}h2{font-size:26px;margin-top:56px}.lide{font-size:18px}}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style></head><body>
+<div class="pagina">
+<nav class="indice" aria-label="Índice do manual">
+  <b>Manual</b>
+  <ol>
+    <li><a href="#comecar">Antes de começar</a></li>
+    <li><a href="#instalar">Instalar</a></li>
+    <li><a href="#primeiro-uso">Primeiro uso</a></li>
+    <li><a href="#mapa">Ler o mapa</a></li>
+    <li><a href="#seu-caso">Abrir seu caso</a></li>
+    <li><a href="#resultados">Entender os resultados</a></li>
+    <li><a href="#laudo">Gerar o laudo</a></li>
+    <li><a href="#ampliar">Ir além</a></li>
+    <li><a href="#problemas">Se algo der errado</a></li>
+    <li><a href="#glossario">Glossário</a></li>
+    <li><a href="#tecnico">Para quem é técnico</a></li>
+  </ol>
+</nav>
+<main>
+<header>
+  <p class="chapeu">F.I.O. Lab 2.2.0 · edição BR</p>
+  <h1>Manual do F.I.O. Lab</h1>
+  <p class="lide">O F.I.O. mostra o que fontes públicas dizem sobre um número de telefone, uma empresa ou um e-mail, desenha as ligações entre eles num mapa e anota cada passo, para que qualquer pessoa possa conferir depois como você chegou lá.</p>
+  <div class="meta"><span><i></i>Windows, macOS e Linux</span><span><i></i>Funciona sem internet para o essencial</span><span><i></i>Seus dados ficam no seu computador</span></div>
+</header>
+
+<figure class="quadro">
+  <div class="rolagem"><svg viewBox="0 0 980 420" role="img" class="diagrama" aria-label="Voce informa os alvos; o F.I.O. consulta fontes no seu computador e na internet; monta um mapa de ligacoes com nota de confianca; entrega laudo, relatorio e planilha. Todo passo vai para o registro de custodia."><defs><marker id="cf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><text x="20" y="26" class="d-eyebrow">1. VOCÊ INFORMA</text><text x="262" y="26" class="d-eyebrow">2. O F.I.O. CONSULTA</text><text x="536" y="26" class="d-eyebrow">3. MONTA O MAPA</text><text x="796" y="26" class="d-eyebrow">4. ENTREGA</text><rect x="20" y="42" width="190" height="196" rx="10" class="d-caixa"/><text x="36" y="70" class="d-tit" style="font-size:15px">Alvos do caso</text><text x="36" y="94" class="d-txt">telefone</text><text x="36" y="114" class="d-txt">e-mail</text><text x="36" y="134" class="d-txt">CNPJ ou domínio</text><text x="36" y="154" class="d-txt">documento (ata,</text><text x="36" y="174" class="d-txt">contrato)</text><rect x="262" y="42" width="214" height="118" rx="10" class="d-caixa"/><text x="278" y="70" class="d-tit" style="font-size:15px">No seu computador</text><text x="278" y="94" class="d-txt">plano de numeração</text><text x="278" y="114" class="d-txt">cadastro da Receita</text><text x="278" y="134" class="d-txt">seus documentos</text><text x="462" y="150" text-anchor="end" class="d-selo">sem internet</text><rect x="262" y="176" width="214" height="138" rx="10" class="d-caixa"/><text x="278" y="204" class="d-tit" style="font-size:15px">Na internet</text><text x="278" y="228" class="d-txt">diários oficiais</text><text x="278" y="248" class="d-txt">CEP · domínios</text><text x="278" y="268" class="d-txt">sanções (CGU)</text><text x="278" y="288" class="d-txt">buscadores públicos</text><text x="462" y="304" text-anchor="end" class="d-selo">fontes públicas</text><rect x="536" y="42" width="200" height="272" rx="10" class="d-caixa d-caixa-acc"/><text x="552" y="70" class="d-tit" style="font-size:15px">Mapa de ligações</text><line x1="590" y1="118" x2="640" y2="180" stroke="#10b981" stroke-width="3.2" stroke-opacity=".85"/><line x1="690" y1="108" x2="640" y2="180" stroke="#10b981" stroke-width="3.2" stroke-opacity=".85"/><line x1="640" y1="180" x2="578" y2="244" stroke="#f59e0b" stroke-width="2.2" stroke-opacity=".85"/><line x1="640" y1="180" x2="700" y2="240" stroke="#10b981" stroke-width="3" stroke-opacity=".85"/><line x1="578" y1="244" x2="700" y2="240" stroke="#f59e0b" stroke-width="2.2" stroke-opacity=".85"/><line x1="590" y1="118" x2="690" y2="108" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" stroke-opacity=".85"/><line x1="700" y1="240" x2="645" y2="290" stroke="#f97316" stroke-width="1.8" stroke-opacity=".85"/><circle cx="590" cy="118" r="9" fill="#3b82f6" class="d-alvo"/><circle cx="690" cy="108" r="9" fill="#3b82f6" class="d-alvo"/><circle cx="640" cy="180" r="13" fill="#10b981"/><circle cx="578" cy="244" r="8" fill="#f59e0b"/><circle cx="700" cy="240" r="10" fill="#10b981"/><circle cx="645" cy="290" r="7" fill="#a855f7"/><rect x="796" y="42" width="164" height="196" rx="10" class="d-caixa"/><text x="812" y="70" class="d-tit" style="font-size:15px">Documentos</text><text x="812" y="94" class="d-txt">laudo técnico</text><text x="812" y="114" class="d-txt">RELINT</text><text x="812" y="134" class="d-txt">relatório técnico</text><text x="812" y="154" class="d-txt">planilha CSV</text><line x1="210" y1="110" x2="258" y2="96" class="d-seta" marker-end="url(#cf)"/><line x1="210" y1="190" x2="258" y2="236" class="d-seta" marker-end="url(#cf)"/><line x1="476" y1="100" x2="532" y2="132" class="d-seta" marker-end="url(#cf)"/><line x1="476" y1="245" x2="532" y2="212" class="d-seta" marker-end="url(#cf)"/><line x1="736" y1="140" x2="792" y2="140" class="d-seta" marker-end="url(#cf)"/><text x="236" y="156" text-anchor="middle" class="d-rot">pede</text><text x="506" y="176" text-anchor="middle" class="d-rot">achados</text><text x="764" y="128" text-anchor="middle" class="d-rot">revisão</text><rect x="20" y="254" width="190" height="60" rx="10" class="d-portao"/><text x="34" y="278" class="d-tit" style="font-size:13.5px">Base legal e escopo</text><text x="34" y="298" class="d-txt" style="font-size:12.5px">conferidos a cada passo</text><rect x="20" y="344" width="940" height="56" rx="10" class="d-faixa"/><text x="40" y="368" class="d-tit" style="font-size:14px">Registro de custódia</text><text x="40" y="388" class="d-txt" style="font-size:12.5px">cada passo anotado com uma impressão digital (SHA-256); alterar qualquer linha depois é detectado</text><line x1="115" y1="314" x2="115" y2="344" class="d-anota"/><line x1="369" y1="314" x2="369" y2="344" class="d-anota"/><line x1="636" y1="314" x2="636" y2="344" class="d-anota"/><line x1="878" y1="238" x2="878" y2="344" class="d-anota"/></svg></div>
+  <figcaption>Como funciona. Você informa os alvos do caso; o F.I.O. consulta fontes no seu computador e na internet; os achados viram um mapa de ligações com nota de confiança; você revisa e emite o documento. Tudo fica anotado no registro de custódia.</figcaption>
+</figure>
+
+<h2 id="comecar">Antes de começar</h2>
+<p>O F.I.O. é uma ferramenta de <b>investigação em fontes abertas</b>: ele só consulta informação publicada por lei ou por quem a publicou, como o cadastro de empresas da Receita Federal, diários oficiais e registros de domínio. Ele não invade sistemas, não entra em contas e não conversa com as pessoas investigadas.</p>
+<div class="nota aviso"><b>Você precisa de um motivo legal para cada caso.</b>Ao abrir um caso, o programa pede a <i>base legal</i> (por exemplo, defesa de direitos num processo, ou contrato de resposta a incidente) e a <i>finalidade</i>, escrita de forma específica. É a Lei Geral de Proteção de Dados (LGPD) que exige isso. Sem esses dois campos, nenhuma consulta é feita.</div>
+<div class="nota nao"><b>O que o F.I.O. se recusa a fazer, sempre</b>Consultar bancos de dados vazados ou vendidos ilegalmente, usar senha de outra pessoa, interceptar mensagens, fingir ser alguém para obter informação e testar em massa se um número tem WhatsApp ou Telegram. Não há opção para ligar essas coisas.</div>
+<p>Uma ligação no mapa quer dizer que <b>duas informações apareceram juntas numa fonte</b>. Isso não prova que as pessoas se conhecem, nem que alguém cometeu um crime. O laudo gerado pelo programa repete esse aviso e nunca afirma nada de forma categórica.</p>
+
+<h2 id="instalar">Instalar</h2>
+<p>São três passos e levam uns dez minutos. Escolha o seu sistema:</p>
+<div class="abas" role="tablist" aria-label="Sistema operacional">
+  <button role="tab" id="aba-win" aria-selected="true" aria-controls="so-win" data-so="win">Windows</button>
+  <button role="tab" id="aba-mac" aria-selected="false" aria-controls="so-mac" data-so="mac">macOS</button>
+  <button role="tab" id="aba-lin" aria-selected="false" aria-controls="so-lin" data-so="lin">Linux</button>
+</div>
+
+<section id="so-win" role="tabpanel" aria-labelledby="aba-win">
+<ol class="fio">
+  <li><b>Instale o Python</b>Entre em <a href="https://www.python.org/downloads/">python.org/downloads</a> e clique no botão amarelo de download. Abra o arquivo baixado. <b>Na primeira tela, marque a caixa “Add python.exe to PATH”</b> e clique em <i>Install Now</i>. Se você pular essa caixa, o F.I.O. não encontra o Python.</li>
+  <li><b>Descompacte o F.I.O.</b>Clique com o botão direito em <code>fio-lab-2.2.0.zip</code>, escolha <i>Extrair tudo…</i> e confirme. Uma boa pasta é <i>Documentos</i>.</li>
+  <li><b>Dê dois cliques em “Iniciar F.I.O. (Windows)”</b>Ele está dentro da pasta <code>fio</code>. Se aparecer a tela azul “O Windows protegeu o computador”, clique em <i>Mais informações</i> e depois em <i>Executar assim mesmo</i>. Uma janela preta se abre e, em seguida, o navegador mostra a bancada.</li>
+</ol>
+</section>
+<section id="so-mac" role="tabpanel" aria-labelledby="aba-mac" hidden>
+<ol class="fio">
+  <li><b>Instale o Python</b>Entre em <a href="https://www.python.org/downloads/">python.org/downloads</a>, baixe o instalador para macOS e siga as telas. O Python que já vem em alguns Macs costuma ser antigo; o F.I.O. precisa da versão 3.10 ou mais nova.</li>
+  <li><b>Descompacte o F.I.O.</b>Dê dois cliques em <code>fio-lab-2.2.0.zip</code>. Aparece a pasta <code>fio</code>.</li>
+  <li><b>Abra “Iniciar F.I.O. (Mac)” com o botão direito</b>Na primeira vez, clique com o botão direito (ou <kbd>control</kbd> + clique) no arquivo, escolha <i>Abrir</i> e confirme <i>Abrir</i> de novo. O macOS pede isso para programas baixados da internet. O Terminal se abre e, em seguida, o navegador mostra a bancada.</li>
+</ol>
+</section>
+<section id="so-lin" role="tabpanel" aria-labelledby="aba-lin" hidden>
+<ol class="fio">
+  <li><b>Confira o Python</b>A maioria das distribuições já traz. No terminal, rode o comando abaixo; a versão precisa ser 3.10 ou maior (Ubuntu 22.04 em diante já atende).<div class="cmd"><button class="copiar" type="button">Copiar</button><code>python3 --version</code></div></li>
+  <li><b>Descompacte o F.I.O.</b><div class="cmd"><button class="copiar" type="button">Copiar</button><code>unzip fio-lab-2.2.0.zip &amp;&amp; cd fio</code></div></li>
+  <li><b>Inicie</b><div class="cmd"><button class="copiar" type="button">Copiar</button><code>./iniciar-fio-linux.sh</code></div>O navegador abre a bancada. Se ele não abrir sozinho, copie o endereço que aparece no terminal.</li>
+</ol>
+</section>
+
+<div class="nota dica"><b>Deixe a janela preta (ou o Terminal) aberta</b>Ela é o motor do programa. Para encerrar o F.I.O., feche essa janela. Para abrir de novo, repita o terceiro passo.</div>
+<p>Não é preciso instalar mais nada: o F.I.O. usa só o que já vem com o Python.</p>
+
+<h2 id="primeiro-uso">Primeiro uso: o caso de demonstração</h2>
+<p>Na primeira vez, o programa prepara um <b>caso de demonstração</b> com empresas e pessoas inventadas. Ele não usa internet e serve para você explorar tudo sem risco.</p>
+<figure class="quadro"><figcaption>Captura visual omitida do repositório para manter a documentação leve. A interface real é reproduzida pela bancada e pelo Colab.</figcaption></figure>
+<figure class="quadro"><figcaption>Captura visual omitida do repositório para manter a documentação leve. A interface real é reproduzida pela bancada e pelo Colab.</figcaption></figure>
+
+<h2 id="mapa">Como ler o mapa</h2>
+<p>O mapa é a primeira aba do caso. Cada círculo é uma coisa encontrada; cada linha é uma ligação entre duas coisas, com uma nota de confiança.</p>
+<figure class="quadro"><figcaption>Captura visual omitida do repositório para manter a documentação leve. A interface real é reproduzida pela bancada e pelo Colab.</figcaption></figure>
+<figure class="quadro"><div class="rolagem"><svg viewBox="0 0 760 250" role="img" class="diagrama" aria-label="Legenda do mapa: cor do circulo indica o tipo; contorno escuro marca o alvo que voce informou; tamanho indica quantas ligacoes; linha grossa verde e confianca alta, ambar media, laranja baixa, cinza tracejada e so indicio."><text x="20" y="26" class="d-eyebrow">CÍRCULOS: O QUE É CADA COISA</text><circle cx="30" cy="58" r="9" fill="#3b82f6"/><text x="48" y="63" class="d-txt">telefone</text><circle cx="210" cy="58" r="9" fill="#10b981"/><text x="228" y="63" class="d-txt">empresa</text><circle cx="390" cy="58" r="9" fill="#f59e0b"/><text x="408" y="63" class="d-txt">pessoa</text><circle cx="570" cy="58" r="9" fill="#a855f7"/><text x="588" y="63" class="d-txt">e-mail</text><circle cx="30" cy="94" r="9" fill="#ef4444"/><text x="48" y="99" class="d-txt">CEP</text><circle cx="210" cy="94" r="9" fill="#fb7185"/><text x="228" y="99" class="d-txt">CPF mascarado</text><circle cx="390" cy="94" r="9" fill="#e11d48"/><text x="408" y="99" class="d-txt">documento</text><circle cx="570" cy="94" r="9" fill="#64748b"/><text x="588" y="99" class="d-txt">bloco de números</text><circle cx="30" cy="142" r="11" fill="#3b82f6" class="d-alvo"/><text x="50" y="147" class="d-txt">contorno escuro = alvo que você informou</text><circle cx="430" cy="142" r="6" fill="#10b981"/><circle cx="456" cy="142" r="13" fill="#10b981"/><text x="480" y="147" class="d-txt">maior = mais ligações</text><text x="20" y="186" class="d-eyebrow">LINHAS: QUANTO CONFIAR NA LIGAÇÃO</text><line x1="20" y1="214" x2="74" y2="214" stroke="#10b981" stroke-width="4.2"/><text x="84" y="212" class="d-tit" style="font-size:13.5px">alta</text><text x="84" y="230" class="d-txt" style="font-size:12px">0,75 ou mais</text><line x1="205" y1="214" x2="259" y2="214" stroke="#f59e0b" stroke-width="3.2"/><text x="269" y="212" class="d-tit" style="font-size:13.5px">média</text><text x="269" y="230" class="d-txt" style="font-size:12px">0,50 a 0,74</text><line x1="390" y1="214" x2="444" y2="214" stroke="#f97316" stroke-width="2.4"/><text x="454" y="212" class="d-tit" style="font-size:13.5px">baixa</text><text x="454" y="230" class="d-txt" style="font-size:12px">0,25 a 0,49</text><line x1="575" y1="214" x2="629" y2="214" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5 4"/><text x="639" y="212" class="d-tit" style="font-size:13.5px">indício</text><text x="639" y="230" class="d-txt" style="font-size:12px">abaixo de 0,25</text></svg></div>
+<figcaption>Legenda do mapa. A cor do círculo diz o que ele é; a cor e a espessura da linha dizem quanto confiar na ligação.</figcaption></figure>
+<h3>De onde vem a nota de confiança</h3>
+<p>Cada ligação recebe duas avaliações, no padrão usado por serviços de inteligência (escala Admiralty): uma <b>letra</b> diz quanto a fonte costuma acertar e um <b>número</b> diz quão provável é a informação. Por exemplo, <code>A2</code> é um registro oficial com informação provavelmente verdadeira, como o cadastro da Receita.</p>
+<p>Quando duas fontes <b>diferentes</b> confirmam a mesma ligação, a nota sobe. Ler a mesma fonte duas vezes não conta como confirmação.</p>
+
+<h2 id="seu-caso">Abrir seu caso</h2>
+<div class="lado">
+<div>
+<p>Clique em <b>+ Novo caso</b> e preencha:</p>
+<ol class="fio">
+  <li><b>Identificador</b>Um código curto, sem espaços. Exemplo: <code>CASO-2026-031</code>.</li>
+  <li><b>Base legal</b>O motivo legal que autoriza o trabalho. A lista traz as opções da LGPD e de contrato, processo e pesquisa. Na dúvida, fale com o jurídico antes de começar.</li>
+  <li><b>Finalidade</b>Para que servirá o resultado, com clareza. “Investigar” não basta; “reunir elementos para notificação extrajudicial sobre boletos falsos” basta.</li>
+  <li><b>Escopo</b>Os telefones, e-mails e domínios que você está autorizado a pesquisar, um por linha. O programa não consulta nada fora dessa lista.</li>
+</ol>
+</div>
+<figure style="margin:0"><div class="tela"><div class="barra"><i></i><i></i><i></i>&nbsp;127.0.0.1:8765 — F.I.O. Lab</div><img src="" alt="Formulário de novo caso preenchido com um exemplo" loading="lazy" width="1200"></div></figure>
+</div>
+<figure class="quadro"><div class="rolagem"><svg viewBox="0 0 760 340" role="img" class="diagrama" aria-label="Jornada de um caso em seis passos: abrir o caso, adicionar alvos, rodar a coleta, revisar o mapa, responder quesitos e emitir o laudo. Pedidos fora do escopo sao bloqueados e anotados."><defs><marker id="jn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect x="20" y="20" width="220" height="104" rx="12" class="d-caixa d-caixa-acc"/><circle cx="50" cy="52" r="15" class="d-no"/><text x="50" y="57" text-anchor="middle" class="d-no-t">1</text><text x="74" y="58" class="d-tit" style="font-size:15px">Abrir o caso</text><text x="38" y="90" class="d-txt">base legal, finalidade</text><text x="38" y="110" class="d-txt">e escopo</text><rect x="270" y="20" width="220" height="104" rx="12" class="d-caixa"/><circle cx="300" cy="52" r="15" class="d-no"/><text x="300" y="57" text-anchor="middle" class="d-no-t">2</text><text x="324" y="58" class="d-tit" style="font-size:15px">Adicionar alvos</text><text x="288" y="90" class="d-txt">telefones, e-mails,</text><text x="288" y="110" class="d-txt">documentos</text><rect x="520" y="20" width="220" height="104" rx="12" class="d-caixa"/><circle cx="550" cy="52" r="15" class="d-no"/><text x="550" y="57" text-anchor="middle" class="d-no-t">3</text><text x="574" y="58" class="d-tit" style="font-size:15px">Rodar a coleta</text><text x="538" y="90" class="d-txt">o F.I.O. consulta</text><text x="538" y="110" class="d-txt">as fontes</text><rect x="520" y="200" width="220" height="104" rx="12" class="d-caixa"/><circle cx="550" cy="232" r="15" class="d-no"/><text x="550" y="237" text-anchor="middle" class="d-no-t">4</text><text x="574" y="238" class="d-tit" style="font-size:15px">Revisar o mapa</text><text x="538" y="270" class="d-txt">ligações, grupos,</text><text x="538" y="290" class="d-txt">observações</text><rect x="270" y="200" width="220" height="104" rx="12" class="d-caixa"/><circle cx="300" cy="232" r="15" class="d-no"/><text x="300" y="237" text-anchor="middle" class="d-no-t">5</text><text x="324" y="238" class="d-tit" style="font-size:15px">Responder quesitos</text><text x="288" y="270" class="d-txt">com o grau de</text><text x="288" y="290" class="d-txt">confiança</text><rect x="20" y="200" width="220" height="104" rx="12" class="d-caixa d-caixa-acc"/><circle cx="50" cy="232" r="15" class="d-no"/><text x="50" y="237" text-anchor="middle" class="d-no-t">6</text><text x="74" y="238" class="d-tit" style="font-size:15px">Emitir o laudo</text><text x="38" y="270" class="d-txt">ou o RELINT, com</text><text x="38" y="290" class="d-txt">a custódia</text><line x1="240" y1="72" x2="266" y2="72" class="d-seta" marker-end="url(#jn)"/><line x1="490" y1="72" x2="516" y2="72" class="d-seta" marker-end="url(#jn)"/><line x1="700" y1="124" x2="700" y2="196" class="d-seta" marker-end="url(#jn)"/><line x1="520" y1="252" x2="494" y2="252" class="d-seta" marker-end="url(#jn)"/><line x1="270" y1="252" x2="244" y2="252" class="d-seta" marker-end="url(#jn)"/><line x1="600" y1="124" x2="600" y2="160" class="d-bloq" marker-end="url(#jnb)"/><defs><marker id="jnb" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8"><path d="M1,1 L9,9 M9,1 L1,9" stroke="#B4232E" stroke-width="2.2"/></marker></defs><text x="588" y="150" text-anchor="end" class="d-rot d-rot-bloq">pivô fora do escopo:</text><text x="588" y="167" text-anchor="end" class="d-rot d-rot-bloq">bloqueado e anotado</text><text x="380" y="330" text-anchor="middle" class="d-rot">cada passo vira uma linha no registro de custódia</text></svg></div>
+<figcaption>O caminho de um caso. Se a coleta encontra algo fora do escopo (por exemplo, o telefone de um sócio), ela para ali e anota o bloqueio. Para ir adiante, marque <i>expandir escopo</i>; cada ampliação também fica anotada.</figcaption></figure>
+<h3>Opções da coleta</h3>
+<div class="rolagem"><table>
+<thead><tr><th>Opção</th><th>O que faz</th><th>Quando usar</th></tr></thead>
+<tbody>
+<tr><td>profundidade</td><td>Quantos “saltos” a partir dos alvos. 1 = só o que liga direto ao alvo; 2 = também o que liga ao que foi encontrado.</td><td>Comece com 1. Use 2 para achar o grupo por trás de uma empresa.</td></tr>
+<tr><td>só offline</td><td>Usa apenas as fontes do seu computador.</td><td>Sem internet, ou quando você não quer que nenhuma consulta saia da máquina.</td></tr>
+<tr><td>expandir escopo</td><td>Permite pesquisar o que for encontrado no caminho, anotando cada inclusão.</td><td>Quando a sua autorização cobre as pessoas e empresas relacionadas.</td></tr>
+</tbody></table></div>
+
+<h2 id="resultados">Entender os resultados</h2>
+<div class="rolagem"><table>
+<thead><tr><th>Aba</th><th>O que mostra</th></tr></thead>
+<tbody>
+<tr><td>grafo</td><td>O mapa de ligações.</td></tr>
+<tr><td>vínculos</td><td>As mesmas ligações em forma de lista, da mais confiável para a menos.</td></tr>
+<tr><td>agrupamentos</td><td>Conjuntos que parecem ser um só grupo, com o motivo e uma ressalva que diz quando o agrupamento pode estar errado.</td></tr>
+<tr><td>observações</td><td>Coisas que merecem atenção, por exemplo telefone de um estado ligado a empresa de outro, ou um número que aparece em muitas empresas sem sócio em comum (típico de escritório de contabilidade).</td></tr>
+<tr><td>custódia</td><td>Tudo o que o programa fez, em ordem, e se o registro continua íntegro.</td></tr>
+<tr><td>experimentos</td><td>Cada vez que você rodou a coleta. Permite comparar duas rodadas e ver o que mudou.</td></tr>
+<tr><td>quesitos</td><td>As perguntas que o laudo deve responder, e as suas respostas.</td></tr>
+</tbody></table></div>
+<figure class="quadro"><figcaption>Captura visual omitida do repositório para manter a documentação leve. A interface real é reproduzida pela bancada e pelo Colab.</figcaption></figure>
+<figure class="quadro"><figcaption>Captura visual omitida do repositório para manter a documentação leve. A interface real é reproduzida pela bancada e pelo Colab.</figcaption></figure>
+
+<h2 id="laudo">Gerar o laudo</h2>
+<ol class="fio">
+  <li><b>Escreva os quesitos</b>Na aba <i>quesitos</i>, escreva as perguntas que o documento precisa responder. Exemplo: “As três linhas estão ligadas ao mesmo grupo empresarial?”.</li>
+  <li><b>Responda cada um</b>Use o grau de confiança que o mapa mostra (“com confiança alta…”, “há indício…”) e salve.</li>
+  <li><b>Abra o documento</b>Clique em <i>Laudo</i> ou <i>RELINT</i> no alto da página do caso. Ele abre numa aba nova; use o menu do navegador para imprimir ou salvar em PDF.</li>
+</ol>
+<div class="cartoes">
+  <div class="cartao"><span class="quando">Para processo ou perícia</span><h4>Laudo técnico</h4><p>Preâmbulo, quesitos, metodologia, exames, cadeia de custódia nas 10 etapas do art. 158-B do Código de Processo Penal, respostas e conclusão.</p></div>
+  <div class="cartao"><span class="quando">Para gestão e decisão</span><h4>RELINT</h4><p>Relatório de inteligência: assunto, síntese no início, desenvolvimento e avaliação das fontes.</p></div>
+  <div class="cartao"><span class="quando">Para o seu trabalho</span><h4>Relatório técnico</h4><p>Tudo o que foi encontrado, com o mapa, a tabela completa e as limitações de cada fonte.</p></div>
+</div>
+<figure class="quadro"><figcaption>Captura visual omitida do repositório para manter a documentação leve. A interface real é reproduzida pela bancada e pelo Colab.</figcaption></figure>
+
+<h2 id="ampliar">Ir além (opcional)</h2>
+<h3>Verificar conexões</h3>
+<p>Em <i>Primeiros passos</i>, clique em <b>Verificar conexões</b>. O programa faz uma consulta neutra a cada fonte (sem envolver nenhuma pessoa) e mostra quais funcionam da sua rede.</p>
+<figure class="quadro"><figcaption>Captura visual omitida do repositório para manter a documentação leve. A interface real é reproduzida pela bancada e pelo Colab.</figcaption></figure>
+<h3>Testar sem instalar, no Google Colab</h3>
+<p>Se o projeto estiver no GitHub, basta clicar no botão <b>Abrir no Colab</b> da página do repositório. Sem GitHub, entre em <a href="https://colab.research.google.com/">colab.research.google.com</a>, escolha <i>Arquivo › Fazer upload de notebook</i> e envie <code>colab/FIO_Lab_Colab.ipynb</code>. Depois, <i>Ambiente de execução › Executar tudo</i>.</p>
+<p>O caderno tem 10 seções em formulários: instala, escolhe onde guardar, confere as fontes, mostra a demonstração com mapa interativo, monta o índice da Receita por estado, roda um caso, gera o laudo, abre a bancada, faz o benchmark e roda os testes.</p>
+<div class="nota aviso"><b>No Colab, os dados ficam nos servidores do Google</b>Use para teste, demonstração, alvos institucionais e pesquisa com dados abertos. Guardar no seu Drive só funciona se você marcar a confirmação de base legal. Caso real com dados pessoais: rode no seu computador.</div>
+<h3>Usar o cadastro completo da Receita Federal</h3>
+<p>Esta é a fonte mais forte do F.I.O.: com ela, um telefone leva à empresa que o declarou, aos sócios e às filiais, sem internet. A Receita publica esse cadastro de graça, e o F.I.O. baixa e monta tudo sozinho.</p>
+<ol class="fio">
+  <li><b>Escolha o estado</b>Montar só a sua UF deixa o índice muito menor. Para mais de uma, separe por vírgula.</li>
+  <li><b>Rode um comando</b>No terminal, dentro da pasta <code>fio</code>. O programa descobre o mês mais recente, baixa um arquivo por vez, filtra, apaga e segue. Pode levar de dezenas de minutos a algumas horas.<div class="cmd"><button class="copiar" type="button">Copiar</button><code>python -m fio indice baixar --uf MG</code></div></li>
+  <li><b>Pronto</b>O coletor <i>cnpj-reverso</i> passa a funcionar sem internet. Se a conexão cair, rode o mesmo comando: o download retoma de onde parou.</li>
+</ol>
+<p>No Colab, a seção 5 do caderno faz o mesmo e, com o Drive ligado, guarda o índice para as próximas vezes.</p>
+<h3>Chaves de acesso</h3>
+<p>Duas fontes pedem chave. Crie o arquivo <code>config.json</code> na pasta de dados do F.I.O. (veja abaixo onde fica) com o conteúdo:</p>
+<div class="cmd"><button class="copiar" type="button">Copiar</button><code>{{"transparencia_api_key": "sua-chave", "hibp_api_key": "sua-chave"}}</code></div>
+<p>A chave do <b>Portal da Transparência</b> (sanções CEIS e CNEP) é gratuita, com cadastro de e-mail no próprio portal. A do <b>Have I Been Pwned</b> (vazamentos de e-mail) é paga.</p>
+<h3>Onde ficam os seus dados</h3>
+<p>Tudo fica numa pasta chamada <code>.fio</code> dentro da sua pasta de usuário: <code>C:\Users\seu-nome\.fio</code> no Windows, <code>/Users/seu-nome/.fio</code> no macOS e <code>/home/seu-nome/.fio</code> no Linux. Nada é enviado para servidores do F.I.O.; o programa nem tem servidor. Quando o prazo do caso terminar, apague a pasta do caso em <code>.fio/casos</code>, como pede a LGPD.</p>
+
+<h2 id="problemas">Se algo der errado</h2>
+<details class="faq"><summary>“Python 3.10 ou mais novo não foi encontrado”</summary><div>O Python não está instalado ou, no Windows, a caixa “Add python.exe to PATH” não foi marcada. Rode o instalador do Python de novo, escolha <i>Modify</i> ou reinstale marcando a caixa, e abra o F.I.O. outra vez.</div></details>
+<details class="faq"><summary>A janela preta abre e fecha na hora</summary><div>Abra o Prompt de Comando na pasta <code>fio</code> (no Explorador, digite <code>cmd</code> na barra de endereço e tecle <kbd>Enter</kbd>) e rode <code>py -m fio lab bancada</code>. A mensagem de erro fica visível; ela diz o que falta.</div></details>
+<details class="faq"><summary>O navegador não abriu</summary><div>Copie o endereço que aparece na janela preta, que começa com <code>http://127.0.0.1:8765/#t=</code>, e cole no navegador. O trecho depois de <code>#t=</code> é a senha desta sessão.</div></details>
+<details class="faq"><summary>A página diz “Token ausente”</summary><div>Você abriu a bancada sem a senha da sessão, por um favorito antigo ou digitando o endereço. Use o endereço completo que aparece na janela preta. A senha muda cada vez que o programa inicia, por segurança.</div></details>
+<details class="faq"><summary>“Endereço já em uso” ou a porta 8765 está ocupada</summary><div>Outro programa, ou outra cópia do F.I.O., está usando a porta. Feche a outra janela, ou inicie com outra porta: <code>python -m fio lab bancada --porta 8770</code>.</div></details>
+<details class="faq"><summary>Algumas fontes aparecem com ✗ na verificação</summary><div>A sua rede não alcança aquela fonte (firewall, proxy corporativo) ou a fonte está fora do ar. As fontes offline continuam funcionando. Em rede corporativa, peça ao suporte para liberar os endereços listados.</div></details>
+<details class="faq"><summary>No Mac: “não pode ser aberto porque é de um desenvolvedor não identificado”</summary><div>Clique com o botão direito no arquivo, escolha <i>Abrir</i> e confirme. Se ainda assim não abrir, vá em <i>Ajustes do Sistema › Privacidade e Segurança</i> e clique em <i>Abrir Mesmo Assim</i>.</div></details>
+<details class="faq"><summary>O mapa ficou confuso, com muitos círculos</summary><div>Use a aba <i>vínculos</i>, que lista tudo em ordem de confiança, ou rode a coleta com profundidade 1. Arraste os círculos para separar os grupos.</div></details>
+
+<h2 id="glossario">Glossário</h2>
+<dl class="glossario">
+<dt>Alvo</dt><dd>O que você informou para pesquisar: um telefone, e-mail, CNPJ, domínio ou documento.</dd>
+<dt>Base legal</dt><dd>O fundamento da LGPD (ou de contrato, processo ou pesquisa) que autoriza tratar os dados do caso.</dd>
+<dt>Bloco de numeração</dt><dd>Os primeiros dígitos de um número, que a Anatel destina em lote às operadoras. Dois números no mesmo bloco são um indício fraco de origem comum.</dd>
+<dt>CNPJ raiz</dt><dd>Os 8 primeiros caracteres do CNPJ. Matriz e filiais da mesma empresa têm a mesma raiz. Desde julho de 2026, novos CNPJs podem ter letras.</dd>
+<dt>CPF mascarado</dt><dd>O formato <code>***456789**</code> em que a Receita publica o CPF de sócios. O F.I.O. usa essa máscara para não confundir homônimos e nunca guarda o CPF completo.</dd>
+<dt>Custódia</dt><dd>O registro, em ordem, de tudo o que foi feito com as informações do caso, protegido contra alteração.</dd>
+<dt>Escopo</dt><dd>A lista do que você está autorizado a pesquisar.</dd>
+<dt>Intermediário</dt><dd>Um telefone, endereço ou e-mail compartilhado por muitas empresas sem relação entre si, como o de um escritório de contabilidade. O F.I.O. sinaliza para não juntar grupos por engano.</dd>
+<dt>Pivô</dt><dd>Usar algo encontrado como ponto de partida para nova busca.</dd>
+<dt>Quesito</dt><dd>Pergunta formal que o laudo deve responder.</dd>
+<dt>RELINT</dt><dd>Relatório de Inteligência, formato usado por órgãos e equipes de inteligência.</dd>
+<dt>SHA-256</dt><dd>Uma “impressão digital” calculada a partir de um conteúdo. Se uma vírgula mudar, a impressão muda.</dd>
+</dl>
+
+<h2 id="tecnico">Para quem é técnico</h2>
+<figure class="quadro"><div class="rolagem"><svg viewBox="0 0 980 380" role="img" class="diagrama" aria-label="Arquitetura: a politica do caso controla o pipeline de quatro estagios; coletores e analisadores sao plugins; tudo grava no ledger, no grafo e no registro de experimento."><defs><marker id="aq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect x="20" y="16" width="940" height="44" rx="10" class="d-portao"/><text x="490" y="44" text-anchor="middle" class="d-tit" style="font-size:14px">Política do caso: base legal · finalidade · escopo conferido a cada pivô · prazo · fontes vedadas</text><rect x="20" y="90" width="205" height="120" rx="10" class="d-caixa"/><text x="36" y="118" class="d-tit" style="font-size:15px">preparação</text><text x="36" y="142" class="d-txt">carrega plugins</text><text x="36" y="162" class="d-txt">versão das fontes</text><text x="36" y="182" class="d-txt">hash do código</text><line x1="225" y1="150" x2="261" y2="150" class="d-seta" marker-end="url(#aq)"/><rect x="265" y="90" width="205" height="120" rx="10" class="d-caixa d-caixa-acc"/><text x="281" y="118" class="d-tit" style="font-size:15px">coleta</text><text x="281" y="142" class="d-txt">ingestão: extrator</text><text x="281" y="162" class="d-txt">normalização: núcleo</text><text x="281" y="182" class="d-txt">enriquecimento: 10 fontes</text><line x1="470" y1="150" x2="506" y2="150" class="d-seta" marker-end="url(#aq)"/><rect x="510" y="90" width="205" height="120" rx="10" class="d-caixa"/><text x="526" y="118" class="d-tit" style="font-size:15px">análise</text><text x="526" y="142" class="d-txt">coerência geográfica</text><text x="526" y="162" class="d-txt">intermediários</text><text x="526" y="182" class="d-txt">sanções</text><line x1="715" y1="150" x2="751" y2="150" class="d-seta" marker-end="url(#aq)"/><rect x="755" y="90" width="205" height="120" rx="10" class="d-caixa"/><text x="771" y="118" class="d-tit" style="font-size:15px">relatório</text><text x="771" y="142" class="d-txt">técnico · MD · CSV</text><text x="771" y="162" class="d-txt">laudo (art. 158-B)</text><text x="771" y="182" class="d-txt">RELINT</text><line x1="490" y1="60" x2="490" y2="86" class="d-seta d-seta-acc" marker-end="url(#aq)"/><rect x="20" y="276" width="300" height="84" rx="10" class="d-faixa"/><text x="36" y="304" class="d-tit" style="font-size:14px">ledger</text><text x="36" y="328" class="d-txt" style="font-size:12.5px">SHA-256 encadeado + artefatos brutos</text><rect x="340" y="276" width="300" height="84" rx="10" class="d-faixa"/><text x="356" y="304" class="d-tit" style="font-size:14px">grafo</text><text x="356" y="328" class="d-txt" style="font-size:12.5px">entidades, arestas com fonte e Admiralty</text><rect x="660" y="276" width="300" height="84" rx="10" class="d-faixa"/><text x="676" y="304" class="d-tit" style="font-size:14px">experimento</text><text x="676" y="328" class="d-txt" style="font-size:12.5px">parâmetros, métricas, SHA-256 do grafo</text><line x1="122" y1="210" x2="170" y2="272" class="d-anota" marker-end="url(#aq)"/><line x1="367" y1="210" x2="170" y2="272" class="d-anota" marker-end="url(#aq)"/><line x1="612" y1="210" x2="470" y2="272" class="d-anota" marker-end="url(#aq)"/><line x1="857" y1="210" x2="790" y2="272" class="d-anota" marker-end="url(#aq)"/><text x="490" y="248" text-anchor="middle" class="d-rot">grava</text></svg></div>
+<figcaption>Arquitetura. A política do caso controla os quatro estágios do pipeline; coletores e analisadores são plugins; tudo grava no ledger, no grafo e no registro de experimento.</figcaption></figure>
+<h3>Linha de comando</h3>
+<div class="cmd"><button class="copiar" type="button">Copiar</button><code>python -m fio demo                       # caso de demonstração
+python -m fio diagnostico                # testa as fontes online
+python -m fio lab bancada                # interface web
+python -m fio numero "(31) 98888-7777"   # análise avulsa, offline
+python -m fio doc cnpj 12.ABC.345/01DE-35
+python -m fio lab pipeline --caso ID --profundidade 2 --laudo laudo.html
+python -m fio lab avaliar --sementes 1,2,3 --grupos 12
+python -m fio indice baixar --uf MG      # índice da Receita por estado
+python -m fio lab benchmark-real         # benchmark com dados reais</code></div>
+<div class="nota dica"><b>Índice por UF sem estourar a RAM</b>O F.I.O. baixa um ZIP da Receita por vez, retoma quedas de conexão e apaga o ZIP depois de processar. As raízes de CNPJ aceitas pela UF ficam numa tabela SQLite auxiliar; Empresas e Sócios são filtrados em lotes. O filtro reduz o arquivo final e a memória, mas não o tráfego, porque a Receita não publica Estabelecimentos separados por estado.</div>
+<p>Referência completa em <code>README.md</code>, desenho interno em <code>ARQUITETURA.md</code> e o funcionamento no Colab e no GitHub em <code>docs/ARQUITETURA-COLAB.html</code>.</p>
+<h3>Testes em nuvem desta versão</h3>
+<p>Executados num ambiente Linux na nuvem em 28/09/2026, a partir do pacote descompactado do zero.</p>
+<div class="rolagem"><table class="num">
+<thead><tr><th>Bateria</th><th>Resultado</th><th>O que cobre</th></tr></thead>
+<tbody>
+<tr><td>Unitários e integração</td><td class="ok">82/82 em Python 3.10, 3.11, 3.12, 3.13 e 3.14</td><td>núcleo, documentos, ledger, grafo, coletores, lab, bancada, CLI</td></tr>
+<tr><td>Integração HTTP</td><td class="ok">aprovado</td><td>servidor local imitando BrasilAPI, ViaCEP, Querido Diário, RDAP, busca e HIBP, com gzip, cache, erro 404 e ledger</td></tr>
+<tr><td>Fumaça da linha de comando</td><td class="ok">23/23 passos</td><td>fluxo completo em subprocesso, inclusive detecção de ledger adulterado</td></tr>
+<tr><td>Navegador (Chromium)</td><td class="ok">aprovado</td><td>jornada do leigo em desktop claro e celular escuro, sem erro de JavaScript</td></tr>
+<tr><td>Cobertura de código</td><td class="num">85%</td><td>medida com coverage.py (a CLI também é exercitada pela fumaça)</td></tr>
+<tr><td>Caderno do Colab</td><td class="ok">11/11 células</td><td>executado fora do Colab com um repositório da Receita simulado, inclusive queda de download</td></tr>
+<tr><td>Fontes reais</td><td class="ruim">não executado aqui</td><td>a rede do ambiente de teste bloqueia essas APIs; o contrato da BrasilAPI foi conferido na documentação publicada</td></tr>
+</tbody></table></div>
+<p>Windows e macOS não foram executados neste ambiente. O arquivo <code>.github/workflows/testes.yml</code> roda a mesma bateria em Windows, macOS e Linux, com Python 3.10 a 3.14, sempre que o projeto é enviado ao GitHub, e toda segunda-feira testa as fontes reais com alvos neutros.</p>
+
+<footer>F.I.O. Lab 2.2.0 · Fontes, Identificadores e Origens · Python, só biblioteca padrão. Este manual acompanha o programa na pasta <code>docs</code>.</footer>
+</main>
+</div>
+<script>
+(function(){
+  var abas=[].slice.call(document.querySelectorAll('.abas [role=tab]'));
+  function mostra(so){abas.forEach(function(b){var on=b.dataset.so===so;b.setAttribute('aria-selected',on);
+    document.getElementById('so-'+b.dataset.so).hidden=!on;});}
+  abas.forEach(function(b){b.addEventListener('click',function(){mostra(b.dataset.so)});});
+  var ua=navigator.userAgent||'';
+  if(/Mac/.test(ua)&&!/iPhone|iPad/.test(ua))mostra('mac');else if(/Linux|X11/.test(ua)&&!/Android/.test(ua))mostra('lin');
+  document.querySelectorAll('.copiar').forEach(function(bt){bt.addEventListener('click',function(){
+    var t=bt.parentNode.querySelector('code').innerText;
+    function feito(){bt.textContent='Copiado';setTimeout(function(){bt.textContent='Copiar'},1600);}
+    function manual(){var r=document.createRange();r.selectNodeContents(bt.parentNode.querySelector('code'));
+      var s=getSelection();s.removeAllRanges();s.addRange(r);bt.textContent='Selecionado';}
+    try{navigator.clipboard.writeText(t).then(feito,manual);}catch(e){manual();}
+  });});
+})();
+</script></body></html>

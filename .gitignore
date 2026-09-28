@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.coverage
+htmlcov/
+cobertura/
+lab-saida/
+.fio/
+*.sqlite
+*.sqlite-journal
+*.construindo
+*.parcial
+receita-tmp/
+!fio/dados_demo/**

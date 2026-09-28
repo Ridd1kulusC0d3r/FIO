@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fio-osint"
+version = "2.2.0"
+description = "F.I.O. Lab (edição BR): laboratório OSINT de análise de vínculos a partir de telefones e registros públicos brasileiros"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+license = {text = "MIT"}
+authors = [{name = "Deivison Lourenço"}]
+keywords = ["osint", "link-analysis", "lgpd", "brasil", "chain-of-custody"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: Portuguese (Brazilian)",
+  "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ridd1kulusC0d3r/FIO"
+Manual = "https://github.com/Ridd1kulusC0d3r/FIO/blob/main/docs/MANUAL.html"
+
+[project.scripts]
+fio = "fio.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["fio*"]
+
+[tool.setuptools.package-data]
+"fio.lab.bancada" = ["ui.html"]
+"fio" = ["dados_demo/*"]

@@ -1,0 +1,14 @@
+name: Problema de uso
+description: Algo não funcionou como o manual descreve
+labels: ["bug"]
+body:
+  - type: textarea
+    id: oque
+    attributes: {label: O que você fez e o que aconteceu}
+    validations: {required: true}
+  - type: input
+    id: sistema
+    attributes: {label: "Sistema e versão do Python (ex.: Windows 11, Python 3.12)"}
+  - type: textarea
+    id: erro
+    attributes: {label: Mensagem de erro (sem dados pessoais do caso), render: text}

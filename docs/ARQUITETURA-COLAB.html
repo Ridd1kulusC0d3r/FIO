@@ -1,0 +1,300 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>F.I.O. no Colab</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Zilla+Slab:wght@600;700&display=swap"><style>:root{
+  --papel:#F3F5F4; --sup:#FFFFFF; --sup2:#E9EEEC; --tinta:#17212B; --texto:#2C3740; --mudo:#5B6770;
+  --linha:#D2D9D6; --fio:#0E7C6B; --fio-suave:#E1F0EC; --fio-tinta:#0A5E51;
+  --aviso:#8A5A00; --aviso-fundo:#FFF4E0; --aviso-borda:#E3B45B; --erro:#B4232E; --erro-fundo:#FBEAEA;
+  --cod:#EEF2F0; --cod-tinta:#1D2A33; --sombra:0 1px 2px rgba(23,33,43,.06),0 4px 14px rgba(23,33,43,.05);
+  --f-display:"Zilla Slab",Rockwell,"Roboto Slab",Georgia,serif;
+  --f-texto:"Atkinson Hyperlegible",Verdana,"Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--papel:#0F1514;--sup:#161F1D;--sup2:#1D2826;--tinta:#E6EEEB;--texto:#CBD6D2;--mudo:#95A39E;
+  --linha:#2B3734;--fio:#3CC2A8;--fio-suave:#15302B;--fio-tinta:#7FE0CC;--aviso:#F2C572;--aviso-fundo:#2A2212;
+  --aviso-borda:#7A5A1C;--erro:#F08A8F;--erro-fundo:#2E1718;--cod:#1B2523;--cod-tinta:#DDE7E3;--sombra:none}}
+:root[data-theme="dark"]{
+  color-scheme:dark;--papel:#0F1514;--sup:#161F1D;--sup2:#1D2826;--tinta:#E6EEEB;--texto:#CBD6D2;--mudo:#95A39E;
+  --linha:#2B3734;--fio:#3CC2A8;--fio-suave:#15302B;--fio-tinta:#7FE0CC;--aviso:#F2C572;--aviso-fundo:#2A2212;
+  --aviso-borda:#7A5A1C;--erro:#F08A8F;--erro-fundo:#2E1718;--cod:#1B2523;--cod-tinta:#DDE7E3;--sombra:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--texto);font:17px/1.65 var(--f-texto);-webkit-text-size-adjust:100%}
+.pagina{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 90px;display:grid;
+  grid-template-columns:230px minmax(0,1fr);gap:48px}
+nav.indice{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:14.5px;
+  max-height:calc(100vh - 40px);overflow:auto}
+nav.indice b{display:block;font:700 12px/1 var(--f-texto);letter-spacing:.09em;text-transform:uppercase;color:var(--fio);margin:4px 0 12px}
+nav.indice ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--linha)}
+nav.indice a{display:block;padding:5px 12px;color:var(--mudo);text-decoration:none;margin-left:-2px;border-left:2px solid transparent}
+nav.indice a:hover,nav.indice a:focus-visible{color:var(--tinta);border-left-color:var(--fio)}
+main{min-width:0;max-width:760px}
+h1,h2,h3{font-family:var(--f-display);color:var(--tinta);text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(34px,5vw,50px);font-weight:700;margin:0 0 12px;letter-spacing:-.01em}
+h2{font-size:30px;font-weight:700;margin:72px 0 10px;scroll-margin-top:20px}
+h3{font-size:21px;font-weight:600;margin:34px 0 8px}
+p{margin:12px 0}
+a{color:var(--fio-tinta);text-underline-offset:3px}
+.chapeu{font:700 12.5px/1 var(--f-texto);letter-spacing:.1em;text-transform:uppercase;color:var(--fio);margin:0 0 14px}
+.lide{font-size:20px;line-height:1.55;color:var(--texto);max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--mudo);font-size:14px;margin:18px 0 6px}
+.meta span{display:inline-flex;gap:6px;align-items:center}
+.meta i{width:8px;height:8px;border-radius:50%;background:var(--fio);display:inline-block}
+figure{margin:26px 0}
+.quadro{background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:18px;box-shadow:var(--sombra)}
+.rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch}
+svg.diagrama{display:block;width:100%;height:auto;min-width:640px;color:var(--mudo);font-family:var(--f-texto)}
+figcaption{font-size:14.5px;color:var(--mudo);margin-top:10px;max-width:68ch}
+.d-caixa{fill:var(--sup);stroke:var(--linha);stroke-width:1.2}.d-caixa-acc{stroke:var(--fio);stroke-width:2}
+.d-tit{fill:var(--tinta);font-weight:700;font-family:var(--f-display)}.d-txt{fill:var(--texto);font-size:13.5px}
+.d-rot{fill:var(--mudo);font-size:12.5px}.d-eyebrow{fill:var(--fio);font-size:12px;font-weight:700;letter-spacing:.08em}
+.d-selo{fill:var(--fio);font-size:11.5px;font-weight:700}.d-seta{stroke:var(--mudo);stroke-width:1.6}
+.d-seta-acc{stroke:var(--fio)}.d-anota{stroke:var(--fio);stroke-width:1.2;stroke-dasharray:3 4}
+.d-faixa{fill:var(--fio-suave);stroke:var(--fio);stroke-width:1.2}.d-portao{fill:var(--aviso-fundo);stroke:var(--aviso-borda);stroke-width:1.2}
+.d-no{fill:var(--fio)}.d-no-t{fill:var(--sup);font-weight:700;font-size:14px}.d-alvo{stroke:var(--tinta);stroke-width:3}
+.d-bloq{stroke:var(--erro);stroke-width:1.6;stroke-dasharray:5 4}.d-rot-bloq{fill:var(--erro)}
+/* o fio: sequencia de passos amarrada por uma linha */
+ol.fio{list-style:none;counter-reset:passo;margin:22px 0;padding:0 0 0 46px;position:relative}
+ol.fio::before{content:"";position:absolute;left:16px;top:10px;bottom:10px;width:2px;background:var(--fio);opacity:.55}
+ol.fio>li{counter-increment:passo;position:relative;margin:0 0 22px}
+ol.fio>li::before{content:counter(passo);position:absolute;left:-46px;top:0;width:34px;height:34px;border-radius:50%;
+  background:var(--sup);border:2px solid var(--fio);color:var(--fio-tinta);font:700 15px/30px var(--f-texto);text-align:center}
+ol.fio>li>b:first-child{display:block;color:var(--tinta);font-size:18px;margin-bottom:2px}
+.abas{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 4px}
+.abas button{font:600 15px var(--f-texto);padding:8px 16px;border-radius:999px;border:1.5px solid var(--linha);
+  background:var(--sup);color:var(--texto);cursor:pointer}
+.abas button[aria-selected="true"]{background:var(--fio);border-color:var(--fio);color:var(--sup)}
+.abas button:focus-visible,.copiar:focus-visible{outline:3px solid var(--fio);outline-offset:2px}
+.cmd{position:relative;background:var(--cod);color:var(--cod-tinta);border-radius:10px;margin:10px 0;
+  font:14.5px/1.55 var(--f-mono);padding:12px 84px 12px 14px;overflow-x:auto;white-space:pre}
+.copiar{position:absolute;right:8px;top:8px;font:600 12.5px var(--f-texto);padding:4px 10px;border-radius:7px;
+  border:1px solid var(--linha);background:var(--sup);color:var(--texto);cursor:pointer}
+code{font:0.88em var(--f-mono);background:var(--cod);padding:1px 6px;border-radius:5px;color:var(--cod-tinta)}
+kbd{font:600 .85em var(--f-texto);border:1px solid var(--linha);border-bottom-width:2px;border-radius:5px;padding:0 6px;background:var(--sup)}
+.nota{border-radius:12px;padding:14px 16px;margin:18px 0;font-size:16px}
+.nota b:first-child{display:block;margin-bottom:2px}
+.nota.aviso{background:var(--aviso-fundo);border:1px solid var(--aviso-borda);color:var(--tinta)}
+.nota.aviso b:first-child{color:var(--aviso)}
+.nota.dica{background:var(--fio-suave);border:1px solid var(--fio);color:var(--tinta)}
+.nota.dica b:first-child{color:var(--fio-tinta)}
+.nota.nao{background:var(--erro-fundo);border:1px solid var(--erro);color:var(--tinta)}
+.nota.nao b:first-child{color:var(--erro)}
+.tela{border:1px solid var(--linha);border-radius:12px;overflow:hidden;background:var(--sup);box-shadow:var(--sombra)}
+.tela img{display:block;width:100%;height:auto}
+.tela .barra{display:flex;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--linha);background:var(--sup2);
+  font:12.5px var(--f-mono);color:var(--mudo)}
+.tela .barra i{width:10px;height:10px;border-radius:50%;background:var(--linha);display:inline-block}
+ol.marcas{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:8px}
+ol.marcas li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;font-size:16px}
+ol.marcas li span{width:26px;height:26px;border-radius:50%;background:#0E7C6B;color:#fff;font:700 13.5px/26px var(--f-texto);text-align:center}
+.lado{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:22px;align-items:start}
+.lado .tela{max-width:250px}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--linha);vertical-align:top}
+th{font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mudo);font-weight:700}
+td:first-child{font-weight:700;color:var(--tinta)}
+.num{font-variant-numeric:tabular-nums}
+.ok{color:var(--fio-tinta);font-weight:700}.ruim{color:var(--erro);font-weight:700}
+details.faq{border-bottom:1px solid var(--linha);padding:4px 0}
+details.faq summary{cursor:pointer;padding:12px 0;font-weight:700;color:var(--tinta);list-style:none;display:flex;gap:10px}
+details.faq summary::before{content:"+";color:var(--fio);font-weight:700;width:14px}
+details.faq[open] summary::before{content:"–"}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq>div{padding:0 0 12px 24px}
+dl.glossario{display:grid;grid-template-columns:200px 1fr;gap:10px 22px;margin:18px 0}
+dl.glossario dt{font-weight:700;color:var(--tinta)}
+dl.glossario dd{margin:0}
+.cartoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.cartao{background:var(--sup);border:1px solid var(--linha);border-radius:12px;padding:16px}
+.cartao h4{margin:0 0 6px;font:700 18px var(--f-display);color:var(--tinta)}
+.cartao p{margin:6px 0 0;font-size:15px}
+.cartao .quando{font:700 12px var(--f-texto);letter-spacing:.08em;text-transform:uppercase;color:var(--fio)}
+footer{margin-top:80px;padding-top:18px;border-top:1px solid var(--linha);color:var(--mudo);font-size:14px}
+@media (max-width:900px){
+  .pagina{grid-template-columns:1fr;gap:0}
+  nav.indice{position:static;max-height:none;margin-bottom:10px}
+  nav.indice ol{border-left:0;display:flex;flex-wrap:wrap;gap:6px}
+  nav.indice a{border:1px solid var(--linha);border-radius:999px;padding:4px 11px;margin:0;font-size:13.5px;background:var(--sup)}
+  .lado{grid-template-columns:1fr}.lado .tela{max-width:280px}
+  .cartoes{grid-template-columns:1fr}
+  dl.glossario{grid-template-columns:1fr;gap:2px}dl.glossario dd{margin-bottom:12px}
+}
+@media (max-width:520px){body{font-size:16.5px}.pagina{padding-inline:16px}h2{font-size:26px;margin-top:56px}.lide{font-size:18px}}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style></head><body>
+<div class="pagina">
+<nav class="indice" aria-label="Índice">
+  <b>Arquitetura</b>
+  <ol>
+    <li><a href="#objetivo">Objetivo</a></li>
+    <li><a href="#entrega">Três entregas</a></li>
+    <li><a href="#colab">Execução no Colab</a></li>
+    <li><a href="#indice">Índice da Receita</a></li>
+    <li><a href="#evolucoes">Evoluções medidas</a></li>
+    <li><a href="#lgpd">LGPD e segurança</a></li>
+    <li><a href="#github">GitHub</a></li>
+    <li><a href="#decisoes">Decisões</a></li>
+    <li><a href="#riscos">Riscos e próximos passos</a></li>
+    <li><a href="#verificacao">Verificação</a></li>
+  </ol>
+</nav>
+<main>
+<header>
+  <p class="chapeu">F.I.O. Lab 2.2 · documento de arquitetura</p>
+  <h1>F.I.O. no Colab e no GitHub</h1>
+  <p class="lide">Como o F.I.O. passa a funcionar em três lugares (Google Colab, computador e linha de comando) a partir de um único repositório, sem ganhar nenhuma dependência e sem ficar mais difícil de divulgar.</p>
+  <div class="meta"><span><i></i>28/09/2026</span><span><i></i>versão 2.2.0</span><span><i></i>82 testes</span></div>
+</header>
+
+<h2 id="objetivo">Objetivo</h2>
+<p>Três restrições guiam todas as decisões deste documento:</p>
+<ol class="fio">
+  <li><b>Quem nunca instalou nada consegue testar em um minuto.</b>O Colab é a porta de entrada da divulgação: um botão num post ou numa palestra.</li>
+  <li><b>Nenhuma dependência nova no pacote.</b>O que roda no Colab é exatamente o que roda no computador de quem baixou o zip.</li>
+  <li><b>A nuvem não vira atalho para dado pessoal.</b>No Colab os dados ficam com o Google; o desenho empurra casos reais para o computador do analista.</li>
+</ol>
+
+<h2 id="entrega">Três entregas, uma fonte</h2>
+<figure class="quadro"><div class="rolagem"><svg viewBox="0 0 980 330" role="img" class="diagrama" aria-label="Um repositorio no GitHub alimenta tres entregas: o Colab baixa o codigo direto; a Release traz o zip para o computador; o Pages publica o manual. Uma tag dispara testes e publicacao."><defs><marker id="en" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect x="20" y="110" width="210" height="140" rx="10" class="d-caixa d-caixa-acc"/><text x="36" y="138" class="d-tit" style="font-size:15px">Repositório GitHub</text><text x="36" y="162" class="d-txt">código (só stdlib)</text><text x="36" y="182" class="d-txt">caderno do Colab</text><text x="36" y="202" class="d-txt">manual e diagramas</text><text x="36" y="222" class="d-txt">workflows de CI</text><text x="20" y="96" class="d-eyebrow">FONTE ÚNICA</text><rect x="330" y="20" width="250" height="86" rx="10" class="d-caixa"/><text x="346" y="48" class="d-tit" style="font-size:15px">Actions: testes</text><text x="346" y="72" class="d-txt">3 sistemas × Python 3.10–3.14</text><text x="346" y="92" class="d-txt">caderno em dia e executável</text><rect x="330" y="124" width="250" height="86" rx="10" class="d-caixa"/><text x="346" y="152" class="d-tit" style="font-size:15px">Actions: publicar (tag vX.Y.Z)</text><text x="346" y="176" class="d-txt">zip para leigos + caderno</text><text x="346" y="196" class="d-txt">manual no GitHub Pages</text><text x="700" y="26" class="d-eyebrow">TRÊS ENTREGAS</text><rect x="700" y="36" width="260" height="84" rx="10" class="d-caixa"/><text x="716" y="64" class="d-tit" style="font-size:14px">Google Colab</text><text x="716" y="88" class="d-txt">botão Abrir no Colab; baixa do</text><text x="716" y="108" class="d-txt">GitHub, recua para o embutido</text><rect x="700" y="134" width="260" height="70" rx="10" class="d-caixa"/><text x="716" y="162" class="d-tit" style="font-size:14px">Computador (Release)</text><text x="716" y="186" class="d-txt">zip + lançadores de dois cliques</text><rect x="700" y="218" width="260" height="70" rx="10" class="d-caixa"/><text x="716" y="246" class="d-tit" style="font-size:14px">Manual (Pages)</text><text x="716" y="270" class="d-txt">página pública para divulgar</text><line x1="230" y1="150" x2="326" y2="64" class="d-seta" marker-end="url(#en)"/><text x="278.0" y="99.0" text-anchor="middle" class="d-rot">push</text><line x1="230" y1="190" x2="326" y2="168" class="d-seta" marker-end="url(#en)"/><text x="278.0" y="171.0" text-anchor="middle" class="d-rot">tag</text><line x1="580" y1="158" x2="696" y2="162" class="d-seta" marker-end="url(#en)"/><line x1="580" y1="184" x2="696" y2="250" class="d-seta" marker-end="url(#en)"/><path d="M230,230 C 470,300 560,300 696,86" class="d-seta" fill="none" marker-end="url(#en)"/><text x="470" y="298" text-anchor="middle" class="d-rot">codeload do ramo main (sem Release)</text></svg></div>
+<figcaption>O repositório é a única fonte. Um push roda os testes; uma tag publica o zip, o caderno e o manual. O Colab baixa o código do ramo principal e, se o GitHub falhar, usa a cópia embutida no próprio caderno.</figcaption></figure>
+<div class="rolagem"><table>
+<thead><tr><th>Entrega</th><th>Instalação</th><th>Persistência</th><th>Dados pessoais</th><th>Público</th></tr></thead>
+<tbody>
+<tr><td>Google Colab</td><td>nenhuma</td><td>sessão; Drive se autorizado</td><td>evitar</td><td>curiosos, alunos, pesquisa com dados abertos</td></tr>
+<tr><td>Computador</td><td>Python + dois cliques</td><td>pasta <code>.fio</code> local</td><td>sim, com base legal</td><td>analistas, casos reais</td></tr>
+<tr><td>Linha de comando</td><td><code>pip install git+…</code></td><td>local</td><td>sim, com base legal</td><td>técnicos, automação</td></tr>
+</tbody></table></div>
+
+<h2 id="colab">Execução no Colab</h2>
+<figure class="quadro"><div class="rolagem"><svg viewBox="0 0 980 420" role="img" class="diagrama" aria-label="No Colab, o navegador fala com a maquina virtual por um proxy autenticado do Google. Na maquina, o kernel roda o F.I.O. e a bancada em 127.0.0.1; o disco /content e temporario. O Google Drive guarda casos e indice entre sessoes, se voce autorizar. A internet traz a base da Receita e as fontes publicas."><defs><marker id="ex" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect x="20" y="40" width="200" height="120" rx="10" class="d-caixa"/><text x="36" y="68" class="d-tit" style="font-size:15px">Seu navegador</text><text x="36" y="92" class="d-txt">caderno (formulários)</text><text x="36" y="112" class="d-txt">mapa interativo</text><text x="36" y="132" class="d-txt">bancada (iframe/aba)</text><rect x="258" y="70" width="120" height="60" rx="10" class="d-portao"/><text x="318" y="96" text-anchor="middle" class="d-tit" style="font-size:13px">proxy Google</text><text x="318" y="116" text-anchor="middle" class="d-txt" style="font-size:12px">autenticado</text><rect x="416" y="20" width="330" height="300" rx="12" class="d-caixa d-caixa-acc"/><text x="432" y="46" class="d-eyebrow">MÁQUINA VIRTUAL DO COLAB</text><rect x="432" y="60" width="298" height="96" rx="10" class="d-caixa"/><text x="448" y="88" class="d-tit" style="font-size:14px">Kernel Python</text><text x="448" y="112" class="d-txt">F.I.O. (GitHub ou embutido)</text><text x="448" y="132" class="d-txt">bancada em 127.0.0.1:8765, token</text><rect x="432" y="172" width="298" height="130" rx="10" class="d-caixa"/><text x="448" y="200" class="d-tit" style="font-size:14px">/content (apagado ao fim)</text><text x="448" y="224" class="d-txt">índice local cnpj-local.sqlite</text><text x="448" y="244" class="d-txt">downloads da Receita, um por vez</text><text x="448" y="264" class="d-txt">laudos para baixar</text><rect x="784" y="40" width="176" height="120" rx="10" class="d-caixa"/><text x="800" y="68" class="d-tit" style="font-size:14px">Google Drive</text><text x="800" y="92" class="d-txt">opcional, com</text><text x="800" y="112" class="d-txt">confirmação LGPD</text><text x="800" y="132" class="d-txt">casos + índice</text><rect x="784" y="196" width="176" height="124" rx="10" class="d-caixa"/><text x="800" y="224" class="d-tit" style="font-size:14px">Internet</text><text x="800" y="248" class="d-txt">Receita (dados</text><text x="800" y="268" class="d-txt">abertos do CNPJ)</text><text x="800" y="288" class="d-txt">fontes públicas</text><line x1="220" y1="100" x2="254" y2="100" class="d-seta" marker-end="url(#ex)"/><line x1="378" y1="100" x2="428" y2="100" class="d-seta" marker-end="url(#ex)"/><line x1="746" y1="96" x2="780" y2="96" class="d-seta" marker-end="url(#ex)"/><text x="763.0" y="88.0" text-anchor="middle" class="d-rot">guarda</text><line x1="780" y1="124" x2="746" y2="124" class="d-seta" marker-end="url(#ex)"/><text x="763.0" y="142" text-anchor="middle" class="d-rot">copia p/ local</text><line x1="780" y1="246" x2="734" y2="236" class="d-seta" marker-end="url(#ex)"/><text x="757.0" y="262" text-anchor="middle" class="d-rot">baixa</text><rect x="20" y="344" width="940" height="56" rx="10" class="d-faixa"/><text x="40" y="368" class="d-tit" style="font-size:14px">Por que o índice é lido de uma cópia local</text><text x="40" y="388" class="d-txt" style="font-size:12.5px">o Drive é montado como sistema de arquivos de rede; sqlite com milhões de linhas fica lento nele. Guarda-se no Drive, consulta-se no /content.</text></svg></div>
+<figcaption>O navegador só fala com a máquina do Colab pelo proxy autenticado do Google. A bancada escuta em 127.0.0.1; nada fica exposto à internet.</figcaption></figure>
+<h3>O caderno em 10 seções</h3>
+<div class="rolagem"><table>
+<thead><tr><th>Seção</th><th>Função</th><th>Detalhe de projeto</th></tr></thead>
+<tbody>
+<tr><td>1 Instalar</td><td>código do GitHub ou embutido</td><td>tenta o ramo principal; se falhar, extrai a cópia em base64 do próprio caderno</td></tr>
+<tr><td>2 Armazenamento</td><td>sessão ou Google Drive</td><td>Drive só com a caixa de confirmação LGPD marcada</td></tr>
+<tr><td>3 Conexões</td><td>diagnóstico das fontes</td><td>consultas neutras, sem pessoa</td></tr>
+<tr><td>4 Demonstração</td><td>caso fictício + mapa</td><td>mapa interativo sem biblioteca externa</td></tr>
+<tr><td>5 Índice</td><td>Receita por UF</td><td>baixa, processa e apaga um arquivo por vez</td></tr>
+<tr><td>6 Caso pontual</td><td>fontes reais</td><td>exemplo com alvos institucionais</td></tr>
+<tr><td>7 Laudo</td><td>laudo, RELINT ou técnico</td><td>download direto; opção de exportar a pasta do caso</td></tr>
+<tr><td>8 Bancada</td><td>interface completa</td><td>no caderno (iframe) ou em nova aba</td></tr>
+<tr><td>9 Pesquisa</td><td>benchmark real e sintético</td><td>saída só agregada</td></tr>
+<tr><td>10 Testes</td><td>suíte + APIs reais</td><td>valida as fontes online a partir da rede do Google</td></tr>
+</tbody></table></div>
+
+<h2 id="indice">Índice da Receita no Colab</h2>
+<figure class="quadro"><div class="rolagem"><svg viewBox="0 0 980 300" role="img" class="diagrama" aria-label="Montagem do indice: para cada arquivo, baixa com retomada, processa filtrando a UF e apaga. Estabelecimentos primeiro, guardando as raizes da UF; depois Empresas e Socios so dessas raizes."><defs><marker id="ix" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><text x="20" y="26" class="d-eyebrow">PARA CADA UM DOS ARQUIVOS, EM ORDEM</text><rect x="20" y="42" width="200" height="100" rx="10" class="d-caixa"/><text x="36" y="70" class="d-tit" style="font-size:15px">1. Baixar</text><text x="36" y="94" class="d-txt">retoma de onde parou</text><text x="36" y="114" class="d-txt">até 5 tentativas</text><rect x="270" y="42" width="220" height="100" rx="10" class="d-caixa d-caixa-acc"/><text x="286" y="70" class="d-tit" style="font-size:15px">2. Processar</text><text x="286" y="94" class="d-txt">lê direto do .zip</text><text x="286" y="114" class="d-txt">filtra pela UF</text><rect x="540" y="42" width="170" height="100" rx="10" class="d-caixa"/><text x="556" y="70" class="d-tit" style="font-size:15px">3. Apagar</text><text x="556" y="94" class="d-txt">libera o disco</text><text x="556" y="114" class="d-txt">antes do próximo</text><rect x="760" y="42" width="200" height="100" rx="10" class="d-caixa"/><text x="776" y="70" class="d-tit" style="font-size:15px">cnpj.sqlite</text><text x="776" y="94" class="d-txt">índice reverso</text><text x="776" y="114" class="d-txt">telefone → cadastro</text><line x1="220" y1="92" x2="266" y2="92" class="d-seta" marker-end="url(#ix)"/><line x1="490" y1="92" x2="536" y2="92" class="d-seta" marker-end="url(#ix)"/><line x1="710" y1="92" x2="756" y2="92" class="d-seta" marker-end="url(#ix)"/><text x="733.0" y="84.0" text-anchor="middle" class="d-rot">grava</text><path d="M625,142 C 625,190 120,190 120,146" class="d-anota" fill="none" marker-end="url(#ix)"/><text x="372" y="182" text-anchor="middle" class="d-rot">próximo arquivo · pico de disco ≈ o maior arquivo</text><text x="20" y="226" class="d-eyebrow">DUAS PASSAGENS PARA O FILTRO POR UF</text><rect x="20" y="240" width="300" height="46" rx="10" class="d-faixa"/><text x="36" y="268" class="d-txt">Estabelecimentos → raízes da UF</text><rect x="370" y="240" width="300" height="46" rx="10" class="d-faixa"/><text x="386" y="268" class="d-txt">Empresas e Sócios só dessas raízes</text><line x1="320" y1="263" x2="366" y2="263" class="d-seta" marker-end="url(#ix)"/><text x="690" y="262" class="d-rot">Empresas e Sócios não trazem UF;</text><text x="690" y="280" class="d-rot">por isso Estabelecimentos vem antes</text></svg></div>
+<figcaption>O pico de disco fica no tamanho do maior arquivo, não da base inteira. O filtro por UF exige duas passagens porque Empresas e Sócios não trazem UF. As raízes aceitas ficam numa tabela SQLite auxiliar, não num conjunto Python mantido inteiro na RAM.</figcaption></figure>
+<p>O caderno descobre sozinho o mês mais recente publicado e testa os caminhos que a Receita já usou. Se o endereço mudar de novo, basta informar o novo em <code>FIO_RECEITA_BASE</code>. Downloads interrompidos retomam de onde pararam com Range + If-Range; se o objeto remoto mudar ou o servidor ignorar a retomada, só aquele ZIP reinicia.</p>
+<div class="nota aviso"><b>Ainda não medido com a base real</b>O tempo de download e o tamanho final do índice por UF dependem da velocidade da Receita e da UF escolhida. O escopo de raízes agora fica em SQLite e é consultado em lotes, evitando crescimento linear de RAM. A primeira execução no Colab imprime velocidade, minutos e tamanho; esses números devem entrar neste documento.</div>
+
+<h2 id="evolucoes">Evoluções desta versão, com resultado medido</h2>
+<h3>Nota de confiança por raridade e situação cadastral</h3>
+<p>Antes, todo vínculo da Receita valia 0,76. Agora o grau muda com o número de empresas (raízes de CNPJ) que declaram o telefone e com a situação do cadastro:</p>
+<div class="rolagem"><table class="num">
+<thead><tr><th>Situação</th><th>Grau</th><th>Confiança</th></tr></thead>
+<tbody>
+<tr><td>telefone de 1 raiz, cadastro ativo</td><td>A2</td><td>0,76</td></tr>
+<tr><td>2 a 3 raízes</td><td>A3</td><td>0,57</td></tr>
+<tr><td>4 a 9 raízes (típico de contador)</td><td>A4</td><td>0,38</td></tr>
+<tr><td>10 ou mais raízes</td><td>A5</td><td>0,19</td></tr>
+<tr><td>cadastro baixado, inapto ou suspenso</td><td>um nível abaixo</td><td>—</td></tr>
+</tbody></table></div>
+<p>Na avaliação sintética (10 mundos com 15 grupos cada), o ajuste de confiança mínima passou a separar vínculo forte de fraco:</p>
+<div class="rolagem"><table class="num">
+<thead><tr><th>Configuração</th><th>Precisão</th><th>Revocação</th><th>F1</th></tr></thead>
+<tbody>
+<tr><td>2.1, melhor caso (com poda de intermediários)</td><td>0,774 ± 0,184</td><td>0,857 ± 0,084</td><td>0,796 ± 0,133</td></tr>
+<tr><td>2.2, confiança mínima 0,4, sem poda</td><td class="ok">0,878 ± 0,058</td><td>0,857 ± 0,084</td><td class="ok">0,865 ± 0,055</td></tr>
+</tbody></table></div>
+<p>A precisão sobe, o desvio cai pela metade, e a poda de intermediários deixa de ser indispensável: a própria nota já rebaixa o telefone do contador.</p>
+<h3>Benchmark com dados reais</h3>
+<p>A base da Receita tem um rótulo natural: estabelecimentos com a mesma raiz de CNPJ são a mesma empresa. O benchmark esconde a raiz e mede quanto cada evidência pública (e-mail, domínio, endereço, nome fantasia, telefone compartilhado, numeração) reúne as filiais sem juntar empresas diferentes. O quadro societário fica de fora, porque na base ele é indexado pela própria raiz e vazaria o gabarito. A amostra é um município denso, onde aparecem os falsos positivos que interessam: contador em comum, mesmo prédio, linhas vizinhas. A saída é só agregada.</p>
+<h3>Mapa interativo nos cadernos</h3>
+<p>Um bloco de HTML e JavaScript puro, com filtro de confiança mínima, tipos e busca, que funciona no Colab, no Jupyter e em qualquer página.</p>
+
+<h2 id="lgpd">LGPD e segurança</h2>
+<div class="rolagem"><table>
+<thead><tr><th>Risco</th><th>Tratamento no desenho</th></tr></thead>
+<tbody>
+<tr><td>Dados do caso em servidor do Google</td><td>aviso no topo do caderno; exemplo com alvos institucionais; recomendação de rodar casos reais no computador</td></tr>
+<tr><td>Guardar dados pessoais no Drive sem perceber</td><td>Drive desligado por padrão; só monta com a confirmação de base legal marcada</td></tr>
+<tr><td>Bancada acessível por terceiros</td><td>escuta em 127.0.0.1; o acesso passa pelo proxy autenticado do Google; token obrigatório em toda rota</td></tr>
+<tr><td>Modo Colab afrouxa proteções</td><td>aceita o Host do proxy e iframe só quando <code>modo_colab</code> é ligado; teste automatizado confere que o token continua exigido</td></tr>
+<tr><td>Túneis públicos (ngrok, cloudflared)</td><td>descartados: expõem a bancada na internet</td></tr>
+<tr><td>Benchmark com dados reais revelar pessoas</td><td>saída só com contagens e métricas; teste confere que nenhum nome de sócio aparece</td></tr>
+</tbody></table></div>
+
+<h2 id="github">Otimização para o GitHub</h2>
+<div class="rolagem"><table>
+<thead><tr><th>Item</th><th>Para quê</th></tr></thead>
+<tbody>
+<tr><td>Licença MIT + <code>USO-RESPONSAVEL.md</code></td><td>adoção sem barreira jurídica; as regras éticas ficam no programa e no documento, não na licença</td></tr>
+<tr><td><code>CITATION.cff</code></td><td>botão “Cite this repository” para uso acadêmico</td></tr>
+<tr><td>Botão Abrir no Colab</td><td>divulgação com zero instalação</td></tr>
+<tr><td>Workflow <i>testes</i></td><td>3 sistemas × 5 versões do Python, caderno em dia e executável, navegador, APIs reais toda segunda</td></tr>
+<tr><td>Workflow <i>publicar</i></td><td>tag vX.Y.Z gera Release com zip, caderno e manual, e publica o manual no Pages</td></tr>
+<tr><td><code>tools/gerar_notebook.py</code></td><td>caderno gerado do código, só biblioteca padrão; o CI falha se estiver desatualizado</td></tr>
+<tr><td><code>tools/configurar_repositorio.py</code></td><td>troca o marcador pelo seu repositório em todos os arquivos</td></tr>
+<tr><td>Templates de issue e PR</td><td>“Fonte quebrada” com a saída do teste ao vivo; checklist ético no PR</td></tr>
+<tr><td><code>SECURITY.md</code>, <code>CONTRIBUTING.md</code></td><td>relato privado de vulnerabilidade; regra de só usar biblioteca padrão</td></tr>
+</tbody></table></div>
+<p>Publicação, depois de criar o repositório vazio no GitHub:</p>
+<div class="cmd"><button class="copiar" type="button">Copiar</button><code>python tools/configurar_repositorio.py seu-usuario/fio-lab
+git init && git add . && git commit -m "F.I.O. Lab 2.2"
+git remote add origin https://github.com/seu-usuario/fio-lab
+git push -u origin main
+git tag v2.2.0 && git push --tags</code></div>
+
+<h2 id="decisoes">Decisões e alternativas descartadas</h2>
+<div class="rolagem"><table>
+<thead><tr><th>Alternativa</th><th>Decisão</th><th>Motivo</th></tr></thead>
+<tbody>
+<tr><td>Caderno sem código embutido</td><td>descartada</td><td>quebra se o GitHub estiver fora ou o repositório for privado</td></tr>
+<tr><td>Streamlit ou Gradio no Colab</td><td>descartada</td><td>dependências novas; a bancada atual já roda no Colab</td></tr>
+<tr><td>Docker</td><td>descartada</td><td>não roda no Colab e afasta leigos</td></tr>
+<tr><td>Publicar no PyPI agora</td><td>adiada</td><td>checar colisão de nome antes; <code>pip install git+…</code> já atende</td></tr>
+<tr><td>sqlite direto no Drive</td><td>descartada</td><td>lento em disco de rede; usa-se cópia local</td></tr>
+<tr><td>Baixar a base inteira e depois processar</td><td>descartada</td><td>dezenas de GB de pico; um arquivo por vez resolve</td></tr>
+</tbody></table></div>
+
+<h2 id="riscos">Riscos e próximos passos</h2>
+<ol class="fio">
+  <li><b>Validar as fontes online no Colab</b>Rodar as seções 3 e 10 e corrigir o que o teste ao vivo apontar. É o maior risco aberto.</li>
+  <li><b>Medir o índice real</b>Montar MG no Colab e registrar tempo, tamanho e memória neste documento.</li>
+  <li><b>Rodar o benchmark real</b>Três municípios de portes diferentes; é o material do artigo.</li>
+  <li><b>Proxy do Colab</b>O Google já mudou esse mecanismo antes; por isso a bancada tem dois modos (iframe e nova aba).</li>
+  <li><b>Endereço da Receita</b>Já mudou mais de uma vez; o caderno tenta os caminhos conhecidos e aceita um novo por variável.</li>
+</ol>
+
+<h2 id="verificacao">Como isto foi verificado</h2>
+<div class="rolagem"><table class="num">
+<thead><tr><th>Verificação</th><th>Resultado</th></tr></thead>
+<tbody>
+<tr><td>Suíte (Linux, nuvem)</td><td class="ok">82/82</td></tr>
+<tr><td>Caderno executado de ponta a ponta fora do Colab, com um repositório da Receita simulado</td><td class="ok">11 de 11 células sem erro</td></tr>
+<tr><td>Download com queda no meio do arquivo</td><td class="ok">retomou e montou o índice</td></tr>
+<tr><td>Filtro por UF</td><td class="ok">descarta a filial de outra UF; empresas e sócios só das raízes filtradas</td></tr>
+<tr><td>Modo Colab da bancada</td><td class="ok">iframe e Host liberados; token segue exigido</td></tr>
+<tr><td>Recursos exclusivos do Colab (proxy, Drive, download)</td><td class="ruim">precisam de sessão real do Colab</td></tr>
+<tr><td>Base real da Receita e APIs reais</td><td class="ruim">bloqueadas no ambiente de teste; validar no Colab</td></tr>
+</tbody></table></div>
+<footer>F.I.O. Lab 2.2.0 · documento de arquitetura · acompanha o repositório em <code>docs/ARQUITETURA-COLAB.html</code>.</footer>
+</main>
+</div>
+<script>
+(function(){
+  var abas=[].slice.call(document.querySelectorAll('.abas [role=tab]'));
+  function mostra(so){abas.forEach(function(b){var on=b.dataset.so===so;b.setAttribute('aria-selected',on);
+    document.getElementById('so-'+b.dataset.so).hidden=!on;});}
+  abas.forEach(function(b){b.addEventListener('click',function(){mostra(b.dataset.so)});});
+  var ua=navigator.userAgent||'';
+  if(/Mac/.test(ua)&&!/iPhone|iPad/.test(ua))mostra('mac');else if(/Linux|X11/.test(ua)&&!/Android/.test(ua))mostra('lin');
+  document.querySelectorAll('.copiar').forEach(function(bt){bt.addEventListener('click',function(){
+    var t=bt.parentNode.querySelector('code').innerText;
+    function feito(){bt.textContent='Copiado';setTimeout(function(){bt.textContent='Copiar'},1600);}
+    function manual(){var r=document.createRange();r.selectNodeContents(bt.parentNode.querySelector('code'));
+      var s=getSelection();s.removeAllRanges();s.addRange(r);bt.textContent='Selecionado';}
+    try{navigator.clipboard.writeText(t).then(feito,manual);}catch(e){manual();}
+  });});
+})();
+</script></body></html>

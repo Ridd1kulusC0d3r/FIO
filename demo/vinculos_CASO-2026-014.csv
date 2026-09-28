@@ -1,0 +1,42 @@
+origem_tipo,origem,relacao,destino_tipo,destino,confianca,nivel,corroboracoes,coletores,observacao
+telefone,+5531988887777,telefone_declarado_por,organizacao,11222333000181,0.76,alta,1,cnpj-reverso,telefone consta no cadastro do estabelecimento
+organizacao,11222333000181,endereco_no_cep,cep,30120010,0.76,alta,1,cnpj-reverso,"RUA DOS ANDRADAS, 1500"
+organizacao,11222333000181,email_declarado,email,contato@auroratech.com.br,0.76,alta,1,cnpj-reverso,e-mail do cadastro
+organizacao,11222333000181,telefone_declarado,telefone,+553133334444,0.76,alta,1,cnpj-reverso,segunda linha do mesmo cadastro
+organizacao,11222333000181,tem_socio,pessoa,MARIA CLARA PEREIRA [***456789**],0.76,alta,1,cnpj-reverso,quadro societario (49)
+pessoa,MARIA CLARA PEREIRA [***456789**],documento_parcial,cpf-parcial,***456789**,0.76,alta,3,cnpj-reverso,CPF mascarado conforme publicado pela Receita
+organizacao,11222333000181,tem_socio,pessoa,JOAO BATISTA SOUZA [***112233**],0.76,alta,1,cnpj-reverso,quadro societario (22)
+pessoa,JOAO BATISTA SOUZA [***112233**],documento_parcial,cpf-parcial,***112233**,0.76,alta,2,cnpj-reverso,CPF mascarado conforme publicado pela Receita
+organizacao,11222333000181,mesmo_grupo_cadastral,organizacao,11222333000262,0.76,alta,1,cnpj-reverso,mesma raiz de CNPJ (filial/matriz)
+telefone,+5521988887778,telefone_declarado_por,organizacao,11222333000262,0.76,alta,1,cnpj-reverso,telefone consta no cadastro do estabelecimento
+organizacao,11222333000262,endereco_no_cep,cep,20040002,0.76,alta,1,cnpj-reverso,"AVENIDA RIO BRANCO, 200"
+organizacao,11222333000262,email_declarado,email,filial.rj@auroratech.com.br,0.76,alta,1,cnpj-reverso,e-mail do cadastro
+organizacao,11222333000262,tem_socio,pessoa,MARIA CLARA PEREIRA [***456789**],0.76,alta,1,cnpj-reverso,quadro societario (49)
+organizacao,11222333000262,tem_socio,pessoa,JOAO BATISTA SOUZA [***112233**],0.76,alta,1,cnpj-reverso,quadro societario (22)
+organizacao,11222333000262,mesmo_grupo_cadastral,organizacao,11222333000181,0.76,alta,1,cnpj-reverso,mesma raiz de CNPJ (filial/matriz)
+telefone,+5531988887779,telefone_declarado_por,organizacao,44555666000109,0.76,alta,1,cnpj-reverso,telefone consta no cadastro do estabelecimento
+organizacao,44555666000109,endereco_no_cep,cep,30120010,0.76,alta,1,cnpj-reverso,"RUA DOS ANDRADAS, 1500"
+organizacao,44555666000109,email_declarado,email,financeiro@auroratech.com.br,0.76,alta,1,cnpj-reverso,e-mail do cadastro
+organizacao,44555666000109,tem_socio,pessoa,MARIA CLARA PEREIRA [***456789**],0.76,alta,1,cnpj-reverso,quadro societario (49)
+organizacao,44555666000109,tem_socio,pessoa,RENATA LIMA CAMPOS [***998877**],0.76,alta,1,cnpj-reverso,quadro societario (22)
+pessoa,RENATA LIMA CAMPOS [***998877**],documento_parcial,cpf-parcial,***998877**,0.76,alta,1,cnpj-reverso,CPF mascarado conforme publicado pela Receita
+email,contato@auroratech.com.br,telefone_declarado_por,organizacao,11222333000181,0.76,alta,1,cnpj-reverso,telefone consta no cadastro do estabelecimento
+organizacao,11222333000181,telefone_declarado,telefone,+5531988887777,0.76,alta,1,cnpj-reverso,segunda linha do mesmo cadastro
+telefone,+553133334444,telefone_declarado_por,organizacao,11222333000181,0.76,alta,1,cnpj-reverso,telefone consta no cadastro do estabelecimento
+email,filial.rj@auroratech.com.br,telefone_declarado_por,organizacao,11222333000262,0.76,alta,1,cnpj-reverso,telefone consta no cadastro do estabelecimento
+organizacao,11222333000262,telefone_declarado,telefone,+5521988887778,0.76,alta,1,cnpj-reverso,segunda linha do mesmo cadastro
+email,financeiro@auroratech.com.br,telefone_declarado_por,organizacao,44555666000109,0.76,alta,1,cnpj-reverso,telefone consta no cadastro do estabelecimento
+organizacao,44555666000109,telefone_declarado,telefone,+5531988887779,0.76,alta,1,cnpj-reverso,segunda linha do mesmo cadastro
+documento,demo/relatorio_interno.txt,menciona,telefone,+5531988887777,0.64,media,1,extrator,grafia no documento: (31) 98888-7777
+documento,demo/relatorio_interno.txt,menciona,telefone,+5531988887779,0.64,media,1,extrator,grafia no documento: 31 98888-7779
+documento,demo/relatorio_interno.txt,menciona,telefone,+5521988887778,0.64,media,1,extrator,grafia no documento: 21 98888-7778
+documento,demo/relatorio_interno.txt,menciona,email,financeiro@auroratech.com.br,0.64,media,1,extrator,
+documento,demo/relatorio_interno.txt,menciona,cpf-parcial,***982247**,0.64,media,1,extrator,cpf extraido do documento
+documento,demo/relatorio_interno.txt,menciona,organizacao,11222333000181,0.64,media,1,extrator,cnpj extraido do documento
+documento,demo/relatorio_interno.txt,menciona,organizacao,12ABC34501DE35,0.64,media,1,extrator,cnpj extraido do documento
+documento,demo/relatorio_interno.txt,menciona,cep,30120010,0.64,media,1,extrator,cep extraido do documento
+documento,demo/relatorio_interno.txt,menciona,placa,QRS1A23,0.64,media,1,extrator,placa extraido do documento
+telefone,+5531988887777,pertence_ao_bloco,faixa,3198888,0.38,baixa,1,nucleo,Bloco de numeracao destinado em lote; util para agrupar linhas de uma mesma contratacao.
+telefone,+5521988887778,pertence_ao_bloco,faixa,2198888,0.38,baixa,1,nucleo,Bloco de numeracao destinado em lote; util para agrupar linhas de uma mesma contratacao.
+telefone,+5531988887779,pertence_ao_bloco,faixa,3198888,0.38,baixa,1,nucleo,Bloco de numeracao destinado em lote; util para agrupar linhas de uma mesma contratacao.
+telefone,+553133334444,pertence_ao_bloco,faixa,3133334,0.38,baixa,1,nucleo,Bloco de numeracao destinado em lote; util para agrupar linhas de uma mesma contratacao.

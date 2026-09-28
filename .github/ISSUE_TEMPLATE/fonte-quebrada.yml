@@ -1,0 +1,20 @@
+name: Fonte quebrada
+description: Uma fonte online parou de responder ou mudou de formato
+labels: ["fonte"]
+body:
+  - type: dropdown
+    id: coletor
+    attributes:
+      label: Coletor
+      options: [cnpj-api, querido-diario, viacep, rdap, transparencia, web, hibp, download da Receita, outro]
+    validations: {required: true}
+  - type: textarea
+    id: saida
+    attributes:
+      label: Saída de `python testes/ao_vivo.py` ou de `python -m fio diagnostico`
+      render: text
+    validations: {required: true}
+  - type: input
+    id: onde
+    attributes:
+      label: Onde rodou (computador, Colab, rede corporativa…)
