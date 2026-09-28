@@ -12,7 +12,7 @@ jobs:
   unpack:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Rebuild repository payload
         shell: bash
         run: |
@@ -21,7 +21,9 @@ jobs:
           tar -xJf /tmp/fio.tar.xz -C .
           python tools/gerar_notebook.py
           python tools/gerar_notebook.py --checar
-          rm -rf .bootstrap .github/workflows/bootstrap.yml
+          # O GITHUB_TOKEN deste job não pode introduzir novos workflows.
+          # Publicamos o código primeiro e instalamos os workflows pelo conector GitHub depois.
+          rm -rf .bootstrap .github/workflows
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
