@@ -13,6 +13,7 @@ import sqlite3
 import threading
 import time
 import traceback
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -34,10 +35,23 @@ class Fila:
             c.execute("UPDATE tarefa SET estado='falhou', erro='servidor reiniciado'"
                       " WHERE estado='rodando'")
 
+    @contextmanager
     def _con(self):
+        """Conexao curta e realmente fechada ao sair do bloco.
+
+        O context manager nativo de sqlite3 faz commit/rollback, mas nao fecha
+        o descritor. Linux permite apagar o arquivo aberto; Windows nao.
+        """
         con = sqlite3.connect(self.caminho, timeout=30)
         con.row_factory = sqlite3.Row
-        return con
+        try:
+            yield con
+            con.commit()
+        except Exception:
+            con.rollback()
+            raise
+        finally:
+            con.close()
 
     def registrar(self, tipo: str, fn) -> None:
         self.manipuladores[tipo] = fn
