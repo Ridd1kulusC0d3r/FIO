@@ -8,7 +8,7 @@ import zipfile
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
-from fio.receita_download import descobrir, montar
+from fio.receita_download import baixar, descobrir, montar
 from fio.indice import IndiceCNPJ, construir
 
 DEMO = Path(__file__).resolve().parents[1] / "fio" / "dados_demo"
@@ -104,6 +104,21 @@ class TestReceita(unittest.TestCase):
             self.assertEqual(len(idx.por_telefone("+5531988887777")), 1)
             # empresas e socios filtrados pelas raizes de MG
             self.assertEqual(idx.estatisticas()["empresa"], 2)
+
+    def test_downloader_nao_promove_zip_corrompido(self):
+        import fio.receita_download as rd
+        rd.time.sleep = lambda s: None
+        Repo.arquivos["Corrompido.zip"] = b"isto-nao-e-um-zip"
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                destino = Path(d) / "Corrompido.zip"
+                with self.assertRaises(RuntimeError):
+                    baixar(self.base + "2026-08/Corrompido.zip", destino,
+                           log=lambda s: None, tentativas=2)
+                self.assertFalse(destino.exists())
+                self.assertFalse(destino.with_suffix(".zip.parcial").exists())
+        finally:
+            Repo.arquivos.pop("Corrompido.zip", None)
 
     def test_construir_local_com_filtro(self):
         with tempfile.TemporaryDirectory() as d:
