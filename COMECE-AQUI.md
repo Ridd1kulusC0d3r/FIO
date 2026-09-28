@@ -6,7 +6,7 @@
 
 1. **Instale o Python 3.10 ou mais novo** em <https://www.python.org/downloads/>.
    No Windows, marque a caixa **“Add python.exe to PATH”** na primeira tela do instalador.
-2. **Descompacte** o arquivo `fio-lab-2.2.0.zip`.
+2. **Descompacte** o arquivo `fio-lab-2.2.1.zip`.
 3. **Dê dois cliques** no lançador do seu sistema, dentro da pasta `fio`:
 
 | Sistema | Arquivo | Observação |

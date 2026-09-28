@@ -20,6 +20,9 @@ biblioteca padrão: nenhuma dependência externa, nem na bancada web.
 
 Manual ilustrado: [docs/MANUAL.html](https://Ridd1kulusC0d3r.github.io/FIO/) (publicado no GitHub Pages).
 Arquitetura no Colab: [docs/ARQUITETURA-COLAB.html](docs/ARQUITETURA-COLAB.html).
+
+**Colab 2.2.1:** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo/relatórios para download antes do runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
+
 Uso responsável: [USO-RESPONSAVEL.md](USO-RESPONSAVEL.md).
 
 > *Estes números pertencem à mesma pessoa, à mesma empresa ou ao mesmo
@@ -31,7 +34,7 @@ Uso responsável: [USO-RESPONSAVEL.md](USO-RESPONSAVEL.md).
 python tools/configurar_repositorio.py seu-usuario/fio-lab   # troca os marcadores e regenera o caderno
 git init && git add . && git commit -m "F.I.O. Lab"
 git remote add origin https://github.com/seu-usuario/fio-lab && git push -u origin main
-git tag v2.2.0 && git push --tags        # gera Release com zip, caderno e manual
+git tag v2.2.1 && git push --tags        # gera Release com zip, caderno e manual
 ```
 
 Depois, em *Settings › Pages*, escolha **GitHub Actions** como fonte para publicar o manual.
@@ -56,7 +59,7 @@ Depois, em *Settings › Pages*, escolha **GitHub Actions** como fonte para publ
 ## Instalação
 
 ```bash
-unzip fio-lab-2.2.0.zip && cd fio
+unzip fio-lab-2.2.1.zip && cd fio
 python3 -m fio --help            # Python 3.10+, nada para instalar
 pip install -e .                 # opcional: comando `fio`
 ```
@@ -118,9 +121,12 @@ distribui Estabelecimentos por estado, então `--uf` **reduz o índice final e a
 não o volume baixado**. As raízes aceitas ficam numa tabela SQLite auxiliar durante
 a construção; Empresas e Sócios são filtrados em lotes contra esse escopo, sem
 manter milhões de CNPJs em um `set` Python. Downloads parciais usam `Range` +
-`If-Range` e reiniciam apenas o arquivo atual se o objeto remoto mudar. Antes do
-rename atômico, o `.parcial` é aberto e validado como ZIP; resposta HTTP completa
-mas corrompida nunca vira cache definitivo. Os índices SQLite de telefone, e-mail,
+`If-Range` e reiniciam apenas o arquivo atual se o objeto remoto mudar. No Colab,
+se a listagem raiz da Receita sofrer `ConnectionResetError`/timeout, o cliente tenta
+`urllib`, recua para `curl --http1.1` e então sonda diretamente os meses recentes.
+Informar `--mes AAAA-MM` pula a listagem raiz por completo. Antes do rename atômico,
+o `.parcial` é aberto e validado como ZIP; resposta HTTP completa mas corrompida
+nunca vira cache definitivo. Os índices SQLite de telefone, e-mail,
 raiz e sócio são criados **depois** da carga filtrada e então recebem `ANALYZE`,
 evitando manter seis B-trees atualizadas durante milhões de inserts.
 
