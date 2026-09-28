@@ -1,0 +1,125 @@
+# CI do F.I.O. Lab
+name: testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * 1" # segunda-feira, 06h de Brasilia
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testes-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unitarios:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    env:
+      FIO_SEM_E2E: "1"
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Suite unitaria
+        run: python -m unittest discover -s testes -v
+
+  fumaca-cli:
+    name: Fumaca da CLI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: "1"
+      FIO_SEM_E2E: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python testes/fumaca.py
+
+  caderno-colab:
+    name: Caderno Colab em dia e executavel
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Verifica reproducao do notebook
+        run: python tools/gerar_notebook.py --checar
+      - name: Executa caminho rapido fora do Colab
+        run: |
+          python -m pip install --disable-pip-version-check nbclient nbformat ipykernel
+          python - <<'EOF'
+          import nbformat
+          from nbclient import NotebookClient
+
+          nb = nbformat.read("colab/FIO_Lab_Colab.ipynb", as_version=4)
+          nb.cells = [
+              c for c in nb.cells
+              if not any(k in "".join(c.source) for k in (
+                  "montar_indice(",
+                  "benchmark(idx",
+                  "avaliar_lote(",
+                  "unittest",
+              ))
+          ]
+          NotebookClient(nb, timeout=300, kernel_name="python3").execute()
+          erros = [
+              o for c in nb.cells if c.cell_type == "code"
+              for o in c.outputs if o.output_type == "error"
+          ]
+          assert not erros, erros
+          print("caderno ok")
+          EOF
+
+  navegador:
+    name: Bancada E2E e cobertura
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check playwright coverage
+      - run: python -m playwright install --with-deps chromium
+      - name: Suite completa com cobertura
+        run: |
+          python -m coverage run --source=fio -m unittest discover -s testes -v
+          python -m coverage report --fail-under=80
+          python -m coverage html -d cobertura
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cobertura
+          path: cobertura
+          if-no-files-found: ignore
+
+  fontes-ao-vivo:
+    name: Contrato das fontes reais
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python -m fio diagnostico
+      - run: python testes/ao_vivo.py
