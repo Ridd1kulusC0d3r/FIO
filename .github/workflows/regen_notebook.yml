@@ -1,0 +1,40 @@
+name: Regenerate F.I.O. notebook
+
+on:
+  push:
+    paths:
+      - ".github/workflows/regen_notebook.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Regenerate notebook deterministically
+        run: |
+          set -euo pipefail
+          python tools/gerar_notebook.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("colab/FIO_Lab_Colab.ipynb")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          assert data.get("nbformat") == 4
+          assert len(data.get("cells", [])) >= 20
+          print("notebook JSON OK:", len(data["cells"]), "cells,", p.stat().st_size, "bytes")
+          PY
+          python tools/gerar_notebook.py --checar
+      - name: Commit regenerated notebook
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/regen_notebook.yml
+          git add colab/FIO_Lab_Colab.ipynb .github/workflows/regen_notebook.yml
+          git commit -m "build(colab): regenerate valid notebook after runtime fixes"
+          git push
