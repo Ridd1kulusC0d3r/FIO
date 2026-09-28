@@ -52,9 +52,7 @@ repositório da Receita simulado: 11 de 11 células sem erro, índice montado, b
 rodado, suíte 82/82 de dentro do caderno. O CI repete a execução a cada push e falha se o
 caderno não corresponder ao código.
 
-Precisam de uma sessão real do Colab: túnel da bancada (iframe e nova aba), montagem do Drive,
-download de arquivos e, principalmente, a base real da Receita e as APIs públicas, que a rede
-deste ambiente de teste bloqueia.
+Na validação 2.2.0, precisavam de uma sessão real do Colab: túnel da bancada (iframe e nova aba), montagem do Drive e download de arquivos. Na 2.2.1 o Drive foi removido; continuam dependentes de uma sessão real o proxy/iframe, os downloads pelo navegador e, principalmente, a base real da Receita e as APIs públicas, que a rede deste ambiente de teste bloqueia.
 
 ## Efeito medido da nova nota de confiança
 
@@ -64,3 +62,10 @@ Avaliação sintética, 10 mundos × 15 grupos:
 |---|---|---|---|
 | 2.1, melhor caso (poda de intermediários) | 0,774 ± 0,184 | 0,857 ± 0,084 | 0,796 ± 0,133 |
 | 2.2, confiança mínima 0,4, sem poda | 0,878 ± 0,058 | 0,857 ± 0,084 | 0,865 ± 0,055 |
+
+
+## Validação incremental — F.I.O. Lab 2.2.1
+
+A correção do Colab foi validada isoladamente em Python 3.13 com `FIO_SEM_E2E=1`: **84 testes, OK (1 pulado: navegador/Playwright)**. O conjunto adicional cobre a descoberta direta por mês quando a listagem raiz da Receita falha, o frontend simplificado do Colab, a exigência de token e o download do modelo de relatório.
+
+A edição Colab 2.2.1 é **somente efêmera**: não monta Google Drive. Casos, fila e índice ficam em `/content/fio-runtime`; persistem apenas os relatórios/modelos baixados explicitamente. A validação contra a base real da Receita e o proxy/iframe do Colab continua dependendo de uma sessão real com acesso externo.
