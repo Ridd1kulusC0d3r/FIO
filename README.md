@@ -118,7 +118,11 @@ distribui Estabelecimentos por estado, então `--uf` **reduz o índice final e a
 não o volume baixado**. As raízes aceitas ficam numa tabela SQLite auxiliar durante
 a construção; Empresas e Sócios são filtrados em lotes contra esse escopo, sem
 manter milhões de CNPJs em um `set` Python. Downloads parciais usam `Range` +
-`If-Range` e reiniciam apenas o arquivo atual se o objeto remoto mudar.
+`If-Range` e reiniciam apenas o arquivo atual se o objeto remoto mudar. Antes do
+rename atômico, o `.parcial` é aberto e validado como ZIP; resposta HTTP completa
+mas corrompida nunca vira cache definitivo. Os índices SQLite de telefone, e-mail,
+raiz e sócio são criados **depois** da carga filtrada e então recebem `ANALYZE`,
+evitando manter seis B-trees atualizadas durante milhões de inserts.
 
 ## Fontes
 
