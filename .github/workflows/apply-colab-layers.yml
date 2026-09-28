@@ -1,0 +1,99 @@
+name: Apply isolated Colab layers
+
+on:
+  push:
+    branches:
+      - fix/colab-ephemeral-frontend
+    paths:
+      - ".bootstrap/READY"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/colab-ephemeral-frontend
+          fetch-depth: 0
+
+      - name: Configure git
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Layer 1 - Receita downloader
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .bootstrap/layer1.b64 > /tmp/l1.tar.xz
+          tar -xJf /tmp/l1.tar.xz
+          git add fio/receita_download.py testes/test_receita.py
+          git diff --cached --quiet || git commit -m "fix(receita): harden Colab discovery and downloader"
+
+      - name: Layer 2 - ephemeral frontend and report model
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .bootstrap/layer2.b64 > /tmp/l2.tar.xz
+          tar -xJf /tmp/l2.tar.xz
+          git add fio/__init__.py pyproject.toml fio/lab/bancada/servidor.py fio/lab/bancada/ui_colab.html fio/relatorio/modelo.py
+          git diff --cached --quiet || git commit -m "feat(colab): add ephemeral frontend and report template"
+
+      - name: Layer 3A - notebook source and README
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .bootstrap/layer3a.b64 > /tmp/l3a.tar.xz
+          tar -xJf /tmp/l3a.tar.xz
+          git add tools/gerar_notebook.py README.md COMECE-AQUI.md
+          git diff --cached --quiet || git commit -m "refactor(colab): make notebook ephemeral and phone-first"
+
+      - name: Layer 3B - manual
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .bootstrap/layer3b.b64 > /tmp/l3b.tar.xz
+          tar -xJf /tmp/l3b.tar.xz
+          git add docs/MANUAL.html
+          git diff --cached --quiet || git commit -m "docs(manual): document ephemeral Colab workflow"
+
+      - name: Layer 3C - architecture and test report
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .bootstrap/layer3c.b64 > /tmp/l3c.tar.xz
+          tar -xJf /tmp/l3c.tar.xz
+          git add docs/ARQUITETURA-COLAB.html docs/diagramas/execucao-no-colab.svg RELATORIO-DE-TESTES.md
+          git diff --cached --quiet || git commit -m "docs(colab): align architecture with ephemeral runtime"
+
+      - name: Generate notebook
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/gerar_notebook.py
+          python tools/gerar_notebook.py --checar
+          git add colab/FIO_Lab_Colab.ipynb
+          git diff --cached --quiet || git commit -m "build(colab): regenerate F.I.O. notebook"
+
+      - name: Test
+        env:
+          FIO_SEM_E2E: "1"
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s testes -v
+
+      - name: Cleanup bootstrap
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap .github/workflows/apply-colab-layers.yml
+          git add -A
+          git diff --cached --quiet || git commit -m "chore: remove temporary layer bootstrap"
+          git push origin HEAD:fix/colab-ephemeral-frontend
