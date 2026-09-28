@@ -69,6 +69,12 @@ jobs:
           from nbclient import NotebookClient
 
           nb = nbformat.read("colab/FIO_Lab_Colab.ipynb", as_version=4)
+          # Em PR, valide exatamente o pacote embutido deste commit.
+          # O modo automatico baixaria main e poderia mascarar/regredir mudancas.
+          for c in nb.cells:
+              if c.cell_type == "code" and 'origem = "automatico"' in c.source:
+                  c.source = c.source.replace('origem = "automatico"', 'origem = "embutido"', 1)
+                  break
           nb.cells = [
               c for c in nb.cells
               if not any(k in "".join(c.source) for k in (
