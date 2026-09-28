@@ -31,11 +31,6 @@ CREATE TABLE IF NOT EXISTS estabelecimento (
   cnpj TEXT PRIMARY KEY, cnpj_basico TEXT, matriz INTEGER, nome_fantasia TEXT,
   situacao TEXT, uf TEXT, municipio TEXT, bairro TEXT, logradouro TEXT,
   cep TEXT, email TEXT, e164_1 TEXT, e164_2 TEXT, inicio TEXT, cnae TEXT);
-CREATE INDEX IF NOT EXISTS ix_tel1 ON estabelecimento(e164_1);
-CREATE INDEX IF NOT EXISTS ix_tel2 ON estabelecimento(e164_2);
-CREATE INDEX IF NOT EXISTS ix_email ON estabelecimento(email);
-CREATE INDEX IF NOT EXISTS ix_basico ON estabelecimento(cnpj_basico);
-
 CREATE TABLE IF NOT EXISTS empresa (
   cnpj_basico TEXT PRIMARY KEY, razao_social TEXT, natureza TEXT,
   capital TEXT, porte TEXT);
@@ -43,6 +38,13 @@ CREATE TABLE IF NOT EXISTS empresa (
 CREATE TABLE IF NOT EXISTS socio (
   cnpj_basico TEXT, nome TEXT, doc TEXT, qualificacao TEXT,
   entrada TEXT, representante TEXT);
+"""
+
+INDICES = """
+CREATE INDEX IF NOT EXISTS ix_tel1 ON estabelecimento(e164_1);
+CREATE INDEX IF NOT EXISTS ix_tel2 ON estabelecimento(e164_2);
+CREATE INDEX IF NOT EXISTS ix_email ON estabelecimento(email);
+CREATE INDEX IF NOT EXISTS ix_basico ON estabelecimento(cnpj_basico);
 CREATE INDEX IF NOT EXISTS ix_socio_basico ON socio(cnpj_basico);
 CREATE INDEX IF NOT EXISTS ix_socio_nome ON socio(nome);
 """
@@ -96,6 +98,7 @@ class Construtor:
         self.con = sqlite3.connect(str(self.saida))
         # O arquivo é provisório durante a construção. Priorizar throughput é
         # seguro aqui porque só renomeamos para o destino após finalizar.
+        self.con.execute("PRAGMA journal_mode=OFF")
         self.con.execute("PRAGMA synchronous=OFF")
         self.con.execute("PRAGMA temp_store=FILE")
         self.con.execute("PRAGMA cache_size=-65536")  # ~64 MiB
@@ -230,6 +233,8 @@ class Construtor:
         self.con.executemany("INSERT OR REPLACE INTO meta VALUES (?,?)", info.items())
         if self.ufs:
             self.con.execute("DROP TABLE IF EXISTS escopo_uf")
+        self.log("criando indices SQLite finais")
+        self.con.executescript(INDICES)
         self.con.execute("ANALYZE")
         self.con.commit()
         self.con.close()
@@ -257,6 +262,18 @@ class IndiceCNPJ:
         self._con = sqlite3.connect(str(self.caminho)) if self.ok else None
         if self._con:
             self._con.row_factory = sqlite3.Row
+
+    def close(self) -> None:
+        if self._con is not None:
+            self._con.close()
+            self._con = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
 
     def por_telefone(self, e164: str) -> list[dict]:
         if not self._con:
