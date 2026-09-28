@@ -274,26 +274,49 @@ def cmd_coletores(args) -> int:
 
 def cmd_indice(args) -> int:
     from .indice import construir, IndiceCNPJ
-    ufs = {u.strip().upper() for u in (args.uf or "").split(",") if u.strip()} or None
+    from .receita_download import validar_ufs
+
+    try:
+        ufs = validar_ufs(
+            {u.strip().upper() for u in (args.uf or "").split(",") if u.strip()} or None
+        )
+    except ValueError as e:
+        _p(f"erro: {e}")
+        return 2
+
+    saida = Path(args.saida or (raiz() / "cnpj.sqlite")).expanduser()
     if args.acao == "baixar":
         from .receita_download import montar
-        saida = args.saida or str(raiz() / "cnpj.sqlite")
-        Path(saida).parent.mkdir(parents=True, exist_ok=True)
+        saida.parent.mkdir(parents=True, exist_ok=True)
         cont = montar(saida, ufs=ufs, mes=args.mes, base=args.base,
                       pasta_tmp=args.tmp, manter_zips=args.manter_zips, log=_p)
         print(json.dumps(cont, ensure_ascii=False, indent=2))
         return 0
+
     if args.acao == "construir":
-        saida = args.saida or str(raiz() / "cnpj.sqlite")
-        Path(saida).parent.mkdir(parents=True, exist_ok=True)
-        cont = construir(args.origem, saida, log=_p, ufs=ufs)
+        if not args.origem:
+            _p("erro: --origem e obrigatorio em 'fio indice construir'")
+            return 2
+        origem = Path(args.origem).expanduser()
+        if not origem.exists() or not origem.is_dir():
+            _p(f"erro: origem inexistente ou nao e diretorio: {origem}")
+            return 2
+        saida.parent.mkdir(parents=True, exist_ok=True)
+        cont = construir(origem, saida, log=_p, ufs=ufs)
         print(json.dumps(cont, ensure_ascii=False, indent=2))
         print(f"indice em {saida}")
         return 0
-    caminho = args.saida or segredos().get("indice_cnpj") or str(raiz() / "cnpj.sqlite")
-    idx = IndiceCNPJ(caminho)
-    print(f"{caminho}: {json.dumps(idx.estatisticas(), ensure_ascii=False)}")
-    return 0
+
+    caminho = Path(
+        args.saida or segredos().get("indice_cnpj") or (raiz() / "cnpj.sqlite")
+    ).expanduser()
+    with IndiceCNPJ(caminho) as idx:
+        stats = idx.estatisticas()
+        meta = idx.meta()
+    print(f"{caminho}: {json.dumps(stats, ensure_ascii=False)}")
+    if meta:
+        print(f"uf={meta.get('ufs', 'todas')} mes={meta.get('mes', '-')}")
+    return 0 if stats.get("indice") != "ausente" else 1
 
 
 def cmd_exposicao(args) -> int:
@@ -428,7 +451,7 @@ def construir_parser() -> argparse.ArgumentParser:
 
     ix = sub.add_parser("indice", help="indice reverso dos Dados Abertos do CNPJ")
     ix.add_argument("acao", choices=["baixar", "construir", "status"])
-    ix.add_argument("--uf", help="filtrar por UF, ex.: MG ou MG,SP (reduz muito o indice)")
+    ix.add_argument("--uf", help="filtrar por UF, ex.: MG ou MG,SP; reduz o indice final e a RAM, nao o trafego da Receita")
     ix.add_argument("--mes", help="AAAA-MM; padrao: o mais recente publicado")
     ix.add_argument("--base", help="URL base da Receita, se o endereco mudar")
     ix.add_argument("--origem", help="diretorio com os CSV da Receita Federal")
