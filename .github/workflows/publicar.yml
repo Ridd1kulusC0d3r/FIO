@@ -1,0 +1,61 @@
+# Publicacao do F.I.O. Lab: GitHub Pages em main e Release em tags v*
+name: publicar
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  pages:
+    name: Documentacao no GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  release:
+    name: Release versionada
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Testes antes da Release
+        env:
+          FIO_SEM_E2E: "1"
+        run: python -m unittest discover -s testes
+      - name: Gera caderno e pacote
+        run: |
+          python tools/gerar_notebook.py
+          VERSAO=$(python -c "import fio; print(fio.__version__)")
+          mkdir -p dist
+          git archive --format=zip --prefix=fio/ -o "dist/fio-lab-$VERSAO.zip" HEAD
+          cp colab/FIO_Lab_Colab.ipynb dist/
+          cp docs/MANUAL.html "dist/Manual do F.I.O. Lab.html"
+      - name: Publica Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "F.I.O. Lab $GITHUB_REF_NAME" --generate-notes
