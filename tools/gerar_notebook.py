@@ -134,10 +134,21 @@ for m in [m for m in list(sys.modules) if m == "fio" or m.startswith("fio.")]:
 import fio
 from IPython.display import HTML, display
 
+FIO_CSS = """
+<style>
+.fio-card{{font-family:Arial,sans-serif;background:#fff;color:#17212B;border:1px solid #D2D9D6;border-radius:14px;padding:16px 18px;margin:10px 0;box-shadow:0 1px 2px #17212b0f,0 4px 14px #17212b0d}}
+.fio-card h3{{font-family:Georgia,serif;margin:0 0 5px;font-size:21px}}.fio-muted{{color:#5B6770}}.fio-accent{{color:#0E7C6B}}.fio-pill{{display:inline-block;border:1px solid #D2D9D6;border-radius:999px;padding:2px 8px;margin-right:6px;font-size:12px}}.fio-table{{border-collapse:collapse;width:100%;font-size:13px}}.fio-table th{{text-align:left;color:#5B6770;font-size:11px;text-transform:uppercase;letter-spacing:.05em}}.fio-table th,.fio-table td{{padding:7px 10px;border-top:1px solid #D2D9D6}}.fio-table tr:first-child th{{border-top:0}}
+</style>
+"""
+
+def cartao(titulo, texto, *selos):
+    pills = "".join(f"<span class='fio-pill'>{{_html.escape(str(s))}}</span>" for s in selos if s)
+    display(HTML(FIO_CSS + f"<div class='fio-card'><h3>{{_html.escape(titulo)}}</h3><p class='fio-muted'>{{_html.escape(texto)}}</p>{{pills}}</div>"))
+
 def quadro(titulo, linhas, colunas):
-    cab = "".join(f"<th style='text-align:left;padding:6px 10px'>{{_html.escape(str(c))}}</th>" for c in colunas)
-    corpo = "".join("<tr>" + "".join(f"<td style='padding:6px 10px;border-top:1px solid #8883'>{{_html.escape(str(v))}}</td>" for v in l) + "</tr>" for l in linhas)
-    display(HTML(f"<b>{{_html.escape(titulo)}}</b><div style='overflow-x:auto'><table style='border-collapse:collapse;font-size:13px'><tr>{{cab}}</tr>{{corpo}}</table></div>"))
+    cab = "".join(f"<th>{{_html.escape(str(c))}}</th>" for c in colunas)
+    corpo = "".join("<tr>" + "".join(f"<td>{{_html.escape(str(v))}}</td>" for v in l) + "</tr>" for l in linhas)
+    display(HTML(FIO_CSS + f"<div class='fio-card'><h3>{{_html.escape(titulo)}}</h3><div style='overflow-x:auto'><table class='fio-table'><tr>{{cab}}</tr>{{corpo}}</table></div></div>"))
 
 def mostrar_html(doc, altura=720):
     import warnings
@@ -145,6 +156,7 @@ def mostrar_html(doc, altura=720):
     display(HTML(f'<iframe srcdoc="{{_html.escape(doc, quote=True)}}" style="width:100%;height:{{altura}}px;border:1px solid #8885;border-radius:8px"></iframe>'))
 
 print(f"F.I.O. Lab {{fio.__version__}} · fonte: {{usado}} · Python {{sys.version.split()[0]}}")
+cartao("F.I.O. pronto", "Escolha uma seção abaixo. O caderno usa o GitHub quando disponível e mantém uma cópia embutida como fallback.", f"v{{fio.__version__}}", usado, f"Python {{sys.version.split()[0]}}")
 os.environ.setdefault("FIO_HOME", str(TRABALHO / "fio-dados"))
 ''')
     md("## 2. Onde guardar os dados\nPor padrão, tudo fica nesta sessão e some quando ela termina. Com o Drive, casos e o índice da Receita continuam lá na próxima vez.")
@@ -203,15 +215,16 @@ São vários arquivos e vários gigabytes: conte com dezenas de minutos a alguma
 ufs = "MG"  #@param {type:"string"}
 mes = ""  #@param {type:"string"}
 reconstruir = False  #@param {type:"boolean"}
-from fio.receita_download import montar as montar_indice
+from fio.receita_download import montar as montar_indice, validar_ufs
 from fio.indice import IndiceCNPJ
 alvo = FIO_HOME / "cnpj.sqlite"
 if alvo.exists() and not reconstruir:
-    m = IndiceCNPJ(os.environ.get("FIO_INDICE_CNPJ", str(alvo))).meta()
+    with IndiceCNPJ(os.environ.get("FIO_INDICE_CNPJ", str(alvo))) as _idx:
+        m = _idx.meta()
     print("Ja existe um indice:", {k: m.get(k) for k in ("ufs", "mes", "estabelecimentos", "construido_em")})
     print("Marque 'reconstruir' para montar de novo.")
 else:
-    filtro = {u.strip().upper() for u in ufs.split(",") if u.strip()} or None
+    filtro = validar_ufs({u.strip().upper() for u in ufs.split(",") if u.strip()} or None)
     local = TRABALHO / "cnpj-local.sqlite"
     res = montar_indice(local, ufs=filtro, mes=mes or None, pasta_tmp=TRABALHO / "receita-tmp")
     if local.resolve() != alvo.resolve():
@@ -301,7 +314,7 @@ except ImportError:
     md("## 8. Bancada web\nA interface completa do F.I.O. (casos, mapa, abas, quesitos, experimentos), servida pelo túnel autenticado do Colab.")
     code('''
 #@title Abrir a bancada { display-mode: "form" }
-exibir = "dentro do caderno"  #@param ["dentro do caderno", "nova aba"]
+exibir = "dentro do caderno"  #@param ["dentro do caderno", "nova aba (experimental)"]
 porta = 8765  #@param {type:"integer"}
 import time, contextlib, io as _io
 from fio.lab.bancada.servidor import servir, Estado
@@ -316,7 +329,8 @@ try:
     if exibir == "dentro do caderno":
         output.serve_kernel_port_as_iframe(porta, path=f"/#t={Estado.token}", height=760)
     else:
-        # Abertura em nova aba depende de cookies/particionamento do navegador;
+        # "nova aba" é conveniência experimental. O iframe é o caminho principal
+        # porque mudanças de segurança do navegador podem bloquear o proxy direto.
         # mantemos como conveniência. O iframe acima é o modo suportado principal.
         from google.colab.output import eval_js
         url = eval_js(f"google.colab.kernel.proxyPort({porta})")
