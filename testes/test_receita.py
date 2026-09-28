@@ -104,6 +104,14 @@ class TestReceita(unittest.TestCase):
             self.assertEqual(len(idx.por_telefone("+5531988887777")), 1)
             # empresas e socios filtrados pelas raizes de MG
             self.assertEqual(idx.estatisticas()["empresa"], 2)
+            nomes_indices = {
+                r[0] for r in idx._con.execute(
+                    "SELECT name FROM sqlite_master WHERE type='index'"
+                )
+            }
+            self.assertTrue({"ix_tel1", "ix_tel2", "ix_email", "ix_basico"} <= nomes_indices)
+            idx.close()
+            self.assertIsNone(idx._con)
 
     def test_downloader_nao_promove_zip_corrompido(self):
         import fio.receita_download as rd
@@ -122,9 +130,13 @@ class TestReceita(unittest.TestCase):
 
     def test_construir_local_com_filtro(self):
         with tempfile.TemporaryDirectory() as d:
-            c = construir(DEMO, Path(d) / "i.sqlite", log=lambda s: None, ufs={"RJ"})
+            caminho = Path(d) / "i.sqlite"
+            c = construir(DEMO, caminho, log=lambda s: None, ufs={"RJ"})
             self.assertEqual(c["estabelecimentos"], 1)
             self.assertEqual(c["socios"], 2)       # so os da raiz com filial no RJ
+            with IndiceCNPJ(caminho) as idx:
+                self.assertEqual(idx.meta()["ufs"], "RJ")
+            self.assertIsNone(idx._con)
 
 
 class TestBenchmarkReal(unittest.TestCase):
