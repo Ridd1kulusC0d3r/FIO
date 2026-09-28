@@ -4,8 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>F.I.O. Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Zilla+Slab:wght@600;700&display=swap">
 <style>
 :root{--bg:#F3F5F4;--pn:#FFFFFF;--pn2:#E9EEEC;--tx:#17212B;--mu:#5B6770;--bd:#D2D9D6;
+--display:"Zilla Slab",Georgia,serif;--text:"Atkinson Hyperlegible","Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
 --ac:#0E7C6B;--acf:#FFFFFF;--ok:#0A7A5A;--wa:#8A5A00;--er:#B4232E;--sh:0 1px 2px rgba(23,33,43,.06),0 4px 14px rgba(23,33,43,.05)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0F1514;--pn:#161F1D;
 --pn2:#1D2826;--tx:#E6EEEB;--mu:#95A39E;--bd:#2B3734;--ac:#3CC2A8;--acf:#0F1514;--ok:#7FE0CC;
@@ -13,12 +17,11 @@
 :root[data-theme=dark]{--bg:#0F1514;--pn:#161F1D;--pn2:#1D2826;--tx:#E6EEEB;--mu:#95A39E;
 --bd:#2B3734;--ac:#3CC2A8;--acf:#0F1514;--ok:#7FE0CC;--wa:#F2C572;--er:#F08A8F;--sh:none}
 *{box-sizing:border-box}html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 -apple-system,BlinkMacSystemFont,
-"Segoe UI",Inter,Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 var(--text);-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--bd);
 background:var(--pn);position:sticky;top:0;z-index:5}
-header b{font-size:15px;letter-spacing:-.01em}header .v{color:var(--mu);font-size:12px}
+header b{font:700 19px/1 var(--display);letter-spacing:-.01em}header .v{color:var(--mu);font-size:12px}
 header .sp{flex:1}
 #tarefa{font-size:12.5px;color:var(--mu);max-width:50vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .app{display:grid;grid-template-columns:250px 1fr;min-height:calc(100% - 49px)}
@@ -39,11 +42,11 @@ textarea{width:100%;min-height:90px;font-family:ui-monospace,Menlo,monospace;fon
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--bd);margin:14px 0 12px;overflow-x:auto}
 .tab{padding:8px 12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--mu);white-space:nowrap}
 .tab.on{color:var(--tx);border-color:var(--ac);font-weight:600}
-h2{margin:0 0 2px;font-size:19px;letter-spacing:-.01em}.mu{color:var(--mu)}
+h2{margin:0 0 2px;font:700 23px/1.15 var(--display);letter-spacing:-.01em}.mu{color:var(--mu)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
 th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);font-weight:600}
-.scroll{overflow-x:auto}.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
+.scroll{overflow-x:auto}.mono{font-family:var(--mono);font-size:12.5px;word-break:break-all}
 .grafo{display:grid;grid-template-columns:1fr 300px;gap:12px}
 svg#g{width:100%;height:560px;background:var(--pn);border:1px solid var(--bd);border-radius:12px;touch-action:none}
 #det{max-height:560px;overflow:auto}
@@ -56,14 +59,15 @@ dialog{border:1px solid var(--bd);border-radius:14px;background:var(--pn);color:
 dialog::backdrop{background:rgba(0,0,0,.45)}
 label{display:block;font-size:12.5px;color:var(--mu);margin:10px 0 4px}
 dialog input,dialog select,dialog textarea{width:100%}
-pre{white-space:pre-wrap;background:var(--pn2);padding:10px;border-radius:8px;font-size:12px;max-height:340px;overflow:auto}
+pre{white-space:pre-wrap;background:var(--pn2);padding:10px;border-radius:8px;font:12px/1.55 var(--mono);max-height:340px;overflow:auto}
 .vazio{padding:40px 10px;text-align:center;color:var(--mu)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.caso:focus-visible,.tab:focus-visible{outline:3px solid color-mix(in srgb,var(--ac) 38%,transparent);outline-offset:2px}
 @media(max-width:860px){.app{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--bd)}
 .grafo{grid-template-columns:1fr}svg#g{height:420px}main{padding:12px}}
 </style>
 </head>
 <body>
-<header><b>F.I.O. Lab</b><span class="v" id="versao"></span><span class="chip">edição BR</span>
+<header><b>F.I.O. Lab</b><span class="v" id="versao"></span><span class="chip">edição BR</span><span class="chip" id="ambiente">local</span>
 <span class="sp"></span><span id="tarefa"></span>
 <button class="btn s" id="tema" title="alternar tema">◐</button></header>
 <div class="app">
@@ -114,6 +118,7 @@ async function init(){
  if(!T){$("#main").innerHTML='<div class="vazio">Token ausente. Abra o endereço impresso no terminal por <code>fio lab bancada</code>.</div>';return}
  try{EST=await api("/estado")}catch(e){$("#main").innerHTML=`<div class="vazio er">${esc(e.message)}</div>`;return}
  $("#versao").textContent="v"+EST.versao;
+ $("#ambiente").textContent=/colab|googleusercontent|prod\.colab/.test(location.hostname)?"Colab":"local";
  $("#bases").innerHTML=Object.entries(EST.bases_legais).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
  await listarCasos();boasVindas();
  document.querySelectorAll("aside .caso[data-v]").forEach(el=>el.onclick=()=>{marcar(el);vista(el.dataset.v)});
