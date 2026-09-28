@@ -86,6 +86,7 @@ class ReversoCNPJ(Coletor):
             return []
         idx = IndiceCNPJ(caminho)
         if not idx.ok:
+            idx.close()
             return []
 
         if alvo.tipo == "telefone":
@@ -170,6 +171,7 @@ class ReversoCNPJ(Coletor):
                                         "municipio": irmao.get("municipio"),
                                         "cnpj_basico": irmao["cnpj_basico"]}),
                     fonte, "mesma raiz de CNPJ (filial/matriz)"))
+        idx.close()
         return achados
 
 
