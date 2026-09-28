@@ -17,8 +17,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .bootstrap/fio.part* > /tmp/fio.b64
-          base64 -d /tmp/fio.b64 > /tmp/fio.tar.xz
+          base64 -d .bootstrap/fio.full > /tmp/fio.tar.xz
           tar -xJf /tmp/fio.tar.xz -C .
           python tools/gerar_notebook.py
           python tools/gerar_notebook.py --checar
