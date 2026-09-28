@@ -198,6 +198,12 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
 
             if total is not None and feito != total:
                 raise ConnectionError(f"recebidos {feito} de {total} bytes")
+            # Só promove o .parcial depois de validar a integridade do ZIP.
+            # Tamanho HTTP correto não prova que o objeto recebido é um ZIP
+            # utilizável (proxy, cache ou origem podem devolver conteúdo inválido).
+            if not _zip_ok(parcial):
+                _limpar_parcial(parcial)
+                raise ConnectionError("download concluido, mas o ZIP recebido e invalido")
             os.replace(parcial, destino)
             _meta_path(parcial).unlink(missing_ok=True)
             return destino
