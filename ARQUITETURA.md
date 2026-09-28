@@ -70,6 +70,20 @@ teve zero requisições.
 **Minimização.** CPF completo extraído de documento vira máscara antes de
 entrar no grafo. O relatório nunca exibe o que o grafo não guarda.
 
+**Construção do índice CNPJ em três camadas.** Primeiro, `Estabelecimentos`
+seleciona a UF e persiste somente as raízes aceitas numa tabela SQLite auxiliar;
+depois, `Empresas` e `Sócios` são filtrados em lotes contra esse escopo. Os índices
+secundários (`telefone`, `email`, `cnpj_basico`, `socio`) só são materializados no
+fim da carga, seguidos de `ANALYZE`. O arquivo final só substitui o anterior após a
+construção fechar com sucesso.
+
+**Downloader fail-closed.** Um `.parcial` usa `Range` + `If-Range` para retomada.
+Resposta 200 durante retomada reinicia o arquivo, 416 descarta o parcial, tamanho
+incompatível falha e, mesmo com tamanho correto, o ZIP é testado antes de
+`os.replace`. Assim, um proxy ou origem que entregue conteúdo truncado/corrompido
+não contamina o índice seguinte.
+
+
 ## Estendendo
 
 - **Coletor novo:** `Coletor` + `@registrar`; declare `tipos_alvo`,
