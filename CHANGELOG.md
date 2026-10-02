@@ -2,6 +2,15 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.0.4] — 2026-10-02
+
+### Alterado
+- **Colab começa pelo frontend:** a ordem do caderno agora é Instalar › Sessão › **Abrir o F.I.O.** (tela dentro do caderno). Demonstração, verificação das fontes, índice pelo caderno, caso pontual, pesquisa e testes viram seção **Avançado (opcional)**.
+- **"Executar tudo" não dispara trabalho pesado:** índice, benchmark, avaliação sintética e testes só rodam com a caixa **executar** marcada.
+
+### Corrigido
+- **A célula "Montar índice" parecia travada:** baixava alguns GB e processava milhões de linhas sem mostrar nada. Agora roda em segundo plano e a célula **acompanha ao vivo** (arquivo, MB, velocidade, linhas lidas, tempo), a cada 3 s; interromper (■) só para de acompanhar. O downloader avisa a cada 10% **ou a cada 15 s**, e o construtor avisa o progresso a cada ~20 s (`indice.Construtor._pulso`).
+
 ## [3.0.3] — 2026-10-02
 
 ### Corrigido

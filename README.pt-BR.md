@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml"><img alt="testes" src="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml/badge.svg"></a>
   <a href="https://colab.research.google.com/github/Ridd1kulusC0d3r/FIO/blob/main/colab/FIO_Lab_Colab.ipynb"><img alt="Abrir no Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a>
-  <img alt="versão 3.0.3" src="https://img.shields.io/badge/vers%C3%A3o-3.0.3-0B4F6C">
+  <img alt="versão 3.0.4" src="https://img.shields.io/badge/vers%C3%A3o-3.0.4-0B4F6C">
   <img alt="Python 3.10–3.14" src="https://img.shields.io/badge/python-3.10%E2%80%933.14-3776AB">
   <img alt="só biblioteca padrão" src="https://img.shields.io/badge/depend%C3%AAncias-nenhuma-0E7C6B">
   <a href="LICENSE"><img alt="licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-555"></a>
@@ -42,7 +42,7 @@ Três regras não negociáveis:
 | **Dois cliques** | leigos, no próprio computador | baixe a [Release](https://github.com/Ridd1kulusC0d3r/FIO/releases), descompacte e abra o lançador do seu sistema ([COMECE-AQUI.md](COMECE-AQUI.md)) |
 | **Linha de comando** | técnicos | `pip install git+https://github.com/Ridd1kulusC0d3r/FIO` e depois `fio --help` |
 
-**Colab (3.0.3):** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo e relatórios para download antes de o runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
+**Colab (3.0.4):** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo e relatórios para download antes de o runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
 
 ```bash
 fio demo --abrir        # caso fictício, 100% offline, abre a bancada

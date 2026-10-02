@@ -115,12 +115,29 @@ class Construtor:
                          "telefones": 0, "descartados_por_uf": 0,
                          "raizes_uf": 0}
 
+    def _pulso(self, linhas, rotulo: str, a_cada: float = 20.0):
+        """Repassa as linhas e avisa o progresso a cada `a_cada` segundos.
+
+        Um arquivo de Estabelecimentos tem milhoes de linhas e leva minutos
+        para ser filtrado por UF; sem aviso, quem acompanha (terminal, Colab)
+        acha que travou.
+        """
+        import time
+        n, t = 0, time.monotonic()
+        for c in linhas:
+            n += 1
+            if n % 50000 == 0 and time.monotonic() - t >= a_cada:
+                t = time.monotonic()
+                self.log(f"  {rotulo}: {n:,} linhas lidas")
+            yield c
+        self.log(f"  {rotulo}: {n:,} linhas lidas (fim do arquivo)")
+
     def estabelecimentos(self, arq: Path) -> None:
         self.log(f"estabelecimentos: {arq.name}")
         self._viu_estabelecimentos = True
         lote = []
         raizes = set()
-        for c in _linhas(arq):
+        for c in self._pulso(_linhas(arq), arq.name):
             if len(c) < 28:
                 continue
             if self.ufs and c[19].upper() not in self.ufs:
@@ -181,7 +198,7 @@ class Construtor:
         self.log(f"empresas: {arq.name}")
         self._garantir_escopo()
         lote = []
-        for c in _linhas(arq):
+        for c in self._pulso(_linhas(arq), arq.name):
             if len(c) < 6:
                 continue
             lote.append((c[0], c[1], c[2], c[4], c[5]))
@@ -201,7 +218,7 @@ class Construtor:
         self.log(f"socios: {arq.name}")
         self._garantir_escopo()
         lote = []
-        for c in _linhas(arq):
+        for c in self._pulso(_linhas(arq), arq.name):
             if len(c) < 6:
                 continue
             lote.append((c[0], c[2], c[3], c[4], c[5], c[8] if len(c) > 8 else ""))

@@ -273,7 +273,7 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
                 feito = ja if retomou else 0
                 _salvar_meta(parcial, url, r.headers)
                 proximo = ((feito / total) // 0.1 + 1) * 0.1 if total else 1.1
-                t0 = time.time()
+                t0 = ultimo_aviso = time.time()
                 with parcial.open(modo) as fh:
                     while True:
                         bloco = r.read(1 << 20)
@@ -281,10 +281,15 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
                             break
                         fh.write(bloco)
                         feito += len(bloco)
-                        if total and feito / total >= proximo:
-                            vel = (feito - ja) / max(time.time() - t0, 0.1) / 1e6
+                        # a cada 10% OU a cada 15 s: arquivo de GB com banda
+                        # modesta fica minutos entre dois 10%, e parece travado
+                        agora = time.time()
+                        if total and (feito / total >= proximo or agora - ultimo_aviso >= 15):
+                            vel = (feito - ja) / max(agora - t0, 0.1) / 1e6
                             log(f"  {destino.name}: {feito / 1e6:,.0f} de {total / 1e6:,.0f} MB ({vel:.1f} MB/s)")
-                            proximo += 0.1
+                            ultimo_aviso = agora
+                            while feito / total >= proximo:
+                                proximo += 0.1
 
             if total is not None and feito != total:
                 raise ConnectionError(f"recebidos {feito} de {total} bytes")
