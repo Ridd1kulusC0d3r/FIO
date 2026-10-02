@@ -7,6 +7,7 @@ de saida e trecho esperado da saida. Uso:  python testes/fumaca.py
 import json
 import os
 import subprocess
+import threading
 import sys
 import tempfile
 import time
@@ -33,7 +34,7 @@ def main() -> int:
         (Path(tmp) / "planilha.csv").write_text(
             "nome;telefone;email\nClinica Exemplo;(31) 3333-4444;a@exemplo.test\n", encoding="utf-8")
         passos = [
-            ("versao", ["--versao"], "fio 2."),
+            ("versao", ["--versao"], "fio 3."),
             ("numero", ["numero", "0 21 31 9 8888-7777"], "+5531988887777"),
             ("doc cnpj alfanumerico", ["doc", "cnpj", "12.ABC.345/01DE-35"], '"valido": true'),
             ("doc cpf-parcial", ["doc", "cpf-parcial", "***456789**"], "PR"),
@@ -89,10 +90,20 @@ def main() -> int:
 
         # bancada sobe e responde com token
         env = {**os.environ, "FIO_HOME": tmp, "PYTHONPATH": str(RAIZ)}
+        env.pop("PYTHONUNBUFFERED", None)   # reproduz o CI: sem isto o bug do buffer some
         proc = subprocess.Popen([sys.executable, "-m", "fio", "lab", "bancada", "--porta", "8791",
                                  "--sem-navegador"], env=env, stdout=subprocess.PIPE, text=True)
         try:
-            linha = proc.stdout.readline()
+            # a leitura da primeira linha roda num fio com prazo: se o servidor
+            # nao imprimir, o teste falha em 20 s em vez de travar o job
+            lida: list[str] = []
+            leitor = threading.Thread(target=lambda: lida.append(proc.stdout.readline()),
+                                      daemon=True)
+            leitor.start()
+            leitor.join(20)
+            if not lida:
+                raise TimeoutError("a bancada nao imprimiu o endereco em 20 s")
+            linha = lida[0]
             token = linha.split("#t=")[-1].strip()
             time.sleep(0.4)
             req = urllib.request.Request("http://127.0.0.1:8791/api/casos",
@@ -105,6 +116,10 @@ def main() -> int:
             print("        ", e)
         finally:
             proc.terminate()
+            try:
+                proc.wait(10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
         resultados.append({"passo": "bancada web responde", "ok": ok, "tempo": "-"})
         print(f"[{'OK   ' if ok else 'FALHA'}]   -    bancada web responde")
 

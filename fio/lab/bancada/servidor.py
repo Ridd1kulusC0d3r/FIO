@@ -372,8 +372,10 @@ def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
     Estado.fila.iniciar(2)
     srv = ThreadingHTTPServer(("127.0.0.1", porta), Manipulador)
     url = f"http://127.0.0.1:{porta}/#t={Estado.token}"
-    print(f"F.I.O. Lab {__version__} — bancada em {url}")
-    print("o token no endereco e a unica credencial desta sessao; nao compartilhe")
+    # flush: com a saida num pipe (testes, lancadores, Colab) o Python guarda
+    # no buffer e quem le a primeira linha ficaria esperando para sempre
+    print(f"F.I.O. Lab {__version__} — bancada em {url}", flush=True)
+    print("o token no endereco e a unica credencial desta sessao; nao compartilhe", flush=True)
     if abrir:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     if not bloquear:

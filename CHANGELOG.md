@@ -8,6 +8,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões s
 - **CI vermelho em todo push:** a referência da CLI era gerada com `format_usage()`, que quebra linhas conforme o terminal e muda de formato entre versões do Python; o `--checar` do CI (Python 3.12) divergia de quem gerou (3.11). A linha de uso agora é montada pelo gerador e a saída é idêntica no Python 3.10 a 3.13.
 - **Workflow `publicar` vermelho a cada push:** o GitHub Pages precisa ser habilitado uma vez pelo dono do repositório. O job agora verifica isso, emite um aviso com o passo a passo e segue verde, em vez de falhar.
 
+- **Job "Fumaça da CLI" travava até estourar os 10 minutos:** a bancada imprimia o endereço sem `flush`; com a saída num pipe o Python guarda no buffer e quem lê a primeira linha espera para sempre. O servidor agora faz `flush`, e o teste de fumaça lê com prazo de 20 s (falha rápido em vez de travar) e esperava a versão `fio 2.`.
+- **Referência da CLI dependia da pasta de quem gerou** (o padrão de `--saida` era um caminho absoluto); agora é `./lab-saida`.
+
 ### Adicionado
 - **Site do projeto** (`docs/index.html`): página inicial com demonstração em GIF, capturas de tela, princípios, tema claro/escuro e responsiva, no lugar do redirecionamento para o manual.
 
