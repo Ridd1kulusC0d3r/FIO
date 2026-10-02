@@ -172,8 +172,40 @@ if (FIO_HOME / "cnpj.sqlite").exists():
     os.environ["FIO_INDICE_CNPJ"] = str(FIO_HOME / "cnpj.sqlite")
 else:
     os.environ.pop("FIO_INDICE_CNPJ", None)
+
+def _ram_gb():
+    try:
+        for linha in open("/proc/meminfo"):
+            if linha.startswith("MemTotal"):
+                return int(linha.split()[1]) / 1e6
+    except OSError:
+        pass
+    return None
+
 livre = shutil.disk_usage(str(TRABALHO)).free / 1e9
-print(f"sessao efemera: {FIO_HOME} · disco livre: {livre:,.0f} GB")
+ram = _ram_gb()
+cpus = os.cpu_count() or 1
+try:
+    import google.colab  # noqa: F401
+    ambiente = "Google Colab"
+except ImportError:
+    ambiente = "fora do Colab (execução local)"
+print(f"sessao efemera: {FIO_HOME}")
+print(f"ambiente: {ambiente} · Python {sys.version.split()[0]} · {cpus} CPU(s)"
+      + (f" · RAM {ram:,.1f} GB" if ram else "") + f" · disco livre {livre:,.0f} GB")
+avisos = []
+if livre < 12:
+    avisos.append("disco livre abaixo de 12 GB: o indice da Receita por UF pode nao caber "
+                  "(os ZIPs sao baixados um por vez, mas o maior chega a varios GB). "
+                  "Reinicie o runtime para liberar espaco.")
+if ram is not None and ram < 4:
+    avisos.append("menos de 4 GB de RAM: use UF unica no indice e profundidade 1 nos casos.")
+if sys.version_info < (3, 10):
+    avisos.append("Python abaixo de 3.10: o F.I.O. exige 3.10 ou mais novo.")
+for a in avisos:
+    print("ATENCAO:", a)
+if not avisos:
+    print("recursos suficientes para o fluxo completo.")
 print("Ao encerrar o runtime, estes dados somem. Exporte o relatorio antes de sair.")
 ''')
     md("## 3. Conferir as fontes públicas\nConsulta neutra a cada fonte (CNPJ do Banco do Brasil, CEP da Praça da Sé, domínio nic.br). Nenhuma pessoa é pesquisada.")
