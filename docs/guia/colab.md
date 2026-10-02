@@ -25,6 +25,7 @@ Menu **Ambiente de execução › Executar tudo** é seguro: o que baixa muito d
 | 4 | Confere as fontes públicas | sim |
 | 5 | Demonstração com mapa interativo | não |
 | 6 | Índice da Receita pelo caderno (segundo plano, progresso ao vivo) | sim (alguns GB) |
+| 6b | Enviar índice pronto (arquivo ou URL) | não |
 | 7 | Caso pontual com fontes reais | sim |
 | 8 | Relatório e exportação | não |
 | 9 | Benchmark com dados reais e avaliação sintética | índice |
@@ -82,6 +83,15 @@ O endereço contém o **token da sessão**: não compartilhe a captura de tela d
 - Se a listagem raiz falhar, o F.I.O. tenta `urllib`, depois `curl` e, por fim, sonda diretamente pastas mensais recentes.
 - Retoma downloads interrompidos (`Range` + `If-Range`) e só promove o arquivo depois de validá-lo como ZIP.
 
+### 6b. Já tenho o índice (enviar arquivo ou URL)
+
+Para quando a Receita não responde a partir do Colab. No seu computador: `fio indice baixar --uf MG` (gera `cnpj.sqlite`). Na célula **Enviar índice pronto**, marque **executar** e escolha:
+
+- **enviar arquivo**: abre o seletor do navegador e envia o `cnpj.sqlite` para a sessão;
+- **baixar de uma URL**: informe uma URL `https://` sua; o download mostra progresso e retoma se cair.
+
+O arquivo é validado (precisa ter estabelecimentos); se não parecer um índice do F.I.O., é descartado. O índice enviado só existe nesta sessão, como tudo no Colab.
+
 ### 7. Caso pontual
 
 Os valores de exemplo usam **alvos institucionais públicos** (CNPJ do Banco do Brasil, CEP da Praça da Sé, `registro.br`). Troque pelos seus só se tiver base legal. Tipos reconhecidos sozinhos: e-mail (tem `@`), CNPJ, CEP (8 dígitos com hífen), domínio (tem ponto e letras) e telefone.
@@ -97,6 +107,7 @@ Baixe primeiro o **modelo vazio** se quiser usar o F.I.O. só como roteiro. Depo
 | Iframe em branco ou "carregando…" para sempre | célula executada com a versão antiga do F.I.O. em memória | rode a seção 1 de novo e a 3 (o instalador limpa os módulos antigos) |
 | "Token da sessão ausente" | iframe aberto sem rodar a célula da seção 3 nesta sessão | rode a célula da seção 3 de novo |
 | Navegador bloqueia cookies/armazenamento de terceiros | iframe sem acesso a `sessionStorage` | a versão ≥ 3.0.2 funciona assim; se estiver na 3.0.1 ou antes, atualize (seção 1 com `origem: github`) |
+| `tempo esgotado` / `Failed to connect to dadosabertos.rfb.gov.br` | **a Receita bloqueia faixas de IP de nuvem** (Colab incluído); nenhuma configuração do caderno resolve | monte o índice no **seu computador** (`fio indice baixar --uf MG`) e traga-o pela célula **6b: Enviar índice pronto** (enviar arquivo ou baixar de uma URL sua). Ou siga sem índice: as demais fontes funcionam |
 | Seção 6 reseta a conexão | listagem raiz da Receita instável | informe `mes` (AAAA-MM) |
 | A célula do índice parece travada | antes da 3.0.4 não havia progresso; um arquivo de Estabelecimentos leva minutos | atualize; a célula agora mostra o andamento a cada 3 s. Se o último aviso tiver mais de 2 minutos, rode a célula de novo (retoma o download) |
 | Seção 6 estoura o disco | runtime com pouco espaço | reinicie o runtime e use uma UF |

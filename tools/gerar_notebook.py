@@ -344,6 +344,46 @@ else:
     job["fio"].start()
     _acompanhar(job)
 ''')
+    md("""### 6b. Já tenho o índice (enviar arquivo ou baixar de uma URL)
+**Use esta opção se a Receita não responde a partir do Colab** (a Receita costuma bloquear faixas de IP de nuvem, e o erro será "tempo esgotado ao conectar"). Monte o índice no **seu computador** (`fio indice baixar --uf MG`, gera `cnpj.sqlite`) e traga-o para cá:
+
+- **enviar arquivo**: abre o seletor do navegador e envia o `cnpj.sqlite` para esta sessão;
+- **baixar de uma URL**: se o arquivo estiver publicado em algum endereço seu (https), informe em `url`; o download mostra o progresso e retoma se cair.""")
+    code('''
+#@title Enviar índice pronto (cnpj.sqlite) { display-mode: "form" }
+executar = False  #@param {type:"boolean"}
+modo = "enviar arquivo"  #@param ["enviar arquivo", "baixar de uma URL"]
+url = ""  #@param {type:"string"}
+import shutil as _sh
+from fio.indice import IndiceCNPJ
+alvo = FIO_HOME / "cnpj.sqlite"
+if not executar:
+    print("Marque 'executar' e rode (▶) para trazer um indice que voce ja montou no seu computador.")
+else:
+    if modo == "baixar de uma URL":
+        from fio.receita_download import baixar
+        if not url.startswith("https://"):
+            raise ValueError("informe uma URL https:// no campo 'url'")
+        baixar(url, alvo, log=print)
+    else:
+        try:
+            from google.colab import files
+        except ImportError:
+            raise RuntimeError("o envio de arquivo so existe no Colab; fora dele, aponte FIO_INDICE_CNPJ para o seu cnpj.sqlite")
+        enviados = files.upload()
+        if not enviados:
+            raise RuntimeError("nenhum arquivo enviado")
+        nome = next(iter(enviados))
+        _sh.move(nome, alvo)
+    with IndiceCNPJ(str(alvo)) as _idx:
+        est = _idx.estatisticas()
+        meta = _idx.meta()
+    if not est.get("estabelecimento"):
+        alvo.unlink(missing_ok=True)
+        raise ValueError("o arquivo nao parece um indice do F.I.O. (sem estabelecimentos); descartado")
+    os.environ["FIO_INDICE_CNPJ"] = str(alvo)
+    quadro("Índice pronto", [[k, v] for k, v in {**est, **{k: meta.get(k) for k in ("ufs", "mes", "construido_em")}}.items()], ["campo", "valor"])
+''')
     md("""## 7. Caso pontual com fontes reais
 Os valores de exemplo usam **alvos institucionais públicos**. Troque pelos seus alvos só se tiver base legal. Tipos reconhecidos sozinhos: e-mail (tem @), CNPJ, CEP (8 dígitos com hífen), domínio (tem ponto e letras) e telefone.""")
     code('''

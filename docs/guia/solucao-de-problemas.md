@@ -42,6 +42,7 @@ Procure pela **mensagem** que você viu. Se nada servir, abra uma [issue](https:
 
 | Sintoma | Solução |
 |---|---|
+| `tempo esgotado` / `Failed to connect` (de nuvem) | a Receita bloqueia IPs de nuvem: monte o índice no seu computador e leve o arquivo ([indice-cnpj](indice-cnpj.md#a-receita-não-responde-de-dentro-de-nuvem)) |
 | Listagem raiz reseta a conexão | informe `--mes AAAA-MM` ou `FIO_RECEITA_MES` |
 | Acabou o disco | `--tmp` em disco maior; **um ZIP por vez** já é o padrão; não use `--manter-zips` |
 | Download interrompido | rode de novo: retoma com `Range` e só reinicia o arquivo atual |
@@ -66,6 +67,7 @@ Procure pela **mensagem** que você viu. Se nada servir, abra uma [issue](https:
 | "Token ausente" | abra pelo endereço **completo** impresso no terminal (com `#t=…`) |
 | `host nao permitido` | acesso por nome que não é `localhost`: `--permitir-host` ou `FIO_HOSTS_PERMITIDOS` |
 | Porta em uso | `fio lab bancada --porta 9000` |
+| Colab: lista de **Base legal** vazia ou "base legal '' nao reconhecida" | bug da tela do Colab até a 3.0.4; atualize e escolha a base legal na lista |
 | Página em branco no Colab | veja [Colab](colab.md#não-carrega-confira-nesta-ordem); atualize para ≥ 3.0.2 |
 | Janela preta fecha sozinha (Windows) | rode `python -m fio lab bancada` num terminal para ver o erro |
 | "O Windows protegeu o computador" | *Mais informações › Executar assim mesmo* (o lançador não é assinado) |

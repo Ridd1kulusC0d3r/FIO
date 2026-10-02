@@ -510,5 +510,59 @@ class TestMundoFachada(unittest.TestCase):
             self.assertEqual(len(lotes), 1)
 
 
+# ------------------------------------------ Receita inacessivel (Colab)
+class TestReceitaInacessivel(unittest.TestCase):
+    """O Colab nao alcanca dadosabertos.rfb.gov.br (timeout de conexao): em vez
+    de sondar mes a mes por 10 minutos, falha na hora com o que fazer."""
+
+    def _tempo_esgotado(self, chamadas):
+        def falso(url, timeout=60):
+            chamadas.append(url)
+            raise RuntimeError("urllib: URLError: <urlopen error timed out>; "
+                               "curl: RuntimeError: curl: (28) Failed to connect to "
+                               "dadosabertos.rfb.gov.br port 443 after 15002 ms")
+        return falso
+
+    def test_timeout_na_raiz_nao_sonda_meses(self):
+        from fio import receita_download as rd
+        chamadas = []
+        with mock.patch.object(rd, "_get", self._tempo_esgotado(chamadas)):
+            with self.assertRaises(rd.ReceitaInacessivel) as cm:
+                rd.descobrir("https://exemplo.test/cnpj/", log=lambda s: None)
+        self.assertEqual(len(chamadas), 1)            # so a raiz, nenhum mes
+        msg = str(cm.exception)
+        self.assertIn("bloquear faixas de IP de nuvem", msg)
+        self.assertIn("fio indice baixar", msg)
+
+    def test_timeout_com_mes_informado_tambem_falha_rapido(self):
+        from fio import receita_download as rd
+        chamadas = []
+        with mock.patch.object(rd, "_get", self._tempo_esgotado(chamadas)):
+            with self.assertRaises(rd.ReceitaInacessivel):
+                rd.descobrir("https://exemplo.test/cnpj/", mes="2026-08", log=lambda s: None)
+        self.assertEqual(len(chamadas), 1)
+
+    def test_reset_de_conexao_continua_sondando_meses(self):
+        from fio import receita_download as rd
+        chamadas = []
+
+        def falso(url, timeout=60):
+            chamadas.append(url)
+            if url.endswith("/cnpj/"):
+                raise RuntimeError("urllib: ConnectionResetError: Connection reset by peer")
+            return '<a href="Empresas0.zip">x</a>' if url.endswith("-07/") else "<html></html>"
+        with mock.patch.object(rd, "_get", falso):
+            b, m, arqs = rd.descobrir("https://exemplo.test/cnpj/", log=lambda s: None)
+        self.assertEqual(arqs, ["Empresas0.zip"])
+        self.assertGreater(len(chamadas), 1)          # reset NAO e falta de rota
+
+    def test_sem_rota_classifica_mensagens(self):
+        from fio.receita_download import _sem_rota
+        self.assertTrue(_sem_rota("curl: (28) Failed to connect ... Timeout was reached"))
+        self.assertTrue(_sem_rota("Network is unreachable"))
+        self.assertFalse(_sem_rota("HTTP Error 404: Not Found"))
+        self.assertFalse(_sem_rota("Connection reset by peer"))
+
+
 if __name__ == "__main__":
     unittest.main()

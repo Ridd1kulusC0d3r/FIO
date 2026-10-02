@@ -23,6 +23,7 @@ import ssl
 import subprocess
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -73,6 +74,40 @@ def _get_curl(url: str, timeout: int = 60) -> str:
     if p.returncode:
         raise RuntimeError(p.stderr.decode("utf-8", "replace").strip() or f"curl rc={p.returncode}")
     return p.stdout.decode("utf-8", "replace")
+
+
+_SEM_ROTA = ("timed out", "timeout", "failed to connect", "network is unreachable",
+             "no route to host", "name or service not known", "connection refused",
+             "temporary failure in name resolution")
+
+
+class ReceitaInacessivel(RuntimeError):
+    """O runtime nao consegue nem abrir conexao com o servidor da Receita."""
+
+
+def _sem_rota(mensagem: str) -> bool:
+    """Falha de conexao (timeout, sem rota, DNS) e nao resposta do servidor.
+
+    Reset de conexao e HTTP 4xx/5xx sao respostas e merecem nova tentativa em
+    outra pasta/transporte; timeout de conexao nao: o host inteiro esta fora
+    de alcance e testar mes por mes so gasta minutos (15 s x 3 transportes x
+    cada mes).
+    """
+    baixa = mensagem.lower()
+    return any(k in baixa for k in _SEM_ROTA)
+
+
+def _aviso_inacessivel(host: str) -> str:
+    return (
+        f"Este runtime nao consegue abrir conexao com {host} (tempo esgotado). "
+        "A Receita costuma bloquear faixas de IP de nuvem (Google Colab, GitHub "
+        "Actions, provedores de hospedagem).\n"
+        "O que fazer:\n"
+        "  1) no SEU computador: fio indice baixar --uf MG   (gera cnpj.sqlite);\n"
+        "  2) envie esse arquivo para o Colab (celula 'Enviar indice pronto') ou "
+        "aponte FIO_INDICE_CNPJ para ele;\n"
+        "  3) ou siga sem o indice: as demais fontes continuam funcionando."
+    )
 
 
 def _get(url: str, timeout: int = 60) -> str:
@@ -127,10 +162,12 @@ def descobrir(base: str | None = None, mes: str | None = None,
     Receita retornou ``Connection reset by peer``.
     """
     erros = []
+    inacessiveis: list[str] = []
     base = base or os.environ.get("FIO_RECEITA_BASE")
     mes = mes or os.environ.get("FIO_RECEITA_MES") or None
     for b in ([base] if base else BASES):
         b = b.rstrip("/") + "/"
+        host = urllib.parse.urlparse(b).netloc
 
         # Mês explícito: não desperdice uma requisição na listagem raiz.
         if mes:
@@ -142,6 +179,8 @@ def descobrir(base: str | None = None, mes: str | None = None,
                 return b, mes, arquivos
             except Exception as e:
                 erros.append(f"{b}{mes}/: {type(e).__name__}: {e}")
+                if _sem_rota(str(e)):
+                    inacessiveis.append(host)
                 continue
 
         # Caminho normal: listar meses na raiz.
@@ -158,6 +197,12 @@ def descobrir(base: str | None = None, mes: str | None = None,
                 erros.append(f"{b}: indice sem pastas AAAA-MM")
         except Exception as e:
             erros.append(f"{b}: {type(e).__name__}: {e}")
+            if _sem_rota(str(e)):
+                # o host inteiro esta fora de alcance: sondar mes a mes so
+                # gastaria minutos (cada tentativa espera o timeout)
+                inacessiveis.append(host)
+                log(f"  sem conexao com {host}; nao vou sondar os meses um a um")
+                continue
 
         # Fallback Colab: a raiz pode falhar enquanto a pasta mensal responde.
         for m in _meses_recentes():
@@ -168,7 +213,12 @@ def descobrir(base: str | None = None, mes: str | None = None,
                     return b, m, arquivos
             except Exception as e:
                 erros.append(f"{b}{m}/: {type(e).__name__}: {e}")
+                if _sem_rota(str(e)):
+                    inacessiveis.append(host)
+                    break
 
+    if inacessiveis:
+        raise ReceitaInacessivel(_aviso_inacessivel(", ".join(sorted(set(inacessiveis)))))
     resumo = erros[-18:]
     raise RuntimeError(
         "nao encontrei a base da Receita. A fonte pode estar bloqueando ou "

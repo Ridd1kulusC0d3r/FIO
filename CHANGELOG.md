@@ -2,6 +2,15 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.0.5] — 2026-10-02
+
+### Corrigido
+- **Colab: a lista de "Base legal" da tela do Colab vinha vazia** (`/api/estado` devolve um dicionário e a tela chamava `.map` nele; o erro abortava a inicialização inteira, e criar o caso falhava com "base legal '' não reconhecida"). A lista agora vem do estado, começa em "Selecione a base legal…" e a tela exige a escolha. Coberto por teste E2E.
+- **Receita inacessível a partir de nuvem:** quando o servidor da Receita não aceita conexão (timeout), o F.I.O. agora **falha na hora** com a explicação e as saídas, em vez de sondar mês a mês por vários minutos (3 transportes × 15 s × cada mês). Reset de conexão e erros HTTP continuam sendo tentados.
+
+### Adicionado
+- **Colab, célula 6b "Enviar índice pronto":** traz para a sessão um `cnpj.sqlite` montado no seu computador, por upload ou por URL https (com progresso e retomada), validando que é um índice do F.I.O.
+
 ## [3.0.4] — 2026-10-02
 
 ### Alterado

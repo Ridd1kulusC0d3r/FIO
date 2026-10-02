@@ -163,6 +163,15 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
                         pg.goto(url)
                         fr = pg.frame_locator("#f")
                         fr.locator(f"text={texto}").first.wait_for(timeout=10000)
+                        if "wb" not in url:
+                            # frontend do Colab: a lista de base legal tem de vir
+                            # do /api/estado (dict) e a versao aparecer
+                            fr.locator("#baseLegal option").nth(3).wait_for(
+                                state="attached", timeout=10000)
+                            n = fr.locator("#baseLegal option").count()
+                            assert n >= 10, f"base legal com {n} opcoes"
+                            assert fr.locator("#baseLegal").input_value() == ""
+                            assert "F.I.O." in fr.locator("#versao").inner_text()
                         if "wb" in url:
                             fr.locator("#bvdemo").click()
                             fr.locator("#g circle").first.wait_for(timeout=15000)
