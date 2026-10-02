@@ -304,6 +304,21 @@ def analisar(tipo: str, valor: str) -> Documento:
     if tipo == "renavam":
         d = _digitos(valor).zfill(11)
         return Documento("renavam", d, valor, renavam_valido(d), {})
+    from . import financeiro as fin          # import tardio: evita ciclo
+    if tipo == "boleto":
+        d = _digitos(valor)
+        ok = fin.boleto_valido(d)
+        return Documento("boleto", d, valor, ok, fin.boleto_dados(d) if ok else {})
+    if tipo == "pix-evp":
+        ok = fin.classificar_chave_pix(valor) == "evp"
+        return Documento("pix-evp", valor.strip().lower(), valor, ok,
+                         {"nota": "chave aleatoria: nao identifica o titular"})
+    if tipo == "cnh":
+        d = _digitos(valor)
+        return Documento("cnh", d, valor, fin.cnh_valida(d), {})
+    if tipo == "cns":
+        d = _digitos(valor)
+        return Documento("cns", d, valor, fin.cns_valido(d), {})
     raise ValueError(f"tipo de documento desconhecido: {tipo}")
 
 
@@ -320,6 +335,13 @@ def extrair_documentos(texto: str) -> list[Documento]:
     def add(doc: Documento) -> None:
         if doc.valido and (doc.tipo, doc.valor) not in achados:
             achados[(doc.tipo, doc.valor)] = doc
+
+    # boleto primeiro e removido do texto: o ultimo bloco da linha digitavel
+    # tem 14 digitos e seria lido como CNPJ
+    from . import financeiro as fin          # import tardio: evita ciclo
+    for m in fin.RX_BOLETO.finditer(texto):
+        add(analisar("boleto", m.group(0)))
+    texto = fin.RX_BOLETO.sub(" ", texto)
 
     for m in _RX["cpf_fmt"].finditer(texto):
         add(analisar("cpf", m.group(0)))
@@ -342,4 +364,6 @@ def extrair_documentos(texto: str) -> list[Documento]:
         add(analisar("cep", _digitos(m.group(0))))
     for m in _RX["placa"].finditer(texto):
         add(analisar("placa", m.group(0)))
+    for m in fin.RX_EVP.finditer(texto):
+        add(analisar("pix-evp", m.group(0)))
     return list(achados.values())

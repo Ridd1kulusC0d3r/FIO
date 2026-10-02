@@ -7,5 +7,6 @@ para o relatorio numa secao propria, separadas dos vinculos.
 
 from .base import Analisador, ANALISADORES, registrar_analisador
 from . import padrao  # noqa: F401  (registro)
+from . import lote  # noqa: F401  (registro; depois de padrao: usa a marca de intermediario)
 
 __all__ = ["Analisador", "ANALISADORES", "registrar_analisador"]

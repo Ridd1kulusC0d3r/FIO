@@ -6,6 +6,7 @@ import datetime as dt
 
 from ..grafo.modelo import Grafo
 from ..grafo.clusters import detectar_clusters, tabela_correlacao, pontes
+from ..grafo import claims
 from ..coletores import REGISTRO
 
 
@@ -34,7 +35,7 @@ def gerar_markdown(caso, g: Grafo, ledger_regs: list,
       "comprovada. Verifique na fonte primaria antes de qualquer decisao.\n")
 
     A("## 2. Panorama\n")
-    A(f"| metrica | valor |\n|---|---|")
+    A("| metrica | valor |\n|---|---|")
     A(f"| alvos primarios | {len(alvos)} |")
     A(f"| entidades | {len(g.entidades)} |")
     A(f"| vinculos | {len(g.arestas)} |")
@@ -64,13 +65,35 @@ def gerar_markdown(caso, g: Grafo, ledger_regs: list,
         A(f"| `{l['entidade']}` | {l['relacao']} | `{l['vinculada_a']}` | "
           f"{l['confianca']} | {l['nivel']} | {l['coletores']} |")
 
-    A("\n## 6. Reservas das fontes\n")
+    A("\n## 6. Observacoes analiticas\n")
+    if g.observacoes:
+        ordem = {"alta": 0, "atencao": 1, "info": 2}
+        for o in sorted(g.observacoes, key=lambda x: ordem.get(x["gravidade"], 3)):
+            A(f"- **[{o['gravidade']}] {o['tipo']}** ({o['analisador']}): {o['texto']}")
+    else:
+        A("Nenhuma observacao analitica.")
+
+    A("\n## 7. Conclusoes rastreaveis\n")
+    A("Cada linha cita a aresta (ou entidades) do grafo que a sustenta; "
+      "conclusao sem evidencia no grafo nao entra aqui.\n")
+    lista = claims.derivar(g)
+    inval = claims.validar(lista, g)
+    A("| id | tipo | confianca | afirmacao | evidencia |")
+    A("|---|---|---|---|---|")
+    for c in lista[:150]:
+        conf = f"{c.confianca:.2f}" if c.confianca is not None else "-"
+        ev = "; ".join(c.evidencias[:2]) + (" ..." if len(c.evidencias) > 2 else "")
+        A(f"| {c.id} | {c.tipo} | {conf} | {c.texto[:140].replace('|', '/')} | `{ev}` |")
+    if inval:
+        A(f"\n**{len(inval)} claim(s) invalido(s)** — ver ledger.")
+
+    A("\n## 8. Reservas das fontes\n")
     for nome in sorted({f.coletor for a in g.arestas.values() for f in a.fontes}):
         col = REGISTRO.get(nome)
         if col:
             A(f"- **{nome}** ({col.admiralty}): {col.reserva}")
 
-    A("\n## 7. Cadeia de custodia\n")
+    A("\n## 9. Cadeia de custodia\n")
     A(f"{len(ledger_regs)} registros encadeados. Verificacao: "
       f"{'integra' if ok else 'COMPROMETIDA'}.")
     for x in problemas:

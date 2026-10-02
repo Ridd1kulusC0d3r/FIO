@@ -3,7 +3,6 @@
 import json
 import os
 import tempfile
-import threading
 import time
 import unittest
 import urllib.request

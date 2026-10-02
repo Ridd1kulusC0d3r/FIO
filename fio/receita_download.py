@@ -17,7 +17,6 @@ import http.client
 import json
 import os
 import re
-import shutil
 import ssl
 import time
 import urllib.error

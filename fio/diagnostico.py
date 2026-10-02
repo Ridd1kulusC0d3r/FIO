@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import ssl
 import time
 import urllib.error
@@ -20,23 +21,48 @@ import urllib.request
 
 from .coletores.base import UA
 
-SONDAS = [
-    ("cnpj-api", "BrasilAPI (cadastro de CNPJ)",
-     "https://brasilapi.com.br/api/cnpj/v1/00000000000191", None),
-    ("viacep", "ViaCEP (CEP)", "https://viacep.com.br/ws/01001000/json/", None),
-    ("querido-diario", "Querido Diario (diarios oficiais)",
-     "https://api.queridodiario.ok.org.br/gazettes?querystring=licitacao&size=1", None),
-    ("rdap", "RDAP registro.br (dominios .br)", "https://rdap.registro.br/domain/nic.br", None),
-    ("rdap", "RDAP generico (outros dominios)", "https://rdap.org/domain/example.com", None),
-    ("web", "DuckDuckGo (busca publica)", "https://lite.duckduckgo.com/lite/?q=teste", None),
-    ("ibge", "IBGE (municipios)",
-     "https://servicodados.ibge.gov.br/api/v1/localidades/municipios/3106200", None),
-    ("hibp", "Have I Been Pwned (lista publica)",
-     "https://haveibeenpwned.com/api/v3/breaches?domain=adobe.com", None),
-    ("transparencia", "Portal da Transparencia (CEIS)",
-     "https://api.portaldatransparencia.gov.br/api-de-dados/ceis?pagina=1",
-     "transparencia_api_key"),
-]
+def carregar_fontes(caminho: Path | None = None) -> list[dict]:
+    """Fontes declaradas em fontes.json (URL, segredo e canario)."""
+    arq = caminho or Path(__file__).with_name("fontes.json")
+    return json.loads(arq.read_text(encoding="utf-8"))["fontes"]
+
+
+def checar_canario(corpo: bytes, canario: dict) -> tuple[bool | None, str]:
+    """True se a resposta tem a forma esperada; None se nao ha canario.
+
+    Chaves: `json_chave` (campo que deve existir, em dict ou no 1o item de
+    lista), `igual` (valor exato do campo), `contem` (texto, no campo ou no
+    corpo inteiro).
+    """
+    if not canario:
+        return None, ""
+    texto = corpo.decode("utf-8", "replace")
+    chave = canario.get("json_chave")
+    valor = texto
+    if chave:
+        try:
+            dados = json.loads(texto)
+        except json.JSONDecodeError:
+            return False, "resposta nao e JSON"
+        if isinstance(dados, list):
+            dados = dados[0] if dados else {}
+        if not isinstance(dados, dict) or chave not in dados:
+            return False, f"campo '{chave}' ausente (formato mudou?)"
+        valor = dados[chave]
+        if "igual" in canario and str(valor) != str(canario["igual"]):
+            return False, f"'{chave}' = {str(valor)[:40]!r}, esperado {canario['igual']!r}"
+        if "contem" not in canario:
+            return True, ""
+    alvo = str(valor)
+    if "contem" in canario and canario["contem"].lower() not in alvo.lower():
+        return False, f"nao contem {canario['contem']!r}"
+    return True, ""
+
+
+# compatibilidade: tuplas (coletor, nome, url, segredo)
+SONDAS = [(f["coletor"], f["nome"], f["url"], f.get("segredo"))
+          for f in carregar_fontes()]
+
 
 
 def _ctx():
@@ -46,10 +72,19 @@ def _ctx():
     return None
 
 
-def sondar(segredos: dict | None = None, timeout: int = 12) -> list[dict]:
+def sondar(segredos: dict | None = None, timeout: int = 12,
+           fontes: list[dict] | None = None) -> list[dict]:
+    """Uma consulta neutra por fonte, mais a checagem do canario.
+
+    `ok` e verdadeiro so se a fonte respondeu E a resposta tem a forma
+    esperada. Fonte que responde 200 com formato novo sai como falha de
+    contrato: e o aviso de que o coletor correspondente quebrou.
+    """
     segredos = segredos or {}
     out = []
-    for coletor, nome, url, segredo in SONDAS:
+    for f in fontes if fontes is not None else carregar_fontes():
+        coletor, nome, url = f["coletor"], f["nome"], f["url"]
+        segredo = f.get("segredo")
         cab = {"User-Agent": UA, "Accept": "application/json, text/html"}
         if segredo:
             if not segredos.get(segredo):
@@ -59,27 +94,32 @@ def sondar(segredos: dict | None = None, timeout: int = 12) -> list[dict]:
                 continue
             cab["chave-api-dados"] = segredos[segredo]
         t = time.perf_counter()
+        corpo = b""
         try:
             req = urllib.request.Request(url, headers=cab)
             with urllib.request.urlopen(req, timeout=timeout, context=_ctx()) as r:
-                r.read(2048)
+                corpo = r.read(262144)
                 status, ok = r.status, 200 <= r.status < 400
         except urllib.error.HTTPError as e:
-            status, ok = e.code, e.code in (401, 403, 404, 429) and False
+            status, ok = e.code, False
         except Exception as e:
             status, ok = f"{type(e).__name__}", False
         ms = round((time.perf_counter() - t) * 1000)
-        dica = ""
-        if not ok:
-            if status == 429:
-                dica = "limite de requisicoes da fonte; tente mais tarde"
-            elif isinstance(status, str):
-                dica = ("sem conexao ate a fonte: verifique internet, proxy "
-                        "corporativo ou firewall")
-            else:
-                dica = f"a fonte respondeu HTTP {status}"
+        dica, contrato = "", None
+        if ok:
+            contrato, motivo = checar_canario(corpo, f.get("canario") or {})
+            if contrato is False:
+                ok, dica = False, f"contrato quebrado: {motivo}"
+        elif status == 429:
+            dica = "limite de requisicoes da fonte; tente mais tarde"
+        elif isinstance(status, str):
+            dica = ("sem conexao ate a fonte: verifique internet, proxy "
+                    "corporativo ou firewall")
+        else:
+            dica = f"a fonte respondeu HTTP {status}"
         out.append({"coletor": coletor, "fonte": nome, "ok": ok,
-                    "status": status, "ms": ms, "dica": dica})
+                    "status": status, "ms": ms, "dica": dica,
+                    "contrato": contrato})
     return out
 
 

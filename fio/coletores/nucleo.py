@@ -37,8 +37,6 @@ class NucleoTelefone(Coletor):
         })
         alvo.rotulo = alvo.rotulo or t.formatado()
 
-        fonte = Fonte(coletor=self.nome, admiralty=self.admiralty,
-                      nota="plano de numeracao brasileiro (tabela local)")
         achados: list[Achado] = []
 
         if t.faixa:

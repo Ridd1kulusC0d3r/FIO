@@ -29,7 +29,7 @@ import zipfile
 from pathlib import Path
 
 from .core.normalize import normalizar
-from .core.documentos import cnpj_limpar, cnpj_valido, cep_uf
+from .core.documentos import cnpj_limpar, cnpj_valido
 
 RECEITAS: dict[str, dict] = {
     "cnes": {
