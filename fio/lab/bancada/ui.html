@@ -325,8 +325,12 @@ svg#g.pan{cursor:grabbing}
 <script>
 "use strict";
 /* ============================================================ base */
-const T=(location.hash.match(/t=([^&]+)/)||[])[1]||sessionStorage.getItem("fio_t")||"";
-try{sessionStorage.setItem("fio_t",T)}catch(e){}
+/* sessionStorage lanca SecurityError em iframe com armazenamento bloqueado (Colab) */
+const guardar={ler(k){try{return sessionStorage.getItem(k)}catch(e){return null}},gravar(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}};
+const T=(location.hash.match(/t=([^&]+)/)||[])[1]||guardar.ler("fio_t")||"";
+guardar.gravar("fio_t",T);
+/* base da API relativa a pagina: funciona atras de proxy com prefixo (Colab, Codespaces) */
+const BASE=(()=>{let b=location.pathname.replace(/workbench\/?$/,"");return b.endsWith("/")?b:b.replace(/[^\/]*$/,"")})();
 history.replaceState(null,"",location.pathname);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -344,7 +348,7 @@ const NIVN={alta:"Alta",media:"Média",baixa:"Baixa",indiciaria:"Indiciária"};
 let EST=null,CASO=null,INFO=null,DADOS=null,EXPS=[],ABA="grafo",VIEW="painel",CASOS=[],HL=new Set(),PEND=null;
 const GR={};
 
-async function api(p,opt={}){const r=await fetch("/api"+p,{...opt,headers:{"X-FIO-Token":T,"Content-Type":"application/json",...(opt.headers||{})}});
+async function api(p,opt={}){const r=await fetch(BASE+"api"+p,{...opt,headers:{"X-FIO-Token":T,"Content-Type":"application/json",...(opt.headers||{})}});
  const j=await r.json().catch(()=>({erro:"resposta inválida"}));if(!r.ok)throw new Error(j.erro||r.status);return j}
 const post=(p,b)=>api(p,{method:"POST",body:JSON.stringify(b)});
 
@@ -479,9 +483,9 @@ async function abrir(id,aba="grafo"){VIEW="caso";CASO=id;ABA=aba;HL=new Set();PE
  $("#main").innerHTML=`<div class="row sb" style="margin-bottom:14px;align-items:flex-start">
   <div class="row"><span class="pill ${c.expirado?"er":"in"}">${esc(c.modo||"passivo")}</span><span class="pill">${IC("lock","sm")}${esc(c.classificacao||"acesso restrito")}</span>
   <span class="mu" style="font-size:12.5px">escopo até ${esc((c.expira_em||"").slice(0,10))} · ${c.escopo.length} identificador(es) autorizados</span></div>
-  <div class="row"><a class="btn s" target="_blank" rel="noopener" href="/api/casos/${E}/relatorio?modelo=tecnico&t=${T}">${IC("file","sm")}Relatório técnico</a>
-  <a class="btn s" target="_blank" rel="noopener" href="/api/casos/${E}/relatorio?modelo=laudo&t=${T}">${IC("file","sm")}Laudo</a>
-  <a class="btn s" target="_blank" rel="noopener" href="/api/casos/${E}/relatorio?modelo=relint&t=${T}">${IC("file","sm")}RELINT</a></div></div>
+  <div class="row"><a class="btn s" target="_blank" rel="noopener" href="${BASE}api/casos/${E}/relatorio?modelo=tecnico&t=${T}">${IC("file","sm")}Relatório técnico</a>
+  <a class="btn s" target="_blank" rel="noopener" href="${BASE}api/casos/${E}/relatorio?modelo=laudo&t=${T}">${IC("file","sm")}Laudo</a>
+  <a class="btn s" target="_blank" rel="noopener" href="${BASE}api/casos/${E}/relatorio?modelo=relint&t=${T}">${IC("file","sm")}RELINT</a></div></div>
  <div class="kpis">${kpi("graph",INFO.entidades,"entidades")}${kpi("link",INFO.vinculos,"vínculos")}${kpi("check",altas,"vínculos de confiança alta","ok")}
   ${kpi("eye",obs.length,"observações analíticas",obs.some(o=>o.gravidade==="alta")?"er":obs.some(o=>o.gravidade==="atencao")?"wa":"")}${kpi("lock",INFO.ledger,"registros de custódia")}${kpi("q",c.quesitos.length,"quesitos")}</div>
  <div class="tabs" role="tablist" aria-label="Seções do caso">${tabs.map(([k,n])=>`<button class="tab" role="tab" data-t="${k}">${k}${n!==""?` <span class="n">${n}</span>`:""}</button>`).join("")}</div><div id="aba" role="tabpanel"></div>`;

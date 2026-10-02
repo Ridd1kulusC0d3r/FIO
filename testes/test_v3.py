@@ -1,6 +1,7 @@
 """Testes dos recursos da 3.0: baseline, canarios, lote, reuso de linha,
 claims, manifesto, calibracao, documentos financeiros e coletores passivos."""
 
+import contextlib
 import json
 import tempfile
 import unittest
@@ -60,8 +61,7 @@ class TestBaseline(unittest.TestCase):
         self.assertIn("invalid", impossivel("dominio"))
 
     def test_get_diferencial_registra_veredito_no_ledger(self):
-        with tempfile.TemporaryDirectory() as d:
-            ctx = _ctx(Path(d))
+        with _sessao() as ctx:
             cli = ctx.http()
             with mock.patch.object(type(cli), "get", side_effect=[
                     (200, self.VAZIA), (200, self.VAZIA)]):
@@ -69,6 +69,18 @@ class TestBaseline(unittest.TestCase):
             self.assertTrue(v.soft404)
             acoes = [r.acao for r in ctx.ledger.registros()]
             self.assertIn("coleta.baseline", acoes)
+
+
+@contextlib.contextmanager
+def _sessao(escopo=("alvo.test",)):
+    """Contexto de coleta numa pasta temporaria; fecha o SQLite antes de
+    apagar (no Windows, arquivo aberto nao pode ser removido)."""
+    with tempfile.TemporaryDirectory() as t:
+        ctx = _ctx(Path(t), escopo)
+        try:
+            yield ctx
+        finally:
+            ctx.cache.fechar()
 
 
 def _ctx(d: Path, escopo=("alvo.test",)):
@@ -108,6 +120,23 @@ class TestCanarios(unittest.TestCase):
     def test_canario_nao_json(self):
         self.assertFalse(checar_canario(b"<html>", {"json_chave": "a"})[0])
 
+    def test_fonte_instavel_nao_reprova_e_tenta_de_novo(self):
+        chamadas = []
+
+        def falha(*a, **k):
+            chamadas.append(1)
+            raise OSError("reset")
+        fontes = [{"coletor": "x", "nome": "Fonte X", "url": "https://x.test/",
+                   "instavel": True, "canario": {}},
+                  {"coletor": "y", "nome": "Fonte Y", "url": "https://y.test/",
+                   "canario": {}}]
+        with mock.patch("fio.diagnostico.urllib.request.urlopen", side_effect=falha):
+            r = sondar({}, fontes=fontes, espera=0)
+        self.assertEqual(len(chamadas), 4)           # 2 tentativas por fonte
+        self.assertIsNone(r[0]["ok"])                # instavel: nao conta como falha
+        self.assertIn("instavel", r[0]["dica"])
+        self.assertFalse(r[1]["ok"])                 # estavel: falha de verdade
+
     def test_sondar_marca_falha_de_contrato(self):
         class Resp:
             status = 200
@@ -117,7 +146,7 @@ class TestCanarios(unittest.TestCase):
         fontes = [{"coletor": "x", "nome": "Fonte X", "url": "https://x.test/",
                    "canario": {"json_chave": "razao_social"}}]
         with mock.patch("fio.diagnostico.urllib.request.urlopen", return_value=Resp()):
-            r = sondar({}, fontes=fontes)[0]
+            r = sondar({}, fontes=fontes, espera=0)[0]
         self.assertFalse(r["ok"])
         self.assertFalse(r["contrato"])
         self.assertIn("contrato quebrado", r["dica"])
@@ -427,8 +456,7 @@ class TestPassivos(unittest.TestCase):
         self.assertEqual(n["exemplo.com.br"]["certificados"], 2)
 
     def test_crtsh_coletor(self):
-        with tempfile.TemporaryDirectory() as d:
-            ctx = _ctx(Path(d), ("exemplo.com.br",))
+        with _sessao(("exemplo.com.br",)) as ctx:
             alvo = Entidade("dominio", "exemplo.com.br")
             with mock.patch("fio.coletores.base.ClienteHTTP.get_json",
                             return_value=(200, self.CRT)):
@@ -442,8 +470,7 @@ class TestPassivos(unittest.TestCase):
         resp = {"archived_snapshots": {"closest": {
             "available": True, "timestamp": "20030415120000",
             "url": "http://web.archive.org/web/20030415120000/http://exemplo.com.br/"}}}
-        with tempfile.TemporaryDirectory() as d:
-            ctx = _ctx(Path(d), ("exemplo.com.br",))
+        with _sessao(("exemplo.com.br",)) as ctx:
             alvo = Entidade("dominio", "exemplo.com.br")
             with mock.patch("fio.coletores.base.ClienteHTTP.get_json",
                             return_value=(200, resp)):
@@ -452,8 +479,7 @@ class TestPassivos(unittest.TestCase):
             self.assertEqual(alvo.atributos["wayback_primeiro"], "20030415120000")
 
     def test_wayback_sem_captura(self):
-        with tempfile.TemporaryDirectory() as d:
-            ctx = _ctx(Path(d), ("novo.test",))
+        with _sessao(("novo.test",)) as ctx:
             alvo = Entidade("dominio", "novo.test")
             with mock.patch("fio.coletores.base.ClienteHTTP.get_json",
                             return_value=(200, {"archived_snapshots": {}})):
@@ -462,8 +488,7 @@ class TestPassivos(unittest.TestCase):
 
     def test_coletores_passivos_exigem_escopo(self):
         from fio.politica import ViolacaoDeEscopo
-        with tempfile.TemporaryDirectory() as d:
-            ctx = _ctx(Path(d), ("outro.test",))
+        with _sessao(("outro.test",)) as ctx:
             with self.assertRaises(ViolacaoDeEscopo):
                 REGISTRO["crtsh"].executar(Entidade("dominio", "exemplo.com.br"), ctx)
 

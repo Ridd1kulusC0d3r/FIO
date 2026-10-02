@@ -348,7 +348,7 @@ class TestDemoEDiagnostico(unittest.TestCase):
         from fio import diagnostico
         with mock.patch("fio.diagnostico.urllib.request.urlopen",
                         side_effect=OSError("sem rede")):
-            res = diagnostico.sondar({})
+            res = diagnostico.sondar({}, espera=0)
         self.assertTrue(all(r["ok"] in (False, None) for r in res))
         self.assertTrue(any("sem chave" == r["status"] for r in res))
 
