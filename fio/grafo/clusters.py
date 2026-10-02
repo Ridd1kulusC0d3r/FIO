@@ -173,8 +173,7 @@ def pontes(g: Grafo) -> list[dict]:
             # a forca de um caminho e a do seu elo mais fraco
             elos = []
             for x, y in zip(cam, cam[1:]):
-                confs = [ar.confianca for ar in g.arestas.values()
-                         if {ar.origem, ar.destino} == {x, y}]
+                confs = [ar.confianca for ar, outro in g.vizinhos(x) if outro == y]
                 elos.append(max(confs) if confs else 0.0)
             saida.append({
                 "de": a, "para": b, "saltos": len(cam) - 1,

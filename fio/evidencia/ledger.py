@@ -17,10 +17,22 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import os
+import threading
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 
 GENESE = "0" * 64
+
+# Varios coletores (e varias instancias de Ledger do mesmo caso) gravam no
+# mesmo arquivo: a gravacao e serializada por caminho.
+_TRAVAS: dict[str, threading.Lock] = {}
+_TRAVAS_GUARDA = threading.Lock()
+
+
+def _trava(caminho: str) -> threading.Lock:
+    with _TRAVAS_GUARDA:
+        return _TRAVAS.setdefault(caminho, threading.Lock())
 
 
 def _sha256(b: bytes) -> str:
@@ -76,18 +88,43 @@ class Ledger:
                 saida.append(RegistroLedger(**json.loads(linha)))
         return saida
 
+    def _ultima_linha(self) -> RegistroLedger | None:
+        """Le so o final do arquivo: gravar um registro custa O(1), nao O(n).
+
+        Antes cada `registrar` relia o ledger inteiro para achar `seq` e o hash
+        anterior; num caso de milhares de registros isso virava metade do
+        tempo do pipeline (O(n^2) em json.loads).
+        """
+        if not self.caminho.exists():
+            return None
+        with self.caminho.open("rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            tam = fh.tell()
+            bloco, dados = 8192, b""
+            while tam > 0:
+                passo = min(bloco, tam)
+                tam -= passo
+                fh.seek(tam)
+                dados = fh.read(passo) + dados
+                linhas = [x for x in dados.split(b"\n") if x.strip()]
+                # a ultima linha esta completa quando ha uma quebra antes dela
+                # (ou quando lemos o arquivo desde o inicio)
+                if len(linhas) >= 2 or tam == 0:
+                    return RegistroLedger(**json.loads(linhas[-1].decode("utf-8")))
+        return None
+
     def ultimo_hash(self) -> str:
-        regs = self.registros()
-        return regs[-1].hash if regs else GENESE
+        r = self._ultima_linha()
+        return r.hash if r else GENESE
 
     def __len__(self) -> int:
-        return len(self.registros())
+        r = self._ultima_linha()
+        return r.seq if r else 0
 
     # ---------------------------------------------------------- escrita
     def registrar(self, acao: str, alvo: str = "", coletor: str = "",
                   resumo: str = "", artefato: bytes | str | None = None,
                   metadados: dict | None = None) -> RegistroLedger:
-        regs = self.registros()
         sha, tam = "", 0
         if artefato is not None:
             dados = artefato.encode("utf-8") if isinstance(artefato, str) else artefato
@@ -96,13 +133,18 @@ class Ledger:
             if not destino.exists():
                 destino.write_bytes(dados)
 
+        with _trava(str(self.caminho.resolve())):
+            return self._gravar(acao, alvo, coletor, resumo, sha, tam, metadados)
+
+    def _gravar(self, acao, alvo, coletor, resumo, sha, tam, metadados):
+        ant = self._ultima_linha()
         r = RegistroLedger(
-            seq=len(regs) + 1,
+            seq=(ant.seq if ant else 0) + 1,
             ts=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
             caso=self.caso, ator=self.ator, acao=acao, alvo=alvo,
             coletor=coletor, resumo=resumo, artefato_sha256=sha,
             artefato_bytes=tam, metadados=metadados or {},
-            anterior=regs[-1].hash if regs else GENESE,
+            anterior=ant.hash if ant else GENESE,
         )
         r.hash = r.calcular_hash()
         with self.caminho.open("a", encoding="utf-8") as fh:

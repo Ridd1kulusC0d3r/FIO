@@ -10,6 +10,7 @@ import csv
 import datetime as dt
 import io
 import json
+from collections import deque
 from dataclasses import dataclass, field, asdict
 
 from .scoring import score_admiralty, combinar, rotulo, descrever
@@ -156,24 +157,32 @@ class Grafo:
         return self.add_aresta(Aresta(o.id, d.id, relacao, [fonte], observacao))
 
     # ------------------------------------------------------------ leitura
+    def _adjacencia(self) -> dict[str, list[tuple[Aresta, str]]]:
+        """Vizinhanca por entidade, calculada uma vez e reaproveitada.
+
+        `vizinhos` varria TODAS as arestas a cada chamada (O(E)); os
+        analisadores e o calculo de pontes chamam isso milhares de vezes. A
+        chave de cache (numero de arestas e de entidades) invalida sozinha
+        quando o grafo cresce.
+        """
+        chave = (len(self.arestas), len(self.entidades))
+        if getattr(self, "_adj_chave", None) != chave:
+            adj: dict[str, list[tuple[Aresta, str]]] = {k: [] for k in self.entidades}
+            for a in self.arestas.values():
+                adj.setdefault(a.origem, []).append((a, a.destino))
+                adj.setdefault(a.destino, []).append((a, a.origem))
+            self._adj, self._adj_chave = adj, chave
+        return self._adj
+
     def vizinhos(self, eid: str) -> list[tuple[Aresta, str]]:
-        saida = []
-        for a in self.arestas.values():
-            if a.origem == eid:
-                saida.append((a, a.destino))
-            elif a.destino == eid:
-                saida.append((a, a.origem))
-        return saida
+        return list(self._adjacencia().get(eid, ()))
 
     def por_tipo(self, tipo: str) -> list[Entidade]:
         return [e for e in self.entidades.values() if e.tipo == tipo]
 
     def componentes(self) -> list[list[str]]:
         """Componentes conexos, maior primeiro."""
-        adj: dict[str, set[str]] = {k: set() for k in self.entidades}
-        for a in self.arestas.values():
-            adj[a.origem].add(a.destino)
-            adj[a.destino].add(a.origem)
+        adj = {k: {o for _, o in v} for k, v in self._adjacencia().items()}
         vistos: set[str] = set()
         comps: list[list[str]] = []
         for no in self.entidades:
@@ -195,20 +204,23 @@ class Grafo:
         """Menor caminho entre duas entidades: o 'como esses dois se ligam'."""
         if origem not in self.entidades or destino not in self.entidades:
             return None
-        adj: dict[str, set[str]] = {k: set() for k in self.entidades}
-        for a in self.arestas.values():
-            adj[a.origem].add(a.destino)
-            adj[a.destino].add(a.origem)
-        fila = [[origem]]
-        vistos = {origem}
+        adj = self._adjacencia()
+        # BFS guardando o antecessor: reconstroi o caminho no fim, sem copiar
+        # uma lista por nó visitado como antes
+        antes = {origem: None}
+        fila = deque([origem])
         while fila:
-            cam = fila.pop(0)
-            if cam[-1] == destino:
-                return cam
-            for viz in adj[cam[-1]]:
-                if viz not in vistos:
-                    vistos.add(viz)
-                    fila.append(cam + [viz])
+            atual = fila.popleft()
+            if atual == destino:
+                cam = []
+                while atual is not None:
+                    cam.append(atual)
+                    atual = antes[atual]
+                return cam[::-1]
+            for _, viz in adj.get(atual, ()):
+                if viz not in antes:
+                    antes[viz] = atual
+                    fila.append(viz)
         return None
 
     def grau(self) -> dict[str, int]:

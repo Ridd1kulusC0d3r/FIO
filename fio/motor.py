@@ -48,6 +48,7 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
 
     fila = [e.id for e in grafo.entidades.values() if e.alvo_primario]
     visitados: set[str] = set()
+    escopo_mudou = False
 
     for nivel in range(profundidade + 1):
         if not fila:
@@ -68,7 +69,7 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
             except ViolacaoDeEscopo as e:
                 if expandir and nivel > 0:
                     caso.escopo.append(alvo.valor)
-                    cd.salvar_caso(caso)
+                    escopo_mudou = True       # grava uma vez no fim, nao a cada pivo
                     ledger.registrar(
                         "escopo.expandido", alvo=alvo.valor,
                         resumo=f"derivada de coleta no nivel {nivel}; "
@@ -101,6 +102,8 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
                     if novo and nivel < profundidade:
                         fila.append(a.destino.id)
 
+    if escopo_mudou:
+        cd.salvar_caso(caso)
     cd.salvar_grafo(grafo)
     res.novas_entidades = len(grafo.entidades) - antes_e
     res.novas_arestas = len(grafo.arestas) - antes_a
