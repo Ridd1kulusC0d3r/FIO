@@ -74,20 +74,21 @@ def _tarefa_avaliar(_caso: str, p: dict, log) -> dict:
 
 
 def _tarefa_indice(_caso: str, p: dict, log) -> dict:
-    """Monta o índice da Receita em segundo plano, sempre na sessão local."""
+    """Instala o indice da Receita na sessao local (veja indice_pronto.instalar)."""
     import os
-    from ...receita_download import montar, validar_ufs
+    from ...receita_download import validar_ufs
+    from ...indice_pronto import instalar
     saida = raiz() / "cnpj.sqlite"
     ufs = validar_ufs({x.strip().upper() for x in str(p.get("ufs", "")).split(",") if x.strip()} or None)
-    mes = str(p.get("mes") or "").strip() or None
     if saida.exists() and not bool(p.get("reconstruir", False)):
         from ...indice import IndiceCNPJ
         with IndiceCNPJ(saida) as idx:
             return {"estado": "existente", "arquivo": str(saida), "meta": idx.meta()}
-    log(f"indice Receita: UF={','.join(sorted(ufs)) if ufs else 'todas'} mes={mes or 'automatico'}")
-    res = montar(saida, ufs=ufs, mes=mes, pasta_tmp=raiz() / "receita-tmp", log=log)
+    res = instalar(saida, ufs, mes=str(p.get("mes") or "").strip() or None,
+                   fonte=str(p.get("fonte") or "auto"), leve=bool(p.get("leve", True)),
+                   log=log, pasta_tmp=raiz() / "receita-tmp")
     os.environ["FIO_INDICE_CNPJ"] = str(saida)
-    return {"estado": "pronto", "arquivo": str(saida), **res}
+    return res
 
 
 # ----------------------------------------------------------------- http

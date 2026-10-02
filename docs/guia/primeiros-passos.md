@@ -26,7 +26,7 @@ Escolha um:
 Depois de instalar com pip, o comando é `fio`. A partir do código, use `python3 -m fio`. Os exemplos abaixo usam `fio`.
 
 ```bash
-fio --versao        # fio 3.0.6
+fio --versao        # fio 3.1.0
 ```
 
 ## 3. Rodar a demonstração

@@ -77,7 +77,9 @@ Na primeira vez, clique em **Montar caso de demonstração** no painel para ver 
 
 ### 6. Índice da Receita por UF (pelo caderno)
 
-É a fonte mais forte do F.I.O.: **telefone → empresa → sócios → filiais**, sem internet depois de pronto. O downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte. O mesmo índice pode ser montado **pela tela da seção 3**, que também mostra o andamento.
+É a fonte mais forte do F.I.O.: **telefone → empresa → sócios → filiais**, sem internet depois de pronto.
+
+**`fonte: auto` (padrão) tenta o índice PRONTO primeiro**: um arquivo pequeno já montado, baixado em **segundos** do GitHub (que o Colab alcança). Só se ele não existir é que monta pela Receita (modo leve, lento, e a Receita costuma bloquear o Colab). `pronto` aceita só o pronto; `receita` monta direto. Detalhes em [índice do CNPJ](indice-cnpj.md) e [pesquisa rápida e leve](desempenho.md). O downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte. O mesmo índice pode ser montado **pela tela da seção 3**, que também mostra o andamento.
 
 **Roda em segundo plano e mostra o progresso ao vivo** (arquivo atual, MB baixados, velocidade, linhas lidas), atualizado a cada 3 segundos. Leva de 10 a 40 minutos conforme a banda. A célula só **acompanha**: **interromper (■) não cancela** o trabalho; rode a célula de novo para voltar a acompanhar. Marque **executar** para iniciar (sem isso, nada é baixado).
 
@@ -88,7 +90,7 @@ Na primeira vez, clique em **Montar caso de demonstração** no painel para ver 
 
 ### 6b. Já tenho o índice (enviar arquivo ou URL)
 
-Para quando a Receita não responde a partir do Colab. No seu computador: `fio indice baixar --uf MG` (gera `cnpj.sqlite`). Na célula **Enviar índice pronto**, marque **executar** e escolha:
+Para quando nem o índice pronto nem a Receita estão disponíveis a partir do Colab. No seu computador: `fio indice baixar --uf MG` (gera `cnpj.sqlite`). Na célula **Enviar índice pronto**, marque **executar** e escolha:
 
 - **enviar arquivo**: abre o seletor do navegador e envia o `cnpj.sqlite` para a sessão;
 - **baixar de uma URL**: informe uma URL `https://` sua; o download mostra progresso e retoma se cair.

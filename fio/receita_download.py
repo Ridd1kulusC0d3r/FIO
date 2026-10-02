@@ -261,19 +261,21 @@ def _zip_ok(caminho: Path) -> bool:
         return False
 
 
-def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
+def baixar(url: str, destino: Path, log=print, tentativas: int = 5,
+           validar=None) -> Path:
     """Baixa ``url`` de forma retomável e grava atomicamente em ``destino``.
 
     Um ``.parcial`` sobrevivente é retomado com ``Range``. ``If-Range`` evita
     concatenar conteúdo antigo quando a Receita substitui o objeto remoto.
     Ao final, o arquivo parcial é movido atomicamente para o nome definitivo.
     """
+    validar = validar or _zip_ok     # Receita: ZIP; indice pronto: xz + SHA-256
     destino = Path(destino)
     destino.parent.mkdir(parents=True, exist_ok=True)
     parcial = destino.with_suffix(destino.suffix + ".parcial")
 
     if destino.exists():
-        if _zip_ok(destino):
+        if validar(destino):
             log(f"  usando download ja concluido: {destino.name}")
             return destino
         log(f"  cache invalido: {destino.name}; baixando novamente")
@@ -346,9 +348,9 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
             # O tamanho HTTP pode estar correto e o objeto ainda assim estar
             # truncado/corrompido. Só promovemos o parcial depois de validar
             # a estrutura ZIP inteira.
-            if not _zip_ok(parcial):
+            if not validar(parcial):
                 _limpar_parcial(parcial)
-                raise ConnectionError("download concluido, mas o ZIP e invalido")
+                raise ConnectionError("download concluido, mas o arquivo e invalido (truncado ou corrompido)")
             os.replace(parcial, destino)
             _meta_path(parcial).unlink(missing_ok=True)
             return destino
@@ -371,12 +373,13 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
     # Alguns runtimes Colab observados resetam urllib, mas aceitam curl.
     # Como último recurso, baixa o objeto inteiro e valida o ZIP antes de usar.
     try:
-        return _baixar_curl_inteiro(url, destino, log=log)
+        return _baixar_curl_inteiro(url, destino, log=log, validar=validar)
     except Exception as curl_erro:
         raise RuntimeError(f"nao consegui baixar {url}: urllib={ultimo}; curl={curl_erro}")
 
 
-def _baixar_curl_inteiro(url: str, destino: Path, log=print, timeout: int = 3600) -> Path:
+def _baixar_curl_inteiro(url: str, destino: Path, log=print, timeout: int = 3600,
+                         validar=None) -> Path:
     """Último fallback de transporte: baixa o arquivo inteiro com curl.
 
     O caminho urllib continua sendo o principal porque oferece retomada com
@@ -396,16 +399,16 @@ def _baixar_curl_inteiro(url: str, destino: Path, log=print, timeout: int = 3600
     if p.returncode:
         parcial.unlink(missing_ok=True)
         raise RuntimeError(p.stderr.decode("utf-8", "replace").strip() or f"curl rc={p.returncode}")
-    if not _zip_ok(parcial):
+    if not (validar or _zip_ok)(parcial):
         parcial.unlink(missing_ok=True)
-        raise RuntimeError("curl concluiu, mas o ZIP e invalido")
+        raise RuntimeError("curl concluiu, mas o arquivo e invalido")
     os.replace(parcial, destino)
     return destino
 
 
 def montar(saida: str | Path, ufs: set[str] | None = None, mes: str | None = None,
            base: str | None = None, pasta_tmp: str | Path | None = None,
-           manter_zips: bool = False, log=print) -> dict:
+           manter_zips: bool = False, log=print, leve: bool = False) -> dict:
     """Descobre, baixa, processa e apaga a base, um ZIP por vez."""
     ufs = validar_ufs(ufs)
     b, m, arquivos = descobrir(base, mes, log)
@@ -421,7 +424,7 @@ def montar(saida: str | Path, ufs: set[str] | None = None, mes: str | None = Non
     provisoria = saida.with_suffix(saida.suffix + ".construindo")
     provisoria.unlink(missing_ok=True)
 
-    c = Construtor(provisoria, ufs, log)
+    c = Construtor(provisoria, ufs, log, leve)
     t0 = time.time()
     try:
         for i, nome in enumerate(alvo, 1):

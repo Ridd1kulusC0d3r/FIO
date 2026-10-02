@@ -2,6 +2,19 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.1.0] — 2026-10-02
+
+### Adicionado
+- **Índice do CNPJ pronto** (`fio indice baixar --uf MG --pronto`): baixa em **segundos** um arquivo já montado e comprimido (xz) da Release `indice-latest`, com SHA-256 conferido e retomada; várias UFs são mescladas. `fio indice exportar` gera os arquivos (`cnpj-UF.sqlite.xz` + manifesto); o workflow `indice` os publica todo mês (e avisa em vez de falhar se a Receita bloquear o runner).
+- **Modo leve** (`--leve`): índice só com estabelecimentos que têm telefone/e-mail (ou a matriz), sem logradouro/bairro/CNAE. A busca por telefone devolve os mesmos CNPJs do índice completo (testado).
+- **Colab e bancada:** a célula do índice e a **bancada completa** (Fontes e diagnóstico) ganharam o seletor de modo (`auto`/`pronto`/`receita`) e a montagem do índice com progresso. Antes a bancada completa, que o Colab abre por padrão, não tinha como montar o índice.
+- **Coleta de rede em paralelo** (`--paralelo`, padrão 4), **`--orcamento SEGUNDOS`** e **`--rapido`** em `fio investigar` e `fio lab pipeline`.
+- Guia [Pesquisa rápida e leve](docs/guia/desempenho.md).
+
+### Desempenho
+- **Pipeline 10× mais rápido** (mundo sintético de 60 grupos, offline: 40,4 s → 3,8 s): o ledger gravava relendo o arquivo inteiro a cada registro (O(n²)); agora lê só o final. A vizinhança do grafo é cacheada (pontes e caminhos varriam todas as arestas a cada passo) e o `caso.json` é gravado uma vez, não a cada pivô.
+- Cache HTTP e ledger **seguros para threads** (gravação serializada por arquivo).
+
 ## [3.0.6] — 2026-10-02
 
 ### Alterado

@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml"><img alt="tests" src="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml/badge.svg"></a>
   <a href="https://colab.research.google.com/github/Ridd1kulusC0d3r/FIO/blob/main/colab/FIO_Lab_Colab.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a>
-  <img alt="version 3.0.6" src="https://img.shields.io/badge/version-3.0.6-0B4F6C">
+  <img alt="version 3.1.0" src="https://img.shields.io/badge/version-3.1.0-0B4F6C">
   <img alt="Python 3.10–3.14" src="https://img.shields.io/badge/python-3.10%E2%80%933.14-3776AB">
   <img alt="zero dependencies" src="https://img.shields.io/badge/dependencies-none-0E7C6B">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-555"></a>
@@ -106,6 +106,8 @@ See [ARQUITETURA.md](ARQUITETURA.md) for the full design (Portuguese).
 | **Traceable claims** | `fio claims`: each conclusion points at the edge that supports it. | A conclusion with no evidence in the graph does not enter the report. |
 | **SHA-256 manifest** | `fio manifesto`: a hash of every deliverable tied to the ledger. | Detects a changed file, a tampered manifest and a rewritten ledger. |
 | **Calibration** | `fio lab calibrar`: declared confidence vs observed precision. | Measures whether "0.76" really means 76%. |
+| **Ready-made CNPJ index** | `fio indice baixar --uf MG --pronto` downloads a compressed, lean index in **seconds** (SHA-256 checked, resumable) instead of building it from GBs of Revenue data. | The Revenue server often blocks cloud IPs; the ready index is hosted on GitHub, which Colab reaches. |
+| **Fast, light search** | Network sources run in parallel; `--rapido` and `--orcamento` cap the work; ledger and graph hot paths fixed. | The offline pipeline went from 40 s to 3.8 s on a 60-group synthetic world. See [docs/guia/desempenho.md](docs/guia/desempenho.md). |
 | **Colab-ready workbench** | The full UI works behind Colab's proxy and inside iframes with blocked storage. | Covered by an end-to-end test that simulates exactly that. |
 
 Full list in the [CHANGELOG](CHANGELOG.md).

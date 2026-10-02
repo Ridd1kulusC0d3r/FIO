@@ -224,12 +224,12 @@ fio coletores
 Indice reverso dos Dados Abertos do CNPJ.
 
 ```text
-fio indice acao [--uf UF] [--mes MES] [--base BASE] [--origem ORIGEM] [--saida SAIDA] [--tmp TMP] [--manter-zips]
+fio indice acao [--uf UF] [--mes MES] [--base BASE] [--origem ORIGEM] [--saida SAIDA] [--tmp TMP] [--manter-zips] [--leve] [--pronto] [--de URL] [--para ARQUIVO]
 ```
 
 | Opção | Obrigatória | Descrição |
 |---|---|---|
-| `acao` (posicional) | sim | (valores: `baixar`, `construir`, `status`) |
+| `acao` (posicional) | sim | (valores: `baixar`, `construir`, `status`, `exportar`) |
 | `--uf` `UF` | não | filtrar por UF, ex.: MG ou MG,SP; reduz o indice final e a RAM, nao o trafego da Receita |
 | `--mes` `MES` | não | AAAA-MM; padrao: o mais recente publicado |
 | `--base` `BASE` | não | URL base da Receita, se o endereco mudar |
@@ -237,6 +237,10 @@ fio indice acao [--uf UF] [--mes MES] [--base BASE] [--origem ORIGEM] [--saida S
 | `--saida` `SAIDA` | não | arquivo sqlite de destino |
 | `--tmp` `TMP` | não | pasta temporaria dos ZIPs baixados |
 | `--manter-zips` | não | nao apagar os ZIPs depois de processar |
+| `--leve` | não | indice enxuto: so estabelecimentos com telefone/e-mail (ou matriz), sem endereco completo nem CNAE |
+| `--pronto` | não | baixar: em vez de montar pela Receita, baixa o indice ja pronto (segundos; precisa de --uf) |
+| `--de` `URL` | não | baixar --pronto: URL base dos arquivos (padrao: Release do repositorio) |
+| `--para` `ARQUIVO` | não | exportar: arquivo .sqlite.xz de saida (padrao: cnpj-UF.sqlite.xz) |
 
 ## `fio exposicao`
 

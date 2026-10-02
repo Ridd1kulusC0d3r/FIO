@@ -274,18 +274,22 @@ display(HTML(mapa_html(CasoEmDisco(CASO_ID).grafo(), altura=560)))
     md("""## 6. Índice da Receita Federal por UF (pelo caderno)
 A fonte mais forte do F.I.O.: telefone → empresa → sócios → filiais, sem internet depois de pronto. O mesmo índice pode ser montado pela tela da seção 3; aqui é a versão pelo caderno.
 
-**Roda em segundo plano e mostra o progresso ao vivo.** O downloader trabalha **um arquivo por vez** (alguns GB no total), filtra pela UF e apaga o ZIP antes do seguinte; leva de 10 a 40 minutos conforme a banda. A célula só **acompanha**: se você interromper (■), o trabalho continua e basta rodar a célula de novo para voltar a acompanhar.
+**`fonte: auto` (padrão) tenta primeiro o índice PRONTO** (um arquivo pequeno e já montado, baixado em segundos do GitHub) e só se ele não existir monta pela Receita. `pronto` aceita só o pronto; `receita` monta direto (o modo lento: alguns GB, de 10 a 40 minutos, e a Receita costuma bloquear IPs de nuvem).
+
+**Roda em segundo plano e mostra o progresso ao vivo.** Pela Receita, o downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte. A célula só **acompanha**: se você interromper (■), o trabalho continua e basta rodar a célula de novo para voltar a acompanhar.
 
 Se a listagem raiz da Receita resetar a conexão, o F.I.O. tenta `urllib`, depois `curl` e, por fim, sonda diretamente pastas mensais recentes. Informar `mes` (AAAA-MM) pula a listagem raiz. O filtro reduz o SQLite final e a RAM, mas não o tráfego, porque os arquivos de Estabelecimentos não são separados por UF.""")
     code('''
 #@title Montar índice (segundo plano, com progresso) { display-mode: "form" }
 executar = False  #@param {type:"boolean"}
 ufs = "MG"  #@param {type:"string"}
+fonte = "auto"  #@param ["auto", "pronto", "receita"]
 mes = ""  #@param {type:"string"}
 reconstruir = False  #@param {type:"boolean"}
 import threading, time, collections, datetime
 from IPython.display import clear_output
-from fio.receita_download import montar as montar_indice, validar_ufs
+from fio.receita_download import validar_ufs
+from fio.indice_pronto import instalar as montar_indice
 from fio.indice import IndiceCNPJ
 alvo = FIO_HOME / "cnpj.sqlite"
 
@@ -338,7 +342,7 @@ else:
         job["linhas"].append(f"{_hora()}  {msg}")
     def _rodar():
         try:
-            job["res"] = montar_indice(alvo, ufs=filtro, mes=mes or None,
+            job["res"] = montar_indice(alvo, filtro, mes=mes or None, fonte=fonte,
                                        pasta_tmp=FIO_HOME / "receita-tmp", log=_log)
         except BaseException as e:      # noqa: BLE001 - o erro vai para a tela
             job["erro"] = f"{type(e).__name__}: {e}"

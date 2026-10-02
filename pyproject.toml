@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fio-osint"
-version = "3.0.6"
+version = "3.1.0"
 description = "F.I.O. Lab (edição BR): laboratório OSINT de análise de vínculos a partir de telefones e registros públicos brasileiros"
 readme = "README.md"
 requires-python = ">=3.10"

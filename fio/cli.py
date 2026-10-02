@@ -291,11 +291,43 @@ def cmd_indice(args) -> int:
         return 2
 
     saida = Path(args.saida or (raiz() / "cnpj.sqlite")).expanduser()
+    if args.acao == "exportar":
+        from .indice_pronto import exportar
+        origem = Path(args.origem).expanduser() if args.origem else saida
+        uf = (args.uf or "").strip().upper() or None
+        if uf and "," in uf:
+            _p("erro: --uf do exportar aceita uma UF por arquivo (ex.: --uf MG)")
+            return 2
+        destino = Path(args.para or f"cnpj-{uf or 'todas'}.sqlite.xz")
+        try:
+            man = exportar(origem, destino, uf=uf, log=_p)
+        except FileNotFoundError as e:
+            _p(f"erro: {e}")
+            return 2
+        print(json.dumps(man, ensure_ascii=False, indent=2))
+        print(f"publique {destino} e {destino}.json (ex.: gh release upload indice-latest ...)")
+        return 0
+
+    if args.acao == "baixar" and args.pronto:
+        from .indice_pronto import importar, IndiceProntoIndisponivel
+        if not ufs:
+            _p("erro: --pronto exige --uf (uma ou mais UFs)")
+            return 2
+        saida.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            res = importar(saida, sorted(ufs), base=args.de, log=_p)
+        except IndiceProntoIndisponivel as e:
+            _p(f"erro: {e}")
+            return 3
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
     if args.acao == "baixar":
         from .receita_download import montar
         saida.parent.mkdir(parents=True, exist_ok=True)
         cont = montar(saida, ufs=ufs, mes=args.mes, base=args.base,
-                      pasta_tmp=args.tmp, manter_zips=args.manter_zips, log=_p)
+                      pasta_tmp=args.tmp, manter_zips=args.manter_zips, log=_p,
+                      leve=args.leve)
         print(json.dumps(cont, ensure_ascii=False, indent=2))
         return 0
 
@@ -308,7 +340,7 @@ def cmd_indice(args) -> int:
             _p(f"erro: origem inexistente ou nao e diretorio: {origem}")
             return 2
         saida.parent.mkdir(parents=True, exist_ok=True)
-        cont = construir(origem, saida, log=_p, ufs=ufs)
+        cont = construir(origem, saida, log=_p, ufs=ufs, leve=args.leve)
         print(json.dumps(cont, ensure_ascii=False, indent=2))
         print(f"indice em {saida}")
         return 0
@@ -500,7 +532,7 @@ def construir_parser() -> argparse.ArgumentParser:
     co.set_defaults(func=cmd_coletores)
 
     ix = sub.add_parser("indice", help="indice reverso dos Dados Abertos do CNPJ")
-    ix.add_argument("acao", choices=["baixar", "construir", "status"])
+    ix.add_argument("acao", choices=["baixar", "construir", "status", "exportar"])
     ix.add_argument("--uf", help="filtrar por UF, ex.: MG ou MG,SP; reduz o indice final e a RAM, nao o trafego da Receita")
     ix.add_argument("--mes", help="AAAA-MM; padrao: o mais recente publicado")
     ix.add_argument("--base", help="URL base da Receita, se o endereco mudar")
@@ -509,6 +541,12 @@ def construir_parser() -> argparse.ArgumentParser:
     ix.add_argument("--tmp", help="pasta temporaria dos ZIPs baixados")
     ix.add_argument("--manter-zips", action="store_true",
                     help="nao apagar os ZIPs depois de processar")
+    ix.add_argument("--leve", action="store_true",
+                    help="indice enxuto: so estabelecimentos com telefone/e-mail (ou matriz), sem endereco completo nem CNAE")
+    ix.add_argument("--pronto", action="store_true",
+                    help="baixar: em vez de montar pela Receita, baixa o indice ja pronto (segundos; precisa de --uf)")
+    ix.add_argument("--de", metavar="URL", help="baixar --pronto: URL base dos arquivos (padrao: Release do repositorio)")
+    ix.add_argument("--para", metavar="ARQUIVO", help="exportar: arquivo .sqlite.xz de saida (padrao: cnpj-UF.sqlite.xz)")
     ix.set_defaults(func=cmd_indice)
 
     ex = sub.add_parser("exposicao",
