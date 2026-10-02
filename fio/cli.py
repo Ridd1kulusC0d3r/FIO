@@ -329,6 +329,42 @@ def cmd_exposicao(args) -> int:
     return 0
 
 
+def cmd_manifesto(args) -> int:
+    from .evidencia import manifesto
+    cd = _caso(args)
+    if args.acao == "gerar":
+        destino = manifesto.gravar(cd.dir, cd.caso_id)
+        m = json.loads(destino.read_text(encoding="utf-8"))
+        print(f"manifesto gravado em {destino}")
+        print(f"{len(m['pecas'])} pecas; ledger com {m['ledger']['registros']} "
+              f"registros; sha256 {m['manifesto_sha256']}")
+        return 0
+    ok, problemas = manifesto.verificar(cd.dir)
+    print("manifesto integro" if ok else "MANIFESTO COM PROBLEMAS")
+    for p in problemas:
+        print(f"  - {p}")
+    return 0 if ok else 1
+
+
+def cmd_claims(args) -> int:
+    from .grafo import claims as cl
+    g = _caso(args).grafo()
+    lista = cl.derivar(g, args.confianca_minima)
+    problemas = cl.validar(lista, g)
+    if args.json:
+        print(cl.como_json(lista))
+    else:
+        for c in lista:
+            conf = f"{c.confianca:.2f}" if c.confianca is not None else "  - "
+            print(f"{c.id}  {c.tipo:<10} {conf}  {c.texto[:110]}")
+        print(f"\n{len(lista)} claims; "
+              + ("todos rastreaveis ao grafo" if not problemas
+                 else f"{len(problemas)} problema(s)"))
+    for p in problemas:
+        _p(f"  invalido: {p}")
+    return 1 if problemas else 0
+
+
 def cmd_diagnostico(args) -> int:
     from .diagnostico import sondar, imprimir
     print("Testando conexao com as fontes online (consultas neutras, sem pessoa)...\n")
@@ -472,6 +508,17 @@ def construir_parser() -> argparse.ArgumentParser:
 
     b = sub.add_parser("bases", help="bases legais aceitas")
     b.set_defaults(func=cmd_bases)
+
+    mf = sub.add_parser("manifesto", help="SHA-256 de cada peca do caso, amarrado ao ledger")
+    mf.add_argument("acao", choices=["gerar", "verificar"])
+    mf.add_argument("--caso", required=True)
+    mf.set_defaults(func=cmd_manifesto)
+
+    cm = sub.add_parser("claims", help="conclusoes do caso, cada uma com a evidencia que a sustenta")
+    cm.add_argument("--caso", required=True)
+    cm.add_argument("--confianca-minima", type=float, default=0.5)
+    cm.add_argument("--json", action="store_true")
+    cm.set_defaults(func=cmd_claims)
 
     dg = sub.add_parser("diagnostico", help="testar conexao com as fontes online")
     dg.set_defaults(func=cmd_diagnostico)

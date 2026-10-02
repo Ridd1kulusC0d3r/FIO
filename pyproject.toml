@@ -31,4 +31,4 @@ include = ["fio*"]
 
 [tool.setuptools.package-data]
 "fio.lab.bancada" = ["ui.html"]
-"fio" = ["dados_demo/*"]
+"fio" = ["dados_demo/*", "fontes.json"]

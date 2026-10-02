@@ -153,9 +153,15 @@ def prever_combinado(g: Grafo, telefones: list[str], limiar: float,
             podar and e.atributos.get("intermediario_provavel")))
 
 
-def avaliar(destino: Path, semente: int = 7, n_grupos: int = 12,
-            armadilhas: bool = True, ator: str = "lab",
-            log=lambda s: None) -> dict:
+def executar_mundo(destino: Path, semente: int = 7, n_grupos: int = 12,
+                   armadilhas: bool = True, ator: str = "lab",
+                   log=lambda s: None):
+    """Gera o mundo sintetico, roda o pipeline offline e devolve
+    (mundo, grafo, telefones, experimento, resumo_do_mundo).
+
+    Compartilhado pela avaliacao e pela calibracao: as duas medem contra o
+    mesmo gabarito, produzido exatamente do mesmo jeito.
+    """
     destino = Path(destino)
     ger = Gerador(semente)
     mundo = ger.gerar(n_grupos, armadilhas)
@@ -195,6 +201,15 @@ def avaliar(destino: Path, semente: int = 7, n_grupos: int = 12,
     exp = pl.executar(cd, ator, cfg, log=log)
     g = cd.grafo()
 
+    return mundo, g, telefones, exp, resumo
+
+
+def avaliar(destino: Path, semente: int = 7, n_grupos: int = 12,
+            armadilhas: bool = True, ator: str = "lab",
+            log=lambda s: None) -> dict:
+    destino = Path(destino)
+    mundo, g, telefones, exp, resumo = executar_mundo(
+        destino, semente, n_grupos, armadilhas, ator, log)
     real = _pares(mundo.telefones)
     resultado = {"semente": semente, "mundo": resumo, "experimento": exp.id,
                  "pares_verdadeiros": len(real), "heuristicas": {},

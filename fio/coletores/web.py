@@ -17,6 +17,7 @@ import re
 import urllib.parse
 
 from .base import Coletor, Contexto, Achado, registrar
+from .baseline import julgar, impossivel
 from ..grafo.modelo import Entidade, Fonte
 from ..core.normalize import normalizar, variantes, extrair_de_texto
 
@@ -91,11 +92,25 @@ class PegadaWeb(Coletor):
         vistos: set[str] = set()
         cliente = ctx.http()
 
+        # baseline: o que o indice devolve para algo que nao pode existir.
+        # Resposta real igual a esta e pagina padrao (sem resultados, bloqueio
+        # anti-robo, redirecionamento) e nao diz nada sobre o alvo.
+        busca = "https://lite.duckduckgo.com/lite/?q="
+        base_url = busca + urllib.parse.quote_plus(
+            f'"{impossivel(alvo.tipo)}"')
+        st_base, corpo_base = cliente.get(base_url, self.nome,
+                                          aceitar_json=False)
+
         for d in dorks:
-            url = ("https://lite.duckduckgo.com/lite/?q="
-                   + urllib.parse.quote_plus(d["consulta"]))
+            url = busca + urllib.parse.quote_plus(d["consulta"])
             status, corpo = cliente.get(url, self.nome, aceitar_json=False)
             if status != 200 or not corpo:
+                continue
+            v = julgar(status, corpo, st_base, corpo_base)
+            if v.soft404:
+                ctx.ledger.registrar(
+                    "coleta.baseline", alvo=url, coletor=self.nome,
+                    resumo="DESCARTADA: " + v.motivo, metadados=v.dict())
                 continue
             html = corpo.decode("utf-8", "replace")
 

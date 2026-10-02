@@ -13,6 +13,8 @@ analise de vinculo na vida real:
   socio-oculto    empresas do mesmo grupo com raizes de CNPJ diferentes,
                   ligadas apenas por socio em comum
   cnpj-alfa       parte das empresas novas ja no formato alfanumerico
+  rede-fachada    quatro empresas de raizes distintas abertas em lote, com
+                  um telefone e um CEP em comum e socios todos diferentes
 
 Seguranca: numeros gerados podem coincidir com linhas reais. Por isso todo
 caso sintetico e forcado a modo offline -- nenhum numero ficticio sai da
@@ -22,6 +24,7 @@ maquina -- e os dominios usam o TLD reservado .test (RFC 2606).
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import json
 import random
 from dataclasses import dataclass, field, asdict
@@ -66,6 +69,9 @@ class Mundo:
 class Gerador:
     def __init__(self, semente: int = 7):
         self.r = random.Random(semente)
+        # datas em fluxo proprio: nao desloca o sorteio dos demais atributos
+        # (mundos antigos continuam identicos ate a ultima armadilha)
+        self.rd = random.Random(semente * 7919 + 13)
         self.semente = semente
         self._usados: set[str] = set()
         self._raizes: set[str] = set()
@@ -131,6 +137,8 @@ class Gerador:
             # linhas corporativas: parte em bloco contiguo
             base_pref = f"9{self.r.randint(6000, 9999)}"
             base_suf = self.r.randint(100, 9000)
+            abertura = dt.date(2010, 1, 1) + dt.timedelta(
+                days=self.rd.randint(0, 365 * 12))
             for ei in range(n_emp):
                 socio_oculto = armadilhas and ei > 0 and self.r.random() < 0.5
                 parente = False
@@ -159,7 +167,9 @@ class Gerador:
                     "matriz": "1" if ordem == 1 else "2",
                     "fantasia": razao.split(" LTDA")[0], "uf": uf, "cep": cep,
                     "ddd1": ddd, "tel1": t1[2:], "ddd2": ddd if t2 else "",
-                    "tel2": t2[2:] if t2 else "", "email": email})
+                    "tel2": t2[2:] if t2 else "", "email": email,
+                    "inicio": (abertura + dt.timedelta(
+                        days=self.rd.randint(0, 700) * ei)).strftime("%Y%m%d")})
                 if not any(e["raiz"] == raiz for e in m.empresas):
                     m.empresas.append({"raiz": raiz, "razao": razao})
                     quem = socios
@@ -265,6 +275,43 @@ class Gerador:
         m.armadilhas.append({"tipo": "homonimo", "pessoa": nome,
                              "grupos": [g_j, g_k]})
 
+        # 7. rede-fachada: empresas de raizes distintas, abertas em lote,
+        #    mesma linha e mesmo CEP, cada uma com um socio diferente.
+        self._rede_fachada(m)
+
+    def _rede_fachada(self, m: Mundo, n: int = 4) -> None:
+        uf = self.r.choice(UFS_USADAS)
+        ddd = self.r.choice(UF_DDDS[uf])
+        compartilhado = self._movel(ddd)
+        cep = f"{CEP_BASE[uf] + self.r.randint(0, 900):05d}{self.r.randint(0, 999):03d}"
+        abertura = dt.date(2023, 3, 1) + dt.timedelta(days=self.rd.randint(0, 60))
+        gid = "G-FACHADA"
+        m.grupos[gid] = {"marca": "REDE DE FACHADA (armadilha)", "uf": uf,
+                         "ddd": ddd, "socios": [], "empresas": []}
+        m.telefones[f"+55{compartilhado}"] = gid
+        for i in range(n):
+            raiz = self._raiz()
+            cnpj = self._cnpj(raiz, 1)
+            propria = self._movel(ddd)
+            socio = self._pessoa()
+            marca = f"{self.r.choice(SOBRENOMES)} {self.r.choice(RAMOS)}"
+            m.estabelecimentos.append({
+                "raiz": raiz, "ordem": "0001", "dv": cnpj[-2:], "matriz": "1",
+                "fantasia": marca, "uf": uf, "cep": cep,
+                "ddd1": ddd, "tel1": compartilhado[2:],
+                "ddd2": ddd, "tel2": propria[2:],
+                "email": f"fachada{i}@gmail.com",
+                "inicio": (abertura + dt.timedelta(
+                    days=self.rd.randint(0, 12))).strftime("%Y%m%d")})
+            m.empresas.append({"raiz": raiz, "razao": f"{marca} LTDA"})
+            m.socios.append({"raiz": raiz, "nome": socio,
+                             "doc": self._cpf_mascara(uf)})
+            m.grupos[gid]["empresas"].append(cnpj)
+            m.telefones[f"+55{propria}"] = gid
+        m.armadilhas.append({"tipo": "rede-fachada",
+                             "telefone": f"+55{compartilhado}",
+                             "empresas": list(m.grupos[gid]["empresas"])})
+
     # --------------------------------------------------------- gravacao
     def gravar(self, m: Mundo, destino: Path) -> dict:
         destino.mkdir(parents=True, exist_ok=True)
@@ -279,7 +326,7 @@ class Gerador:
         est_linhas = []
         for e in m.estabelecimentos:
             est_linhas.append([e["raiz"], e["ordem"], e["dv"], e["matriz"],
-                               e["fantasia"], e.get("situacao", "02"), "", "0", "", "", "01/01/2020",
+                               e["fantasia"], e.get("situacao", "02"), "", "0", "", "", e.get("inicio", "20200101"),
                                "4930202", "", "RUA", "FICTICIA", "100", "", "CENTRO",
                                e["cep"], e["uf"], "0001", e["ddd1"], e["tel1"],
                                e["ddd2"], e["tel2"], "", "", e["email"], "", ""])
