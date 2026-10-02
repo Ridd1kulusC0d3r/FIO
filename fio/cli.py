@@ -120,7 +120,8 @@ def cmd_investigar(args) -> int:
         res = investigar(cd, _ator(args), coletores=cols,
                          profundidade=args.profundidade,
                          permitir_rede=not args.offline,
-                         intervalo=args.intervalo,
+                         intervalo=args.intervalo, paralelo=args.paralelo,
+                         orcamento=args.orcamento, rapido=args.rapido,
                          expandir=args.expandir_escopo,
                          log=_p if args.verboso else (lambda s: None))
     except ViolacaoDeEscopo as e:
@@ -438,6 +439,12 @@ def construir_parser() -> argparse.ArgumentParser:
     i.add_argument("--coletores", help="lista separada por virgula")
     i.add_argument("--profundidade", type=int, default=1)
     i.add_argument("--offline", action="store_true", help="so coletores locais")
+    i.add_argument("--paralelo", type=int, default=4,
+                   help="coletores de rede simultaneos por alvo (1 = em sequencia)")
+    i.add_argument("--orcamento", type=float, default=None, metavar="SEGUNDOS",
+                   help="limite de tempo de coleta; esgotado, nao abre novas consultas")
+    i.add_argument("--rapido", action="store_true",
+                   help="modo leve: fontes lentas fazem menos consultas (ex.: 3 recortes de busca)")
     i.add_argument("--intervalo", type=float, default=1.5,
                    help="segundos entre requisicoes ao mesmo host")
     i.add_argument("--expandir-escopo", action="store_true",

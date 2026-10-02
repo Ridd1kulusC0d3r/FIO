@@ -82,6 +82,10 @@ class PegadaWeb(Coletor):
 
     def coletar(self, alvo: Entidade, ctx: Contexto) -> list[Achado]:
         dorks = montar_dorks(alvo)
+        if ctx.rapido:
+            # modo leve: so os recortes de maior retorno (pagina oficial, cadastro
+            # empresarial e institucional); os outros sete custam ~1,5 s cada
+            dorks = [d for d in dorks if d["recorte"] in ("institucional", "empresarial", "oficial")]
         alvo.atributos["dorks"] = dorks
         ctx.ledger.registrar(
             "analise.dorks", alvo=alvo.valor, coletor=self.nome,

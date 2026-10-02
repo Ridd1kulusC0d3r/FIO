@@ -4,6 +4,7 @@ claims, manifesto, calibracao, documentos financeiros e coletores passivos."""
 import contextlib
 import json
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -562,6 +563,125 @@ class TestReceitaInacessivel(unittest.TestCase):
         self.assertTrue(_sem_rota("Network is unreachable"))
         self.assertFalse(_sem_rota("HTTP Error 404: Not Found"))
         self.assertFalse(_sem_rota("Connection reset by peer"))
+
+
+# ------------------------------------------------- coleta em paralelo
+class TestColetaParalela(unittest.TestCase):
+    """Fontes de rede de um mesmo alvo rodam juntas; o resultado nao muda."""
+
+    def _montar(self, tmp, n=4, espera=0.4):
+        from fio.coletores.base import Coletor, Achado, REGISTRO
+        from fio.caso import CasoEmDisco
+        from fio.politica import Caso
+
+        class Lenta(Coletor):
+            requer_rede = True
+            tipos_alvo = ("dominio",)
+            admiralty = "B2"
+
+            def coletar(self, alvo, ctx):
+                time.sleep(espera)
+                return [Achado(alvo, "rel", Entidade("dominio", f"{self.nome}.exemplo.test"),
+                               Fonte(self.nome, "B2"))]
+
+        nomes = []
+        for i in range(n):
+            c = type(f"Lenta{i}", (Lenta,), {"nome": f"lenta{i}"})()
+            REGISTRO[c.nome] = c
+            nomes.append(c.nome)
+        cd = CasoEmDisco("PAR", base=Path(tmp))
+        cd.criar(Caso(id="PAR", titulo="paralelo", base_legal="pesquisa-academica",
+                      finalidade="medir o ganho da coleta em paralelo",
+                      responsavel="ci", escopo=["exemplo.test"]), "ci")
+        cd.add_alvo(Entidade("dominio", "exemplo.test"), "ci")
+        return cd, nomes
+
+    def test_paralelo_e_mais_rapido_e_igual(self):
+        from fio.motor import investigar
+        from fio.coletores.base import REGISTRO
+        with tempfile.TemporaryDirectory() as t1, tempfile.TemporaryDirectory() as t2:
+            cd1, nomes = self._montar(t1)
+            t = time.perf_counter()
+            investigar(cd1, "ci", coletores=nomes, paralelo=1, intervalo=0)
+            seq = time.perf_counter() - t
+            cd2, _ = self._montar(t2)
+            t = time.perf_counter()
+            investigar(cd2, "ci", coletores=nomes, paralelo=4, intervalo=0)
+            par = time.perf_counter() - t
+            for n in nomes:
+                REGISTRO.pop(n, None)
+            self.assertGreaterEqual(seq, 1.5)           # 4 x 0,4 s em sequencia
+            self.assertLess(par, seq * 0.6)             # em paralelo: ~0,4 s
+            g1, g2 = cd1.grafo(), cd2.grafo()
+            self.assertEqual(sorted(g1.entidades), sorted(g2.entidades))
+            self.assertEqual(sorted(g1.arestas), sorted(g2.arestas))
+            # a cadeia de custodia sobrevive a gravacoes concorrentes
+            for cd in (cd1, cd2):
+                ok, probs = cd.ledger().verificar()
+                self.assertTrue(ok, probs)
+
+    def test_orcamento_para_de_abrir_consultas(self):
+        from fio.motor import investigar
+        from fio.coletores.base import REGISTRO
+        with tempfile.TemporaryDirectory() as t:
+            cd, nomes = self._montar(t, n=2, espera=0.3)
+            # segundo alvo para o orcamento (0 s) cortar antes de consulta-lo
+            cd.add_alvo(Entidade("dominio", "outro.exemplo.test"), "ci")
+            investigar(cd, "ci", coletores=nomes, paralelo=1, intervalo=0, orcamento=0.0)
+            for n in nomes:
+                REGISTRO.pop(n, None)
+            acoes = [r.acao for r in cd.ledger().registros()]
+            self.assertIn("orcamento.esgotado", acoes)
+
+
+class TestLedgerRapido(unittest.TestCase):
+    def test_gravar_nao_reler_o_arquivo_inteiro(self):
+        with tempfile.TemporaryDirectory() as t:
+            led = Ledger(Path(t), "T", "ci")
+            for i in range(300):
+                led.registrar("a", alvo=str(i), metadados={"x": "y" * 50})
+            ini = time.perf_counter()
+            for i in range(300):
+                led.registrar("b", alvo=str(i))
+            dt = time.perf_counter() - ini
+            self.assertLess(dt, 1.5)                    # antes: O(n^2), varios segundos
+            ok, probs = led.verificar()
+            self.assertTrue(ok, probs)
+            self.assertEqual(len(led), 600)
+
+    def test_instancias_diferentes_encadeiam_corretamente(self):
+        with tempfile.TemporaryDirectory() as t:
+            a, b = Ledger(Path(t), "T", "ci"), Ledger(Path(t), "T", "ci")
+            for i in range(20):
+                (a if i % 2 else b).registrar("x", alvo=str(i))
+            ok, probs = a.verificar()
+            self.assertTrue(ok, probs)
+
+    def test_registro_longo_com_ultima_linha_maior_que_o_bloco(self):
+        with tempfile.TemporaryDirectory() as t:
+            led = Ledger(Path(t), "T", "ci")
+            led.registrar("curto")
+            led.registrar("longo", metadados={"lixo": "z" * 30000})
+            r = led.registrar("depois")
+            self.assertEqual(r.seq, 3)
+            self.assertTrue(led.verificar()[0])
+
+
+class TestGrafoRapido(unittest.TestCase):
+    def test_vizinhos_e_caminho_com_cache_invalidam_ao_crescer(self):
+        from fio.grafo.modelo import Aresta
+        g = Grafo("T")
+        ents = [g.add_entidade(Entidade("telefone", f"+55319999{i:04d}")) for i in range(5)]
+        for a, b in zip(ents, ents[1:]):
+            g.add_aresta(Aresta(a.id, b.id, "r", [Fonte("t", "B2")]))
+        self.assertEqual(len(g.vizinhos(ents[2].id)), 2)
+        self.assertEqual(g.caminho(ents[0].id, ents[4].id),
+                         [e.id for e in ents])
+        # atalho: o cache precisa perceber a aresta nova
+        g.add_aresta(Aresta(ents[0].id, ents[4].id, "atalho", [Fonte("t", "B2")]))
+        self.assertEqual(len(g.vizinhos(ents[0].id)), 2)
+        self.assertEqual(g.caminho(ents[0].id, ents[4].id), [ents[0].id, ents[4].id])
+        self.assertIsNone(g.caminho(ents[0].id, "telefone:inexistente"))
 
 
 if __name__ == "__main__":

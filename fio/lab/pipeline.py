@@ -31,6 +31,9 @@ class Config:
     offline: bool = False
     expandir_escopo: bool = False
     intervalo: float = 1.5
+    paralelo: int = 4                     # coletores de rede simultaneos por alvo
+    orcamento: float | None = None        # segundos de coleta (None = sem limite)
+    rapido: bool = False                  # modo leve: menos consultas por fonte
     relatorio: str | None = None          # caminho .html
     laudo: str | None = None              # caminho .html do laudo
     modelo_laudo: str = "laudo"
@@ -95,7 +98,8 @@ def executar(cd: CasoEmDisco, ator: str, cfg: Config,
             r = investigar(cd, ator, coletores=cfg.coletores,
                            profundidade=cfg.profundidade,
                            permitir_rede=not cfg.offline,
-                           intervalo=cfg.intervalo,
+                           intervalo=cfg.intervalo, paralelo=cfg.paralelo,
+                           orcamento=cfg.orcamento, rapido=cfg.rapido,
                            expandir=cfg.expandir_escopo,
                            segredos_extra=cfg.extras.get("segredos"), log=log)
             return {"coletores": r.executados, "entidades_novas": r.novas_entidades,

@@ -98,7 +98,7 @@ fio alvo --caso CASO --tipo TIPO --valor VALOR [--ddd DDD]
 Rodar os coletores e pivotar.
 
 ```text
-fio investigar --caso CASO [--coletores COLETORES] [--profundidade PROFUNDIDADE] [--offline] [--intervalo INTERVALO] [--expandir-escopo] [-v]
+fio investigar --caso CASO [--coletores COLETORES] [--profundidade PROFUNDIDADE] [--offline] [--paralelo PARALELO] [--orcamento SEGUNDOS] [--rapido] [--intervalo INTERVALO] [--expandir-escopo] [-v]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -107,6 +107,9 @@ fio investigar --caso CASO [--coletores COLETORES] [--profundidade PROFUNDIDADE]
 | `--coletores` `COLETORES` | não | lista separada por virgula |
 | `--profundidade` `PROFUNDIDADE` | não | (padrão: `1`) |
 | `--offline` | não | so coletores locais |
+| `--paralelo` `PARALELO` | não | coletores de rede simultaneos por alvo (1 = em sequencia) (padrão: `4`) |
+| `--orcamento` `SEGUNDOS` | não | limite de tempo de coleta; esgotado, nao abre novas consultas |
+| `--rapido` | não | modo leve: fontes lentas fazem menos consultas (ex.: 3 recortes de busca) |
 | `--intervalo` `INTERVALO` | não | segundos entre requisicoes ao mesmo host (padrão: `1.5`) |
 | `--expandir-escopo` | não | autoriza pivotar sobre entidades derivadas da coleta; cada inclusao fica registrada no ledger |
 | `-v`, `--verboso` | não |  |
@@ -386,7 +389,7 @@ fio laudo --caso CASO --saida SAIDA [--modelo MODELO]
 Pipeline, experimentos, avaliacao e bancada web.
 
 ```text
-fio lab acao [--indice INDICE] [--municipio MUNICIPIO] [--max-raizes MAX_RAIZES] [--caso CASO] [--coletores COLETORES] [--profundidade PROFUNDIDADE] [--offline] [--expandir-escopo] [--intervalo INTERVALO] [--relatorio RELATORIO] [--laudo LAUDO] [--modelo MODELO] [--descricao DESCRICAO] [--a A] [--b B] [--semente SEMENTE] [--sementes SEMENTES] [--grupos GRUPOS] [--saida SAIDA] [--porta PORTA] [--sem-navegador] [--permitir-host PERMITIR_HOST] [-v]
+fio lab acao [--indice INDICE] [--municipio MUNICIPIO] [--max-raizes MAX_RAIZES] [--caso CASO] [--coletores COLETORES] [--profundidade PROFUNDIDADE] [--offline] [--expandir-escopo] [--intervalo INTERVALO] [--paralelo PARALELO] [--orcamento SEGUNDOS] [--rapido] [--relatorio RELATORIO] [--laudo LAUDO] [--modelo MODELO] [--descricao DESCRICAO] [--a A] [--b B] [--semente SEMENTE] [--sementes SEMENTES] [--grupos GRUPOS] [--saida SAIDA] [--porta PORTA] [--sem-navegador] [--permitir-host PERMITIR_HOST] [-v]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -401,6 +404,9 @@ fio lab acao [--indice INDICE] [--municipio MUNICIPIO] [--max-raizes MAX_RAIZES]
 | `--offline` | não |  |
 | `--expandir-escopo` | não |  |
 | `--intervalo` `INTERVALO` | não | (padrão: `1.5`) |
+| `--paralelo` `PARALELO` | não | pipeline: coletores de rede simultaneos por alvo (padrão: `4`) |
+| `--orcamento` `SEGUNDOS` | não | pipeline: limite de tempo de coleta |
+| `--rapido` | não | pipeline: modo leve (menos consultas por fonte) |
 | `--relatorio` `RELATORIO` | não |  |
 | `--laudo` `LAUDO` | não |  |
 | `--modelo` `MODELO` | não | (valores: `laudo`, `relint`; padrão: `laudo`) |

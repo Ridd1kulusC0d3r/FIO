@@ -14,6 +14,7 @@ import gzip
 import json
 import os
 import ssl
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -51,7 +52,9 @@ class Contexto:
     intervalo: float = 1.5           # segundos entre requisicoes por host
     timeout: int = 20
     segredos: dict = field(default_factory=dict)
+    rapido: bool = False             # modo leve: menos consultas por fonte
     _ultimo: dict = field(default_factory=dict)
+    _trava: threading.Lock = field(default_factory=threading.Lock)
 
     def http(self) -> "ClienteHTTP":
         return ClienteHTTP(self)
@@ -83,11 +86,14 @@ class ClienteHTTP:
             return em_cache
 
         host = url.split("/")[2] if "://" in url else url
-        agora = time.time()
-        ultimo = self.ctx._ultimo.get(host, 0.0)
-        if agora - ultimo < self.ctx.intervalo:
-            time.sleep(self.ctx.intervalo - (agora - ultimo))
-        self.ctx._ultimo[host] = time.time()
+        # reserva a "vez" do host sob trava: threads de hosts diferentes nao
+        # esperam umas as outras, e threads do MESMO host entram em fila
+        with self.ctx._trava:
+            agora = time.time()
+            vez = max(agora, self.ctx._ultimo.get(host, 0.0) + self.ctx.intervalo)
+            self.ctx._ultimo[host] = vez
+        if vez > agora:
+            time.sleep(vez - agora)
 
         cab = {"User-Agent": UA, "Accept-Encoding": "gzip",
                "Accept": "application/json, text/html;q=0.8"

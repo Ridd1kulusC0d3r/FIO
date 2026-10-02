@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+import threading
 import time
 from pathlib import Path
 
@@ -16,7 +17,9 @@ class CacheHTTP:
     def __init__(self, caminho: str | Path, ttl_segundos: int = 86400):
         self.caminho = str(caminho)
         self.ttl = ttl_segundos
-        self._con = sqlite3.connect(self.caminho)
+        # coletores de rede rodam em threads: a conexao e compartilhada sob trava
+        self._con = sqlite3.connect(self.caminho, check_same_thread=False)
+        self._trava = threading.Lock()
         self._con.execute(
             "CREATE TABLE IF NOT EXISTS cache ("
             " chave TEXT PRIMARY KEY, url TEXT, status INTEGER,"
@@ -29,10 +32,11 @@ class CacheHTTP:
         return hashlib.sha256((url + "|" + extra).encode()).hexdigest()
 
     def obter(self, url: str, extra: str = "") -> tuple[int, bytes] | None:
-        cur = self._con.execute(
-            "SELECT status, corpo, ts FROM cache WHERE chave=?", (self._k(url, extra),)
-        )
-        linha = cur.fetchone()
+        with self._trava:
+            cur = self._con.execute(
+                "SELECT status, corpo, ts FROM cache WHERE chave=?", (self._k(url, extra),)
+            )
+            linha = cur.fetchone()
         if not linha:
             return None
         status, corpo, ts = linha
@@ -41,11 +45,12 @@ class CacheHTTP:
         return (status, corpo)
 
     def guardar(self, url: str, status: int, corpo: bytes, extra: str = "") -> None:
-        self._con.execute(
-            "INSERT OR REPLACE INTO cache VALUES (?,?,?,?,?)",
-            (self._k(url, extra), url, status, corpo, time.time()),
-        )
-        self._con.commit()
+        with self._trava:
+            self._con.execute(
+                "INSERT OR REPLACE INTO cache VALUES (?,?,?,?,?)",
+                (self._k(url, extra), url, status, corpo, time.time()),
+            )
+            self._con.commit()
 
     def fechar(self) -> None:
         self._con.close()
