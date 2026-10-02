@@ -8,5 +8,5 @@ declarada e escopo autorizado. Toda evidencia entra num ledger encadeado
 por hash. Nada e inferido sem fonte registrada.
 """
 
-__version__ = "2.2.0"
+__version__ = "3.0.0"
 __all__ = ["__version__"]
