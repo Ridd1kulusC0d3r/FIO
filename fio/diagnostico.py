@@ -73,7 +73,7 @@ def _ctx():
 
 
 def sondar(segredos: dict | None = None, timeout: int = 12,
-           fontes: list[dict] | None = None) -> list[dict]:
+           fontes: list[dict] | None = None, espera: float = 2.0) -> list[dict]:
     """Uma consulta neutra por fonte, mais a checagem do canario.
 
     `ok` e verdadeiro so se a fonte respondeu E a resposta tem a forma
@@ -94,22 +94,33 @@ def sondar(segredos: dict | None = None, timeout: int = 12,
                 continue
             cab["chave-api-dados"] = segredos[segredo]
         t = time.perf_counter()
-        corpo = b""
-        try:
-            req = urllib.request.Request(url, headers=cab)
-            with urllib.request.urlopen(req, timeout=timeout, context=_ctx()) as r:
-                corpo = r.read(262144)
-                status, ok = r.status, 200 <= r.status < 400
-        except urllib.error.HTTPError as e:
-            status, ok = e.code, False
-        except Exception as e:
-            status, ok = f"{type(e).__name__}", False
+        # uma segunda tentativa cobre soltura momentanea (reset de conexao,
+        # 5xx, corpo truncado); falha que se repete e falha de verdade
+        for tentativa in (1, 2):
+            corpo = b""
+            try:
+                req = urllib.request.Request(url, headers=cab)
+                with urllib.request.urlopen(req, timeout=timeout, context=_ctx()) as r:
+                    corpo = r.read(262144)
+                    status, ok = r.status, 200 <= r.status < 400
+            except urllib.error.HTTPError as e:
+                status, ok = e.code, False
+            except Exception as e:
+                status, ok = f"{type(e).__name__}", False
+            contrato, motivo = (checar_canario(corpo, f.get("canario") or {})
+                                if ok else (None, ""))
+            transitorio = (isinstance(status, str)
+                           or (isinstance(status, int) and status >= 500)
+                           or contrato is False)
+            if (ok and contrato is not False) or not transitorio or tentativa == 2:
+                break
+            time.sleep(espera)
         ms = round((time.perf_counter() - t) * 1000)
-        dica, contrato = "", None
-        if ok:
-            contrato, motivo = checar_canario(corpo, f.get("canario") or {})
-            if contrato is False:
-                ok, dica = False, f"contrato quebrado: {motivo}"
+        dica = ""
+        if ok and contrato is False:
+            ok, dica = False, f"contrato quebrado: {motivo}"
+        elif ok:
+            pass
         elif status == 429:
             dica = "limite de requisicoes da fonte; tente mais tarde"
         elif isinstance(status, str):
@@ -117,6 +128,12 @@ def sondar(segredos: dict | None = None, timeout: int = 12,
                     "corporativo ou firewall")
         else:
             dica = f"a fonte respondeu HTTP {status}"
+        if not ok and f.get("instavel"):
+            # fonte comunitaria conhecida por oscilar: aparece, mas nao reprova
+            out.append({"coletor": coletor, "fonte": nome, "ok": None,
+                        "status": status, "ms": ms, "contrato": contrato,
+                        "dica": f"fonte instavel (nao conta como falha): {dica}"})
+            continue
         out.append({"coletor": coletor, "fonte": nome, "ok": ok,
                     "status": status, "ms": ms, "dica": dica,
                     "contrato": contrato})

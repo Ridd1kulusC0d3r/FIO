@@ -2,6 +2,16 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.0.2] — 2026-10-02
+
+### Corrigido
+- **Colab: a tela completa da bancada não carregava atrás do proxy do Colab.** `ui.html` chamava `/api` com caminho absoluto e lia `sessionStorage` sem proteção; dentro do iframe, com armazenamento bloqueado ou prefixo de caminho, o script parava e a página ficava em branco. A base da API agora é relativa à página e o armazenamento é protegido. Coberto por teste E2E que simula proxy com prefixo, iframe de outra origem e `sessionStorage` bloqueado.
+- **CI no Windows:** o helper dos testes da 3.0 deixava o SQLite do cache aberto e o Windows não apagava a pasta temporária.
+- **Contrato das fontes:** `fio diagnostico` tenta uma segunda vez antes de reprovar (reset de conexão, 5xx, corpo truncado) e fontes comunitárias conhecidas por oscilar (`crt.sh`, Querido Diário) aparecem como "instável" sem reprovar o job.
+
+### Adicionado
+- **Colab:** a célula "Preparar sessão" informa Python, CPUs, RAM e disco e avisa quando os recursos não bastam para o índice da Receita.
+
 ## [3.0.1] — 2026-10-02
 
 ### Alterado
