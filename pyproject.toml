@@ -32,3 +32,10 @@ include = ["fio*"]
 [tool.setuptools.package-data]
 "fio.lab.bancada" = ["ui.html"]
 "fio" = ["dados_demo/*", "fontes.json"]
+
+[tool.ruff]
+line-length = 110
+extend-exclude = ["demo"]
+
+[tool.ruff.lint]
+select = ["E9", "F"]
