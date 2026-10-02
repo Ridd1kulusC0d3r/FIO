@@ -159,7 +159,7 @@ class TestBenchmarkReal(unittest.TestCase):
 
 class TestModoColab(unittest.TestCase):
     def test_modo_colab_libera_iframe_e_host_mas_exige_token(self):
-        import json as _j, os, time, urllib.request, urllib.error
+        import os, time, urllib.request, urllib.error
         from fio.lab.bancada.servidor import servir, Estado
         with tempfile.TemporaryDirectory() as d:
             os.environ["FIO_HOME"] = d

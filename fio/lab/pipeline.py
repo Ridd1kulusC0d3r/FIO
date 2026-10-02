@@ -20,7 +20,7 @@ from ..grafo.clusters import detectar_clusters, pontes
 from ..receitas import versoes_fontes
 from ..caso import raiz
 from . import plugins
-from .experimentos import Registro, sha_grafo
+from .experimentos import Experimento, Registro, sha_grafo
 
 
 @dataclass

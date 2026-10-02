@@ -19,7 +19,6 @@ Cuidados de desenho:
 
 from __future__ import annotations
 
-import json
 import random
 import re
 import sqlite3
@@ -71,7 +70,6 @@ def benchmark(indice: str | Path, municipio: str | None = None, max_raizes: int 
         "SELECT COUNT(DISTINCT cnpj_basico) FROM estabelecimento WHERE e164_1=? OR e164_2=?",
         (t, t)).fetchone()[0] for t in tel_raizes}
     ouro = {t: next(iter(r)) for t, r in tel_raizes.items() if len(r) == 1}
-    est_por_cnpj = {e["cnpj"]: e for e in est}
 
     def pares_de(grupo_por_tel: dict[str, str]) -> set:
         """Pares de telefones-ouro do mesmo grupo, excluindo os do mesmo estabelecimento."""

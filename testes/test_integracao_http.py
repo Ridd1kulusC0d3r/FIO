@@ -263,7 +263,7 @@ class TestColetoresLocais(unittest.TestCase):
 
 class TestPluginsERelatorios(unittest.TestCase):
     def test_plugin_de_exemplo_carrega_e_entra_na_assinatura(self):
-        import os, shutil
+        import shutil
         from fio.lab import plugins
         from fio.analise import ANALISADORES
         with tempfile.TemporaryDirectory() as d:

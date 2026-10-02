@@ -27,7 +27,7 @@ import csv
 import datetime as dt
 import json
 import random
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..core.documentos import cnpj_dv, REGIAO_FISCAL_CPF

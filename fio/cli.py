@@ -206,6 +206,11 @@ def cmd_relatorio(args) -> int:
         print(f"vinculos CSV: {args.csv}")
     led.registrar("relatorio.gerado", alvo=str(saida),
                   resumo=f"{len(g.entidades)} entidades, {len(g.arestas)} vinculos")
+    if args.manifesto:
+        from .evidencia import manifesto
+        extras = [Path(x) for x in (args.saida, args.markdown, args.csv) if x]
+        destino = manifesto.gravar(cd.dir, cd.caso_id, extras)
+        print(f"manifesto SHA-256 (inclui os relatorios): {destino}")
     if not verif[0]:
         _p("ATENCAO: cadeia de custodia comprometida; ver secao 9 do relatorio")
     return 0
@@ -462,6 +467,8 @@ def construir_parser() -> argparse.ArgumentParser:
     r.add_argument("--saida", required=True, help="arquivo .html")
     r.add_argument("--markdown", help="tambem gravar .md")
     r.add_argument("--csv", help="tambem gravar vinculos em .csv")
+    r.add_argument("--manifesto", action="store_true",
+                   help="gravar o manifesto SHA-256 do caso e dos relatorios gerados")
     r.set_defaults(func=cmd_relatorio)
 
     le = sub.add_parser("ledger", help="cadeia de custodia")
