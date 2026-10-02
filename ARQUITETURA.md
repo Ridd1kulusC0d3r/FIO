@@ -33,7 +33,7 @@
 | `fio.receitas` | indexador universal de dados abertos (CSV/JSON/ZIP → sqlite) |
 | `fio.indice` | índice reverso dos Dados Abertos do CNPJ; filtro por UF em duas passagens com escopo SQLite (RAM limitada) |
 | `fio.receita_download` | descobre o mês mais recente; downloader retomável com Range/If-Range; valida cache, processa e apaga arquivo por arquivo |
-| `fio.analise` | analisadores sobre o grafo, sem rede |
+| `fio.analise` | analisadores sobre o grafo, sem rede: coerência geográfica, intermediários, sanção, `lote-de-registro`, `reuso-de-linha` |
 | `fio.motor` | pivô por profundidade, com escopo em cada salto |
 | `fio.lab.pipeline` | estágios, métricas, experimento |
 | `fio.lab.experimentos` | registro, snapshot do grafo, comparação |
@@ -44,7 +44,14 @@
 | `fio.lab.bancada` | servidor local + SPA |
 | `fio.relatorio` | relatório técnico, Markdown, laudo/RELINT, mapa interativo para cadernos |
 | `fio.lab.benchmark_real` | benchmark com a raiz do CNPJ como gabarito oculto |
-| `tools/` | gerador do caderno do Colab e configurador do repositório |
+| `fio.coletores.baseline` | baseline diferencial: descarta resposta indistinguível da de um valor impossível |
+| `fio.coletores.passivos` | `crtsh` (Certificate Transparency) e `wayback` |
+| `fio.core.financeiro` | boleto, chave PIX (EVP), CNH, CNS |
+| `fio.grafo.claims` | conclusões ligadas à evidência do grafo |
+| `fio.evidencia.manifesto` | SHA-256 das peças do caso amarrado ao ledger |
+| `fio.lab.calibracao` | confiabilidade, ECE e regressão isotônica contra o gabarito sintético |
+| `fio/fontes.json` + `fio.diagnostico` | registro declarativo de fontes com canário de contrato |
+| `tools/` | gerador do caderno do Colab, da referência da CLI, da mídia, checador de links e configurador do repositório |
 
 ## Decisões de projeto
 

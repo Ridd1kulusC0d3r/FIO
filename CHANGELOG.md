@@ -10,6 +10,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões s
 - **Contrato das fontes:** `fio diagnostico` tenta uma segunda vez antes de reprovar (reset de conexão, 5xx, corpo truncado) e fontes comunitárias conhecidas por oscilar (`crt.sh`, Querido Diário) aparecem como "instável" sem reprovar o job.
 
 ### Adicionado
+- **Documentação:** home do repositório em inglês (`README.md`) com versão em português (`README.pt-BR.md`); guias novos em `docs/guia/` (primeiros passos, conceitos, interpretando resultados, receitas de uso, Colab, bancada, configuração, solução de problemas, detalhe por coletor); **referência da CLI gerada do `argparse`** (`tools/gerar_referencia_cli.py`) e verificador de links (`tools/checar_links.py`), ambos no CI.
 - **Colab:** a célula "Preparar sessão" informa Python, CPUs, RAM e disco e avisa quando os recursos não bastam para o índice da Receita.
 
 ## [3.0.1] — 2026-10-02
