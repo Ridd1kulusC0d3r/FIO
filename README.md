@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml"><img alt="tests" src="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml/badge.svg"></a>
   <a href="https://colab.research.google.com/github/Ridd1kulusC0d3r/FIO/blob/main/colab/FIO_Lab_Colab.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a>
-  <img alt="version 3.0.2" src="https://img.shields.io/badge/version-3.0.2-0B4F6C">
+  <img alt="version 3.0.3" src="https://img.shields.io/badge/version-3.0.3-0B4F6C">
   <img alt="Python 3.10–3.14" src="https://img.shields.io/badge/python-3.10%E2%80%933.14-3776AB">
   <img alt="zero dependencies" src="https://img.shields.io/badge/dependencies-none-0E7C6B">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-555"></a>

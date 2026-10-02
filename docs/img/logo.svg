@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="F.I.O. Lab">
+  <title>F.I.O. Lab</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E7C6B"/>
+      <stop offset="1" stop-color="#0B4F6C"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)"/>
+  <!-- o fio: uma linha que costura tres pontos -->
+  <path d="M26 92 C 44 92, 44 38, 64 38 S 84 90, 102 90" fill="none"
+        stroke="#F2F7F6" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+  <circle cx="26" cy="92" r="9" fill="#F2F7F6"/>
+  <circle cx="64" cy="38" r="11" fill="#FFB547"/>
+  <circle cx="102" cy="90" r="9" fill="#F2F7F6"/>
+  <circle cx="64" cy="38" r="4" fill="#0B4F6C"/>
+</svg>

@@ -71,11 +71,39 @@ def _linha(a: argparse.Action) -> str:
     return f"| {_opcao(a)} | {obrig} | {desc} |"
 
 
+def _uso(nome: str, p: argparse.ArgumentParser) -> str:
+    """Linha de uso montada a mao.
+
+    `format_usage()` quebra linhas conforme a largura do terminal e muda de
+    formato entre versoes do Python (3.12/3.13 mexeram em metavar e
+    alinhamento), o que faria o `--checar` do CI divergir da maquina de quem
+    gerou. Montada daqui, a saida e a mesma em qualquer Python.
+    """
+    partes = [nome]
+    for a in p._actions:
+        if isinstance(a, (argparse._HelpAction, argparse._VersionAction)):
+            continue
+        if isinstance(a, argparse._SubParsersAction):
+            partes.append("{" + ",".join(a.choices) + "} ...")
+            continue
+        if a.option_strings:
+            termo = a.option_strings[0]
+            if not isinstance(a, (argparse._StoreTrueAction, argparse._StoreFalseAction)):
+                termo += f" {a.metavar or a.dest.upper()}"
+                if a.nargs == "*":
+                    termo += " ..."
+            partes.append(termo if a.required else f"[{termo}]")
+        else:
+            termo = a.metavar or a.dest
+            partes.append(termo if a.nargs not in ("?", "*") else f"[{termo}]")
+    return " ".join(partes)
+
+
 def _secao(nome: str, p: argparse.ArgumentParser, ajuda: str, nivel: int) -> list[str]:
     L = [f"{'#' * nivel} `{nome}`", ""]
     if ajuda:
         L += [ajuda[0].upper() + ajuda[1:] + ".", ""]
-    L += ["```text", p.format_usage().replace("usage: ", "").strip(), "```", ""]
+    L += ["```text", _uso(nome, p), "```", ""]
     itens = [a for a in p._actions
              if not isinstance(a, (argparse._HelpAction, argparse._SubParsersAction,
                                    argparse._VersionAction))]

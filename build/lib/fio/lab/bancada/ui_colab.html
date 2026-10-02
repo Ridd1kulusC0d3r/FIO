@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>F.I.O. · Colab</title>
+<style>
+:root{
+  --papel:#F3F5F4;--sup:#FFFFFF;--sup2:#E9EEEC;--tinta:#17212B;--texto:#2C3740;--mudo:#5B6770;
+  --linha:#D2D9D6;--fio:#0E7C6B;--fio-suave:#E1F0EC;--fio-tinta:#0A5E51;
+  --aviso:#8A5A00;--aviso-fundo:#FFF4E0;--aviso-borda:#E3B45B;--erro:#B4232E;--erro-fundo:#FBEAEA;
+  --cod:#EEF2F0;--sombra:0 1px 2px rgba(23,33,43,.06),0 4px 14px rgba(23,33,43,.05);
+  --f-display:Rockwell,"Roboto Slab",Georgia,serif;
+  --f-texto:Verdana,"Segoe UI",system-ui,sans-serif;
+  --f-mono:ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  color-scheme:dark;--papel:#0F1514;--sup:#161F1D;--sup2:#1D2826;--tinta:#E6EEEB;--texto:#CBD6D2;--mudo:#95A39E;
+  --linha:#2B3734;--fio:#3CC2A8;--fio-suave:#15302B;--fio-tinta:#7FE0CC;--aviso:#F2C572;--aviso-fundo:#2A2212;
+  --aviso-borda:#7A5A1C;--erro:#F08A8F;--erro-fundo:#2E1718;--cod:#1B2523;--sombra:none}}
+*{box-sizing:border-box}body{margin:0;background:var(--papel);color:var(--texto);font:16px/1.55 var(--f-texto)}
+.shell{max-width:1120px;margin:auto;padding:24px 18px 70px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:26px}
+.brand small{display:block;color:var(--fio);font-weight:700;text-transform:uppercase;letter-spacing:.1em}.brand h1{font:700 clamp(32px,6vw,54px)/1.04 var(--f-display);margin:7px 0 8px;color:var(--tinta)}
+.brand p{margin:0;max-width:720px;color:var(--mudo);font-size:17px}.badge{border:1px solid var(--linha);background:var(--sup);border-radius:999px;padding:7px 11px;font:12px var(--f-mono);white-space:nowrap}
+.grid{display:grid;grid-template-columns:1.25fr .75fr;gap:16px}.card{background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:18px;box-shadow:var(--sombra)}
+.card h2{font:700 23px/1.15 var(--f-display);color:var(--tinta);margin:0 0 6px}.card p{margin:6px 0 14px;color:var(--mudo)}
+label{display:block;font-size:13px;font-weight:700;color:var(--mudo);margin:12px 0 5px}input,select,textarea{width:100%;border:1px solid var(--linha);border-radius:9px;background:var(--papel);color:var(--tinta);padding:10px 11px;font:15px var(--f-texto)}
+textarea{min-height:86px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.check{display:flex;align-items:center;gap:8px;margin:12px 0}.check input{width:auto}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--linha);border-radius:9px;padding:10px 14px;background:var(--sup2);color:var(--tinta);font:700 14px var(--f-texto);cursor:pointer;text-decoration:none}
+button.primary,.btn.primary{background:var(--fio);border-color:var(--fio);color:#fff}button:disabled{opacity:.55;cursor:wait}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.note{border:1px solid var(--aviso-borda);background:var(--aviso-fundo);border-radius:10px;padding:11px 13px;color:var(--tinta);font-size:14px}.good{border-color:var(--fio);background:var(--fio-suave)}
+.status{font:13px/1.5 var(--f-mono);white-space:pre-wrap;background:var(--cod);border-radius:9px;padding:10px;margin-top:12px;min-height:45px}.muted{color:var(--mudo)}.ok{color:var(--fio-tinta);font-weight:700}.err{color:var(--erro);font-weight:700}
+.sep{height:1px;background:var(--linha);margin:18px 0}.footer{margin-top:20px;color:var(--mudo);font-size:13px}.hidden{display:none!important}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.top{display:block}.badge{display:inline-block;margin-top:12px}.row,.row3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <small>F.I.O. · Fontes, Identificadores e Origens</small>
+      <h1>Investigação curta, rastreável e efêmera.</h1>
+      <p>Informe um telefone, registre a finalidade do caso e rode apenas as fontes públicas permitidas. A sessão do Colab não persiste dados; baixe o relatório antes de encerrar.</p>
+    </div>
+    <div id="versao" class="badge">carregando…</div>
+  </header>
+
+  <div class="grid">
+    <main class="card">
+      <h2>1. Telefone e caso</h2>
+      <p>O telefone é normalizado antes da coleta. O F.I.O. não testa mensageria em massa nem consulta bases vazadas.</p>
+      <label for="telefone">Telefone</label>
+      <div class="row3">
+        <input id="telefone" placeholder="(31) 98888-7777" autocomplete="off">
+        <input id="ddd" placeholder="DDD padrão (opcional)" maxlength="2">
+        <button id="validar">Validar</button>
+      </div>
+      <div id="numeroStatus" class="status muted">Aguardando telefone.</div>
+
+      <div class="sep"></div>
+      <div class="row">
+        <div><label for="casoId">ID do caso</label><input id="casoId" value="FIO-COLAB-01"></div>
+        <div><label for="responsavel">Responsável</label><input id="responsavel" value="Analista"></div>
+      </div>
+      <label for="titulo">Título</label><input id="titulo" value="Análise pontual de identificador telefônico">
+      <label for="baseLegal">Base legal</label><select id="baseLegal"></select>
+      <label for="finalidade">Finalidade específica</label><textarea id="finalidade">Verificar, em fontes públicas e dentro do escopo autorizado, vínculos cadastrais associados ao identificador informado.</textarea>
+      <div class="row">
+        <div><label for="profundidade">Profundidade</label><select id="profundidade"><option value="0">0 · só alvo</option><option value="1" selected>1 · recomendada</option><option value="2">2 · ampliar vínculos</option></select></div>
+        <div><label>&nbsp;</label><div class="check"><input id="internet" type="checkbox" checked><span>usar fontes online</span></div></div>
+      </div>
+      <div class="actions">
+        <button id="executar" class="primary">Criar caso e investigar</button>
+        <a id="workbench" class="btn" href="#">Bancada completa</a>
+      </div>
+      <div id="execStatus" class="status muted">Nenhuma execução iniciada.</div>
+      <div id="relatorios" class="actions hidden"></div>
+    </main>
+
+    <aside>
+      <section class="card">
+        <h2>2. Índice da Receita</h2>
+        <p>Opcional. Baixa um arquivo por vez, filtra pela UF e apaga o ZIP após processar. O índice também é efêmero nesta sessão.</p>
+        <div class="row">
+          <div><label for="ufs">UF</label><input id="ufs" value="MG" maxlength="8"></div>
+          <div><label for="mes">Mês (opcional)</label><input id="mes" placeholder="AAAA-MM"></div>
+        </div>
+        <div class="actions"><button id="indice" class="primary">Montar índice</button><button id="indiceStatusBtn">Conferir</button></div>
+        <div id="indiceStatus" class="status muted">Índice ainda não conferido.</div>
+      </section>
+
+      <section class="card" style="margin-top:16px">
+        <h2>3. Relatório</h2>
+        <p>Baixe um modelo vazio agora ou exporte o relatório preenchido depois da execução.</p>
+        <div class="actions">
+          <a id="modeloMd" class="btn primary" href="#">Baixar modelo .md</a>
+          <a id="modeloHtml" class="btn" href="#">Baixar modelo .html</a>
+        </div>
+        <div class="note good" style="margin-top:14px"><b>Efêmero por desenho.</b><br>Fechar ou reciclar o runtime apaga casos, índice e fila. O que precisa sobreviver deve ser baixado.</div>
+      </section>
+    </aside>
+  </div>
+  <div class="footer">F.I.O. separa observação de avaliação e conclusão. Correlação cadastral não prova vínculo pessoal ou prática ilícita.</div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const token=new URLSearchParams(location.hash.replace(/^#/,"" )).get("t")||"";
+const hdr={"X-FIO-Token":token,"Content-Type":"application/json"};
+const apiBase="./api";
+async function api(path,opt={}){const r=await fetch(apiBase+path,{...opt,headers:{...hdr,...(opt.headers||{})}});let v;const ct=r.headers.get("content-type")||"";v=ct.includes("json")?await r.json():await r.text();if(!r.ok)throw new Error(v.erro||v||r.statusText);return v}
+async function post(path,obj){return api(path,{method:"POST",body:JSON.stringify(obj)})}
+function qs(obj){return new URLSearchParams({...obj,t:token}).toString()}
+function tarefa(id,el,fim){const loop=async()=>{try{const t=await api(`/tarefas/${id}`);el.textContent=`#${id} · ${t.estado}\n${(t.progresso||"").split("\n").slice(-4).join("\n")}`;if(["fila","rodando"].includes(t.estado))return setTimeout(loop,1200);if(t.estado!=="concluida")el.classList.add("err");else el.classList.add("ok");fim&&fim(t)}catch(e){el.textContent=e.message;el.classList.add("err")}};loop()}
+function relatorios(caso){const box=$("#relatorios");box.classList.remove("hidden");box.innerHTML="";for(const m of ["laudo","relint","tecnico"]){const a=document.createElement("a");a.className="btn";a.textContent=`Baixar ${m}`;a.href=`${apiBase}/casos/${encodeURIComponent(caso)}/relatorio?${qs({modelo:m,download:1})}`;box.appendChild(a)}}
+async function init(){if(!token){$("#execStatus").textContent="Token da sessão ausente. Reabra a célula da bancada no Colab.";$("#execStatus").classList.add("err");return}const e=await api("/estado");$("#versao").textContent=`F.I.O. ${e.versao} · sessão efêmera`;$("#baseLegal").innerHTML=e.bases_legais.map(x=>`<option value="${x}">${x}</option>`).join("");$("#workbench").href=`./workbench/#t=${encodeURIComponent(token)}`;$("#modeloMd").href=`${apiBase}/modelo-relatorio?${qs({formato:"md",download:1})}`;$("#modeloHtml").href=`${apiBase}/modelo-relatorio?${qs({formato:"html",download:1})}`;conferirIndice()}
+$("#validar").onclick=async()=>{const el=$("#numeroStatus");try{const r=await post("/numero",{valor:$("#telefone").value,ddd:$("#ddd").value||null});el.className="status "+(r.valido?"ok":"err");el.textContent=r.valido?`${r.formatado||r.chave}\nE.164: ${r.e164||"—"} · UF provável: ${r.uf||"—"} · faixa: ${r.faixa||"—"}`:`Inválido: ${r.justificativa||"formato não reconhecido"}`}catch(e){el.className="status err";el.textContent=e.message}}
+$("#executar").onclick=async()=>{const b=$("#executar"),el=$("#execStatus"),id=$("#casoId").value.trim();b.disabled=true;el.className="status muted";try{const n=await post("/numero",{valor:$("#telefone").value,ddd:$("#ddd").value||null});if(!n.valido)throw new Error(n.justificativa||"telefone inválido");try{await post("/casos",{id,titulo:$("#titulo").value,base_legal:$("#baseLegal").value,finalidade:$("#finalidade").value,responsavel:$("#responsavel").value,escopo:[n.chave]})}catch(e){if(!String(e.message).includes("ja existe"))throw e}await post(`/casos/${encodeURIComponent(id)}/alvos`,{tipo:"telefone",valor:$("#telefone").value,ddd:$("#ddd").value||null,ator:$("#responsavel").value});const q=await post(`/casos/${encodeURIComponent(id)}/pipeline`,{profundidade:+$("#profundidade").value,offline:!$("#internet").checked,expandir_escopo:false,ator:$("#responsavel").value,descricao:"consulta pontual pelo frontend Colab"});tarefa(q.tarefa,el,t=>{b.disabled=false;if(t.estado==="concluida")relatorios(id)})}catch(e){b.disabled=false;el.className="status err";el.textContent=e.message}}
+async function conferirIndice(){const el=$("#indiceStatus");try{const r=await api("/indice");el.className="status "+(r.existe?"ok":"muted");el.textContent=r.existe?`Índice pronto\nUF: ${r.meta.ufs||"—"} · mês: ${r.meta.mes||"—"}\nEstabelecimentos: ${r.estatisticas.estabelecimento||0}`:"Índice não montado nesta sessão."}catch(e){el.className="status err";el.textContent=e.message}}
+$("#indiceStatusBtn").onclick=conferirIndice;
+$("#indice").onclick=async()=>{const b=$("#indice"),el=$("#indiceStatus");b.disabled=true;el.className="status muted";try{const r=await post("/indice",{ufs:$("#ufs").value,mes:$("#mes").value,reconstruir:false});tarefa(r.tarefa,el,t=>{b.disabled=false;if(t.estado==="concluida")conferirIndice()})}catch(e){b.disabled=false;el.className="status err";el.textContent=e.message}}
+init().catch(e=>{$("#execStatus").textContent=e.message;$("#execStatus").classList.add("err")});
+</script>
+</body>
+</html>

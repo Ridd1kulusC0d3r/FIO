@@ -2,6 +2,15 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.0.3] — 2026-10-02
+
+### Corrigido
+- **CI vermelho em todo push:** a referência da CLI era gerada com `format_usage()`, que quebra linhas conforme o terminal e muda de formato entre versões do Python; o `--checar` do CI (Python 3.12) divergia de quem gerou (3.11). A linha de uso agora é montada pelo gerador e a saída é idêntica no Python 3.10 a 3.13.
+- **Workflow `publicar` vermelho a cada push:** o GitHub Pages precisa ser habilitado uma vez pelo dono do repositório. O job agora verifica isso, emite um aviso com o passo a passo e segue verde, em vez de falhar.
+
+### Adicionado
+- **Site do projeto** (`docs/index.html`): página inicial com demonstração em GIF, capturas de tela, princípios, tema claro/escuro e responsiva, no lugar do redirecionamento para o manual.
+
 ## [3.0.2] — 2026-10-02
 
 ### Corrigido

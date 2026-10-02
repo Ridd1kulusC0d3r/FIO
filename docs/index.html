@@ -1,3 +1,175 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>F.I.O. Lab</title>
-<meta http-equiv="refresh" content="0; url=MANUAL.html"></head>
-<body><a href="MANUAL.html">Manual do F.I.O. Lab</a></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F.I.O. Lab</title>
+<meta name="description" content="Laboratório OSINT em Python para análise de vínculos entre telefones e registros públicos brasileiros. Python OSINT lab for link analysis across phone numbers and Brazilian public records.">
+<link rel="icon" href="img/logo.svg" type="image/svg+xml">
+<meta property="og:title" content="F.I.O. Lab">
+<meta property="og:description" content="Estes números pertencem à mesma pessoa, à mesma empresa ou ao mesmo grupo? Com que confiança?">
+<meta property="og:image" content="img/banner.png">
+<style>
+:root{
+  --bg:#f5f8f7;--card:#fff;--ink:#14212b;--mut:#51606b;--line:#d5dedb;
+  --brand:#0e7c6b;--brand2:#0b4f6c;--accent:#e59a1f;--code:#0f2530;--codeink:#d8f1ec;
+  --shadow:0 1px 2px #14212b10,0 8px 28px #14212b12;
+}
+@media (prefers-color-scheme:dark){:root:not([data-tema="claro"]){
+  --bg:#0a1620;--card:#102331;--ink:#e8f2f0;--mut:#9db3b8;--line:#1f3a48;--brand:#35c2a9;--brand2:#5fb4d6;
+  --code:#071118;--codeink:#cdeee6;--shadow:0 1px 2px #0006,0 8px 28px #0007}}
+:root[data-tema="escuro"]{--bg:#0a1620;--card:#102331;--ink:#e8f2f0;--mut:#9db3b8;--line:#1f3a48;--brand:#35c2a9;--brand2:#5fb4d6;--code:#071118;--codeink:#cdeee6;--shadow:0 1px 2px #0006,0 8px 28px #0007}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--brand2)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header.top{display:flex;align-items:center;gap:14px;padding:14px 0}
+header.top img{width:34px;height:34px}
+header.top b{font-size:18px;letter-spacing:-.2px}
+header.top nav{margin-left:auto;display:flex;gap:18px;flex-wrap:wrap;font-size:15px;align-items:center}
+header.top nav a{color:var(--mut);text-decoration:none}
+header.top nav a:hover{color:var(--ink)}
+.hero{padding:34px 0 28px;text-align:center}
+.hero h1{font-size:clamp(34px,6vw,60px);line-height:1.05;margin:0 0 14px;letter-spacing:-1.5px}
+.hero h1 span{color:var(--accent)}
+.hero p.lede{font-size:clamp(17px,2.2vw,21px);color:var(--mut);max-width:760px;margin:0 auto 8px}
+.hero p.en{font-size:15px;color:var(--mut);max-width:760px;margin:0 auto 24px;font-style:italic}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:22px 0 6px}
+.btn{display:inline-block;padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:600;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn.p{background:linear-gradient(135deg,var(--brand),var(--brand2));border-color:transparent;color:#fff}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.demo{margin:26px auto 0;max-width:940px;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:var(--card)}
+.demo img{display:block;width:100%;height:auto}
+section{padding:42px 0}
+section>h2{font-size:28px;letter-spacing:-.5px;margin:0 0 6px}
+section>p.sub{color:var(--mut);margin:0 0 22px;max-width:760px}
+.grid{display:grid;gap:16px}
+.g3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 6px;font-size:18px}
+.card p{margin:0;color:var(--mut);font-size:15px}
+.card .k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:700}
+.shot{padding:0;overflow:hidden;margin:0}
+.shot img{display:block;width:100%;height:auto;border-bottom:1px solid var(--line)}
+.shot figcaption{padding:12px 16px;font-size:14px;color:var(--mut)}
+pre{background:var(--code);color:var(--codeink);border-radius:12px;padding:16px 18px;overflow:auto;font:13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0}
+.warn{border-left:4px solid var(--accent);background:var(--card);padding:14px 18px;border-radius:0 12px 12px 0;color:var(--mut);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:15px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:10px 14px;text-align:left;border-top:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.06em;border-top:0}
+footer{padding:30px 0 50px;color:var(--mut);font-size:14px;border-top:1px solid var(--line);margin-top:20px}
+footer .row{display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between}
+button.tema{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn:hover{transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <img src="img/logo.svg" alt="">
+    <b>F.I.O. Lab</b>
+    <nav aria-label="principal">
+      <a href="#como">Como funciona</a>
+      <a href="#telas">Telas</a>
+      <a href="#comecar">Começar</a>
+      <a href="MANUAL.html">Manual</a>
+      <a href="https://github.com/Ridd1kulusC0d3r/FIO">GitHub</a>
+      <button class="tema" id="tema" type="button" aria-label="Alternar tema claro/escuro">Tema</button>
+    </nav>
+  </header>
+
+  <main>
+  <section class="hero">
+    <h1>F.I.O.<span> Lab</span></h1>
+    <p class="lede">Estes números pertencem à mesma pessoa, à mesma empresa ou ao mesmo grupo? Com que confiança? E com que frequência essa resposta erra?</p>
+    <p class="en">Do these phone numbers belong to the same person, company or group? How confident are we? And how often is that answer wrong? A Python OSINT lab for link analysis across Brazilian public records.</p>
+    <div class="btns">
+      <a class="btn p" href="https://colab.research.google.com/github/Ridd1kulusC0d3r/FIO/blob/main/colab/FIO_Lab_Colab.ipynb">▶ Abrir no Google Colab</a>
+      <a class="btn" href="https://github.com/Ridd1kulusC0d3r/FIO/releases">Baixar a Release</a>
+      <a class="btn" href="MANUAL.html">Manual ilustrado</a>
+    </div>
+    <div class="demo"><img src="img/demo.gif" alt="Bancada do F.I.O.: abrir o caso de demonstração, explorar o grafo, ver vínculos, observações e a cadeia de custódia"></div>
+  </section>
+
+  <section id="como">
+    <h2>Três regras que não se negociam</h2>
+    <p class="sub">O F.I.O. cruza telefones, CNPJs, sócios, e-mails, domínios e diários oficiais num grafo em que <b>toda aresta carrega a fonte que a sustenta</b>. Python puro, só biblioteca padrão, inclusive a interface web.</p>
+    <div class="grid g3">
+      <div class="card"><div class="k">1</div><h3>Sem escopo, sem coleta</h3><p>Todo caso exige base legal, finalidade e prazo. O escopo é conferido a cada pivô; fora dele, o coletor não roda.</p></div>
+      <div class="card"><div class="k">2</div><h3>Sem fonte, sem vínculo</h3><p>Confiança pela escala Admiralty, combinando só fontes <i>independentes</i>. Nunca chega a 100%.</p></div>
+      <div class="card"><div class="k">3</div><h3>Sem prova, sem conclusão</h3><p>Cada conclusão cita a aresta que a sustenta. Tudo o que é coletado vai para um ledger encadeado por SHA-256.</p></div>
+    </div>
+    <p class="warn" style="margin-top:18px">Vínculo é <b>coocorrência documentada</b> entre identificadores, não relação comprovada. O relatório diz isso em toda página.</p>
+  </section>
+
+  <section id="telas">
+    <h2>A bancada</h2>
+    <p class="sub">Interface local, sem fontes nem scripts externos, com tema claro e escuro e layout que funciona no celular.</p>
+    <div class="grid g2">
+      <figure class="card shot"><img src="img/painel-claro.png" alt="Painel" loading="lazy"><figcaption><b>Painel.</b> Casos, caso de demonstração em um clique, verificação das fontes.</figcaption></figure>
+      <figure class="card shot"><img src="img/grafo-detalhe.png" alt="Grafo com detalhe de um telefone" loading="lazy"><figcaption><b>Grafo.</b> Espessura e estilo da aresta seguem a confiança; o clique mostra fontes e hashes.</figcaption></figure>
+      <figure class="card shot"><img src="img/observacoes.png" alt="Observações analíticas" loading="lazy"><figcaption><b>Observações.</b> Padrões que merecem conferência, com explicações concorrentes. Não são acusações.</figcaption></figure>
+      <figure class="card shot"><img src="img/grafo-escuro.png" alt="Grafo no tema escuro" loading="lazy"><figcaption><b>Tema escuro</b> e exportação em PNG, SVG e JSON.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>O que ele faz de diferente</h2>
+    <div class="grid g3">
+      <div class="card"><h3>Baseline diferencial</h3><p>Consulta um valor que <i>não pode existir</i> e descarta respostas iguais: acaba com o “200 OK” que não diz nada.</p></div>
+      <div class="card"><h3>Lote de registro</h3><p>Empresas de raízes distintas abertas na mesma janela e ligadas por telefone, e-mail, CEP ou sócio: rede de fachada ou contabilidade?</p></div>
+      <div class="card"><h3>Reuso de linha</h3><p>Telefone declarado por empresa encerrada e por outra ativa: número reciclado, não operador em comum.</p></div>
+      <div class="card"><h3>Claims rastreáveis</h3><p>Conclusão sem evidência no grafo não entra no relatório.</p></div>
+      <div class="card"><h3>Manifesto SHA-256</h3><p>Detecta peça alterada, manifesto adulterado e ledger reescrito.</p></div>
+      <div class="card"><h3>Calibração medida</h3><p>Confiança declarada × precisão observada em mundos sintéticos com gabarito. Sem maquiagem.</p></div>
+    </div>
+  </section>
+
+  <section id="comecar">
+    <h2>Começar</h2>
+    <p class="sub">Python 3.10 ou mais novo. Nenhuma dependência para instalar.</p>
+    <div class="grid g2">
+      <pre><span style="opacity:.6"># linha de comando</span>
+pip install git+https://github.com/Ridd1kulusC0d3r/FIO
+fio demo --abrir        <span style="opacity:.6"># caso fictício, offline</span>
+fio lab bancada         <span style="opacity:.6"># http://127.0.0.1:8765</span></pre>
+      <table>
+        <tr><th>Jeito</th><th>Para quem</th></tr>
+        <tr><td><b>Google Colab</b></td><td>testar sem instalar (sessão efêmera)</td></tr>
+        <tr><td><b>Dois cliques</b></td><td>leigos; Release + lançador do sistema</td></tr>
+        <tr><td><b>Linha de comando</b></td><td>técnicos e automação</td></tr>
+      </table>
+    </div>
+    <p style="margin-top:18px">Guias completos (primeiros passos, conceitos, receitas de uso, referência da CLI, solução de problemas) em <a href="https://github.com/Ridd1kulusC0d3r/FIO/tree/main/docs/guia">docs/guia</a>.</p>
+  </section>
+
+  <section>
+    <h2>Uso responsável</h2>
+    <p class="sub">O F.I.O. <b>recusa por construção</b>: bases vazadas, credenciais de terceiros, interceptação, engenharia social e enumeração de plataformas de mensageria. A coleta é passiva e o CPF só entra no grafo mascarado (LGPD, art. 6º, III). Leia o <a href="https://github.com/Ridd1kulusC0d3r/FIO/blob/main/USO-RESPONSAVEL.md">guia de uso responsável</a> antes do primeiro caso real.</p>
+  </section>
+  </main>
+
+  <footer>
+    <div class="row">
+      <span>F.I.O. Lab · licença MIT · Fontes, Identificadores e Origens</span>
+      <span><a href="MANUAL.html">Manual</a> · <a href="ARQUITETURA-COLAB.html">Arquitetura no Colab</a> · <a href="https://github.com/Ridd1kulusC0d3r/FIO">GitHub</a></span>
+    </div>
+  </footer>
+</div>
+<script>
+(function(){
+  var b=document.getElementById("tema"),r=document.documentElement;
+  try{var t=localStorage.getItem("fio_site_tema");if(t)r.setAttribute("data-tema",t)}catch(e){}
+  b.addEventListener("click",function(){
+    var a=r.getAttribute("data-tema");
+    var escuro=a==="escuro"||(a!=="claro"&&matchMedia("(prefers-color-scheme: dark)").matches);
+    var n=escuro?"claro":"escuro";r.setAttribute("data-tema",n);
+    try{localStorage.setItem("fio_site_tema",n)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
