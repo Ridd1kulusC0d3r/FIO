@@ -410,7 +410,7 @@ fio lab acao [--indice INDICE] [--municipio MUNICIPIO] [--max-raizes MAX_RAIZES]
 | `--semente` `SEMENTE` | não | (padrão: `7`) |
 | `--sementes` `SEMENTES` | não | (padrão: `1,2,3,4,5`) |
 | `--grupos` `GRUPOS` | não | (padrão: `12`) |
-| `--saida` `SAIDA` | não | (padrão: `/home/user/fio/lab-saida`) |
+| `--saida` `SAIDA` | não | (padrão: `./lab-saida`) |
 | `--porta` `PORTA` | não | (padrão: `8765`) |
 | `--sem-navegador` | não |  |
 | `--permitir-host` `PERMITIR_HOST` | não | sufixos de Host aceitos alem de localhost (ex.: colab.googleusercontent.com); o token continua obrigatorio |

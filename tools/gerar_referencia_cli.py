@@ -58,13 +58,24 @@ def _opcao(a: argparse.Action) -> str:
     return nome
 
 
+def _neutro(valor) -> str:
+    """Padrao que depende da maquina (diretorio atual) vira caminho relativo.
+
+    Sem isto a referencia muda conforme a pasta de quem gera (`/home/x/fio` no
+    notebook de um, `/home/runner/work/...` no CI) e o `--checar` reprova.
+    """
+    v = str(valor)
+    cwd = str(Path.cwd())
+    return "./" + v[len(cwd):].lstrip("/\\") if v.startswith(cwd) else v
+
+
 def _linha(a: argparse.Action) -> str:
     obrig = "sim" if (a.required or (not a.option_strings and a.nargs not in ("?", "*"))) else "não"
     extra = []
     if a.choices:
         extra.append("valores: " + ", ".join(f"`{c}`" for c in a.choices))
     if a.default not in (None, False, argparse.SUPPRESS) and a.option_strings:
-        extra.append(f"padrão: `{a.default}`")
+        extra.append(f"padrão: `{_neutro(a.default)}`")
     desc = (a.help or "").replace("|", "\\|")
     if extra:
         desc = (desc + " " if desc else "") + f"({'; '.join(extra)})"
