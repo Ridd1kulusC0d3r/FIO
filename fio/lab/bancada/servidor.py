@@ -35,6 +35,7 @@ from ..fila import Fila
 from ..experimentos import Registro
 
 UI = Path(__file__).with_name("ui.html")
+UI_COLAB = Path(__file__).with_name("ui_colab.html")
 _ID_OK = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 
@@ -42,6 +43,7 @@ class Estado:
     token = ""
     hosts_extra: tuple = ()
     permitir_iframe = False
+    modo_colab = False
     fila: Fila | None = None
     porta = 8765
     ator = "bancada"
@@ -70,6 +72,23 @@ def _tarefa_avaliar(_caso: str, p: dict, log) -> dict:
     return {"agregado": agg, "markdown": tabela_lote(agg)}
 
 
+def _tarefa_indice(_caso: str, p: dict, log) -> dict:
+    """Monta o índice da Receita em segundo plano, sempre na sessão local."""
+    import os
+    from ...receita_download import montar, validar_ufs
+    saida = raiz() / "cnpj.sqlite"
+    ufs = validar_ufs({x.strip().upper() for x in str(p.get("ufs", "")).split(",") if x.strip()} or None)
+    mes = str(p.get("mes") or "").strip() or None
+    if saida.exists() and not bool(p.get("reconstruir", False)):
+        from ...indice import IndiceCNPJ
+        with IndiceCNPJ(saida) as idx:
+            return {"estado": "existente", "arquivo": str(saida), "meta": idx.meta()}
+    log(f"indice Receita: UF={','.join(sorted(ufs)) if ufs else 'todas'} mes={mes or 'automatico'}")
+    res = montar(saida, ufs=ufs, mes=mes, pasta_tmp=raiz() / "receita-tmp", log=log)
+    os.environ["FIO_INDICE_CNPJ"] = str(saida)
+    return {"estado": "pronto", "arquivo": str(saida), **res}
+
+
 # ----------------------------------------------------------------- http
 class Manipulador(BaseHTTPRequestHandler):
     server_version = f"FIO-Bancada/{__version__}"
@@ -88,11 +107,13 @@ class Manipulador(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corpo)
 
-    def _html(self, texto: str, status=200):
+    def _html(self, texto: str, status=200, download_name: str | None = None):
         corpo = texto.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
+        if download_name:
+            self.send_header("Content-Disposition", f'attachment; filename="{download_name}"')
         if not Estado.permitir_iframe:
             self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
@@ -101,6 +122,19 @@ class Manipulador(BaseHTTPRequestHandler):
                          "style-src 'unsafe-inline'; img-src 'self' data:; "
                          "connect-src 'self'; frame-ancestors "
                          + ("*" if Estado.permitir_iframe else "'none'"))
+        self.send_header("Content-Length", str(len(corpo)))
+        self.end_headers()
+        self.wfile.write(corpo)
+
+    def _texto(self, texto: str, content_type="text/plain; charset=utf-8",
+               download_name: str | None = None, status=200):
+        corpo = texto.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        if download_name:
+            self.send_header("Content-Disposition", f'attachment; filename="{download_name}"')
         self.send_header("Content-Length", str(len(corpo)))
         self.end_headers()
         self.wfile.write(corpo)
@@ -144,6 +178,9 @@ class Manipulador(BaseHTTPRequestHandler):
         url = urllib.parse.urlparse(self.path)
         qs = urllib.parse.parse_qs(url.query)
         if url.path in ("/", "/index.html"):
+            pagina = UI_COLAB if Estado.modo_colab and UI_COLAB.exists() else UI
+            return self._html(pagina.read_text(encoding="utf-8"))
+        if url.path in ("/workbench", "/workbench/"):
             return self._html(UI.read_text(encoding="utf-8"))
         if not url.path.startswith("/api/"):
             return self._erro("nao encontrado", 404)
@@ -183,6 +220,22 @@ class Manipulador(BaseHTTPRequestHandler):
             from ...diagnostico import sondar
             from ...caso import segredos
             return self._json(sondar(segredos(), timeout=8))
+        if partes == ["indice"]:
+            from ...indice import IndiceCNPJ
+            p = raiz() / "cnpj.sqlite"
+            if not p.exists():
+                return self._json({"existe": False})
+            with IndiceCNPJ(p) as idx:
+                return self._json({"existe": True, "arquivo": str(p), "meta": idx.meta(),
+                                   "estatisticas": idx.estatisticas()})
+        if partes == ["modelo-relatorio"]:
+            from ...relatorio.modelo import modelo_markdown, modelo_html
+            formato = (qs.get("formato") or ["md"])[0]
+            download = (qs.get("download") or [""])[0] in ("1", "true", "sim")
+            if formato == "html":
+                return self._html(modelo_html(), download_name="FIO-modelo-relatorio.html" if download else None)
+            return self._texto(modelo_markdown(), "text/markdown; charset=utf-8",
+                               "FIO-modelo-relatorio.md" if download else None)
         if partes[:1] == ["tarefas"] and len(partes) == 2:
             t = Estado.fila.obter(int(partes[1]))
             return self._json(t) if t else self._erro("tarefa inexistente", 404)
@@ -215,15 +268,18 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json(Registro(cd.dir).comparar(qs["a"][0], qs["b"][0]))
             if sub == "relatorio":
                 modelo = (qs.get("modelo") or ["tecnico"])[0]
+                download = (qs.get("download") or [""])[0] in ("1", "true", "sim")
                 led = cd.ledger()
                 c, g, regs, verif = cd.caso(), cd.grafo(), led.registros(), led.verificar()
+                nome = f"{modelo}_{cd.caso_id}.html" if download else None
                 if modelo in ("laudo", "relint"):
                     from ...relatorio.laudo import gerar_laudo
                     exps = Registro(cd.dir).listar()
                     return self._html(gerar_laudo(c, g, regs, verif, modelo=modelo,
-                                                  experimento=exps[-1].dict() if exps else None))
+                                                  experimento=exps[-1].dict() if exps else None),
+                                      download_name=nome)
                 from ...relatorio import gerar_html
-                return self._html(gerar_html(c, g, regs, verif))
+                return self._html(gerar_html(c, g, regs, verif), download_name=nome)
         return self._erro("rota inexistente", 404)
 
     def _rota_post(self, caminho: str, d: dict):
@@ -247,6 +303,9 @@ class Manipulador(BaseHTTPRequestHandler):
             if d.get("texto"):
                 return self._json([x.dict() for x in extrair_documentos(str(d["texto"])[:500000])])
             return self._json(analisar(d["tipo"], str(d["valor"])).dict())
+        if partes == ["indice"]:
+            tid = Estado.fila.enfileirar("indice", "-", d)
+            return self._json({"tarefa": tid}, 202)
         if partes == ["avaliar"]:
             tid = Estado.fila.enfileirar("avaliar", "-", d)
             return self._json({"tarefa": tid}, 202)
@@ -303,11 +362,13 @@ def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
         extra.append("*")
     Estado.hosts_extra = tuple(h.lower() for h in extra)
     Estado.permitir_iframe = modo_colab
+    Estado.modo_colab = modo_colab
     Estado.porta = porta
     (raiz() / "lab").mkdir(parents=True, exist_ok=True)
     Estado.fila = Fila(raiz() / "lab" / "fila.sqlite")
     Estado.fila.registrar("pipeline", _tarefa_pipeline)
     Estado.fila.registrar("avaliar", _tarefa_avaliar)
+    Estado.fila.registrar("indice", _tarefa_indice)
     Estado.fila.iniciar(2)
     srv = ThreadingHTTPServer(("127.0.0.1", porta), Manipulador)
     url = f"http://127.0.0.1:{porta}/#t={Estado.token}"

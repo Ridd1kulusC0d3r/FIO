@@ -2,6 +2,13 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.0.1] — 2026-10-02
+
+### Alterado
+- **Colab com runtime efêmero:** nada é montado no Google Drive; o caderno e a tela simplificada (`ui_colab.html`) recebem o telefone diretamente, constroem o índice por UF e oferecem modelo e relatórios para download.
+- **Downloader do índice resiliente** (`receita_download`) e testes ajustados para Windows (índices SQLite fechados antes da limpeza).
+- Mesclado com a 3.0.0 (bancada redesenhada, claims, manifesto, baseline); caderno regenerado.
+
 ## [3.0.0] — 2026-10-02
 
 ### Adicionado

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fio-osint"
-version = "3.0.0"
+version = "3.0.1"
 description = "F.I.O. Lab (edição BR): laboratório OSINT de análise de vínculos a partir de telefones e registros públicos brasileiros"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -30,7 +30,7 @@ fio = "fio.cli:main"
 include = ["fio*"]
 
 [tool.setuptools.package-data]
-"fio.lab.bancada" = ["ui.html"]
+"fio.lab.bancada" = ["ui.html", "ui_colab.html"]
 "fio" = ["dados_demo/*", "fontes.json"]
 
 [tool.ruff]

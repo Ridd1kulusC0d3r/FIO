@@ -14,10 +14,13 @@ duas versões no mesmo ZIP.
 from __future__ import annotations
 
 import http.client
+import datetime as dt
 import json
 import os
 import re
+import shutil
 import ssl
+import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -47,10 +50,58 @@ def _ctx():
     return ssl.create_default_context(cafile=b) if b and os.path.exists(b) else None
 
 
-def _get(url: str, timeout: int = 60) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+def _get_urllib(url: str, timeout: int = 60) -> str:
+    req = urllib.request.Request(
+        url, headers={"User-Agent": UA, "Accept-Encoding": "identity", "Connection": "close"}
+    )
     with urllib.request.urlopen(req, timeout=timeout, context=_ctx()) as r:
         return r.read().decode("utf-8", "replace")
+
+
+def _get_curl(url: str, timeout: int = 60) -> str:
+    """Fallback para ambientes (notadamente alguns runtimes Colab) em que
+    a pilha TLS/HTTP do urllib sofre reset enquanto o binário curl funciona.
+    Não é dependência do F.I.O.; só é usado quando estiver instalado.
+    """
+    curl = shutil.which("curl")
+    if not curl:
+        raise RuntimeError("curl nao instalado")
+    cmd = [curl, "-fsSL", "--http1.1", "--retry", "3", "--retry-delay", "2",
+           "--retry-all-errors", "--connect-timeout", "15", "--max-time", str(timeout),
+           "-A", UA, url]
+    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if p.returncode:
+        raise RuntimeError(p.stderr.decode("utf-8", "replace").strip() or f"curl rc={p.returncode}")
+    return p.stdout.decode("utf-8", "replace")
+
+
+def _get(url: str, timeout: int = 60) -> str:
+    erros = []
+    for nome, fn in (("urllib", _get_urllib), ("curl", _get_curl)):
+        try:
+            return fn(url, timeout)
+        except Exception as e:
+            erros.append(f"{nome}: {type(e).__name__}: {e}")
+    raise RuntimeError("; ".join(erros))
+
+
+def _meses_recentes(qtd: int = 8) -> list[str]:
+    """Meses candidatos, do mais recente para trás, sem depender do índice raiz.
+
+    A Receita às vezes fecha/resetta a conexão na listagem principal, enquanto
+    a pasta mensal continua acessível. Provar alguns meses evita transformar
+    uma falha de diretório em falha do laboratório inteiro.
+    """
+    hoje = dt.datetime.now(dt.timezone.utc).date()
+    ano, mes = hoje.year, hoje.month
+    out = []
+    for _ in range(qtd):
+        out.append(f"{ano:04d}-{mes:02d}")
+        mes -= 1
+        if mes == 0:
+            ano -= 1
+            mes = 12
+    return out
 
 
 def validar_ufs(ufs: set[str] | None) -> set[str] | None:
@@ -65,26 +116,66 @@ def validar_ufs(ufs: set[str] | None) -> set[str] | None:
 
 def descobrir(base: str | None = None, mes: str | None = None,
               log=print) -> tuple[str, str, list[str]]:
-    """Devolve ``(base, mês, arquivos .zip do mês)``."""
+    """Devolve ``(base, mês, arquivos .zip do mês)``.
+
+    Estratégia em camadas:
+    1. se o usuário informou mês, consulta a pasta mensal diretamente;
+    2. tenta a listagem raiz para descobrir o último mês;
+    3. se a raiz falhar/resetar, prova os meses recentes diretamente.
+
+    Isso corrige o caso real observado no Colab em que a listagem raiz da
+    Receita retornou ``Connection reset by peer``.
+    """
     erros = []
     base = base or os.environ.get("FIO_RECEITA_BASE")
+    mes = mes or os.environ.get("FIO_RECEITA_MES") or None
     for b in ([base] if base else BASES):
         b = b.rstrip("/") + "/"
+
+        # Mês explícito: não desperdice uma requisição na listagem raiz.
+        if mes:
+            try:
+                arquivos = sorted(set(_ZIP.findall(_get(b + mes + "/"))))
+                if not arquivos:
+                    raise ValueError(f"pasta {mes} sem .zip")
+                log(f"fonte: {b}{mes}/ ({len(arquivos)} arquivos; mes informado)")
+                return b, mes, arquivos
+            except Exception as e:
+                erros.append(f"{b}{mes}/: {type(e).__name__}: {e}")
+                continue
+
+        # Caminho normal: listar meses na raiz.
         try:
             meses = sorted(set(_MES.findall(_get(b))))
-            if not meses:
-                raise ValueError("indice sem pastas AAAA-MM")
-            m = mes or meses[-1]
-            if m not in meses:
-                raise ValueError(f"mes {m} nao publicado nesta fonte")
-            arquivos = sorted(set(_ZIP.findall(_get(b + m + "/"))))
-            if not arquivos:
-                raise ValueError(f"pasta {m} sem .zip")
-            log(f"fonte: {b}{m}/ ({len(arquivos)} arquivos; meses disponiveis: {meses[0]}..{meses[-1]})")
-            return b, m, arquivos
+            if meses:
+                m = meses[-1]
+                arquivos = sorted(set(_ZIP.findall(_get(b + m + "/"))))
+                if arquivos:
+                    log(f"fonte: {b}{m}/ ({len(arquivos)} arquivos; meses disponiveis: {meses[0]}..{meses[-1]})")
+                    return b, m, arquivos
+                erros.append(f"{b}{m}/: pasta sem .zip")
+            else:
+                erros.append(f"{b}: indice sem pastas AAAA-MM")
         except Exception as e:
             erros.append(f"{b}: {type(e).__name__}: {e}")
-    raise RuntimeError("nao encontrei a base da Receita. Tentativas:\n  " + "\n  ".join(erros))
+
+        # Fallback Colab: a raiz pode falhar enquanto a pasta mensal responde.
+        for m in _meses_recentes():
+            try:
+                arquivos = sorted(set(_ZIP.findall(_get(b + m + "/", timeout=35))))
+                if arquivos:
+                    log(f"fonte: {b}{m}/ ({len(arquivos)} arquivos; descoberta por sondagem)")
+                    return b, m, arquivos
+            except Exception as e:
+                erros.append(f"{b}{m}/: {type(e).__name__}: {e}")
+
+    resumo = erros[-18:]
+    raise RuntimeError(
+        "nao encontrei a base da Receita. A fonte pode estar bloqueando ou "
+        "resetando conexoes deste runtime. Tentativas:\n  " + "\n  ".join(resumo) +
+        "\nDica: informe o mes (AAAA-MM) para pular a listagem raiz; o downloader "
+        "tambem tenta curl automaticamente quando disponivel."
+    )
 
 
 def _meta_path(parcial: Path) -> Path:
@@ -197,12 +288,12 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
 
             if total is not None and feito != total:
                 raise ConnectionError(f"recebidos {feito} de {total} bytes")
-            # Só promove o .parcial depois de validar a integridade do ZIP.
-            # Tamanho HTTP correto não prova que o objeto recebido é um ZIP
-            # utilizável (proxy, cache ou origem podem devolver conteúdo inválido).
+            # O tamanho HTTP pode estar correto e o objeto ainda assim estar
+            # truncado/corrompido. Só promovemos o parcial depois de validar
+            # a estrutura ZIP inteira.
             if not _zip_ok(parcial):
                 _limpar_parcial(parcial)
-                raise ConnectionError("download concluido, mas o ZIP recebido e invalido")
+                raise ConnectionError("download concluido, mas o ZIP e invalido")
             os.replace(parcial, destino)
             _meta_path(parcial).unlink(missing_ok=True)
             return destino
@@ -222,7 +313,39 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
             log(f"  falha ({type(ultimo).__name__}: {ultimo}); nova tentativa {n + 1}/{tentativas} em {espera}s")
             time.sleep(espera)
 
-    raise RuntimeError(f"nao consegui baixar {url}: {ultimo}")
+    # Alguns runtimes Colab observados resetam urllib, mas aceitam curl.
+    # Como último recurso, baixa o objeto inteiro e valida o ZIP antes de usar.
+    try:
+        return _baixar_curl_inteiro(url, destino, log=log)
+    except Exception as curl_erro:
+        raise RuntimeError(f"nao consegui baixar {url}: urllib={ultimo}; curl={curl_erro}")
+
+
+def _baixar_curl_inteiro(url: str, destino: Path, log=print, timeout: int = 3600) -> Path:
+    """Último fallback de transporte: baixa o arquivo inteiro com curl.
+
+    O caminho urllib continua sendo o principal porque oferece retomada com
+    If-Range. Este fallback existe para o caso de reset específico da pilha
+    Python no Colab. O ZIP é validado antes de ser promovido.
+    """
+    curl = shutil.which("curl")
+    if not curl:
+        raise RuntimeError("curl nao instalado")
+    parcial = destino.with_suffix(destino.suffix + ".curl.parcial")
+    parcial.unlink(missing_ok=True)
+    cmd = [curl, "-fL", "--http1.1", "--retry", "5", "--retry-delay", "3",
+           "--retry-all-errors", "--connect-timeout", "20", "--max-time", str(timeout),
+           "-A", UA, "-o", str(parcial), url]
+    log(f"  fallback de transporte: curl ({destino.name})")
+    p = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
+    if p.returncode:
+        parcial.unlink(missing_ok=True)
+        raise RuntimeError(p.stderr.decode("utf-8", "replace").strip() or f"curl rc={p.returncode}")
+    if not _zip_ok(parcial):
+        parcial.unlink(missing_ok=True)
+        raise RuntimeError("curl concluiu, mas o ZIP e invalido")
+    os.replace(parcial, destino)
+    return destino
 
 
 def montar(saida: str | Path, ufs: set[str] | None = None, mes: str | None = None,

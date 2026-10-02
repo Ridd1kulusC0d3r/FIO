@@ -125,10 +125,10 @@ class TestReceitas(unittest.TestCase):
                             encoding="latin-1")
             meta = construir("cnes", csvp, raiz)
             self.assertEqual(meta["chaves"], "3")
-            idx = Indice(raiz / "indices" / "cnes.sqlite")
-            self.assertEqual(idx.buscar("telefone", "+553133334444")[0]["rotulo"], "CLINICA X")
-            self.assertEqual(len(idx.buscar("cnpj", "11222333000181")), 1)
-            self.assertEqual(len(idx.meta["sha256"]), 64)
+            with Indice(raiz / "indices" / "cnes.sqlite") as idx:
+                self.assertEqual(idx.buscar("telefone", "+553133334444")[0]["rotulo"], "CLINICA X")
+                self.assertEqual(len(idx.buscar("cnpj", "11222333000181")), 1)
+                self.assertEqual(len(idx.meta["sha256"]), 64)
 
     def test_receita_de_faixa(self):
         from fio.receitas import construir, Indice
@@ -138,9 +138,9 @@ class TestReceitas(unittest.TestCase):
             p.write_text("CN,PREFIXO,FAIXA_INICIAL,FAIXA_FINAL,PRESTADORA\n"
                          "31,98888,0000,9999,OPERADORA TESTE\n", encoding="utf-8")
             construir("anatel-faixas", p, raiz)
-            idx = Indice(raiz / "indices" / "anatel-faixas.sqlite")
-            self.assertEqual(idx.faixa("31", "988887777")[0]["prestadora"], "OPERADORA TESTE")
-            self.assertEqual(idx.faixa("31", "977777777"), [])
+            with Indice(raiz / "indices" / "anatel-faixas.sqlite") as idx:
+                self.assertEqual(idx.faixa("31", "988887777")[0]["prestadora"], "OPERADORA TESTE")
+                self.assertEqual(idx.faixa("31", "977777777"), [])
 
 
 class TestLab(unittest.TestCase):
@@ -271,5 +271,6 @@ class TestIndiceZip(unittest.TestCase):
                     z.write(demo / f"{nome}.csv", interno)
             c = construir(d, d / "i.sqlite", log=lambda s: None)
             self.assertEqual(c["estabelecimentos"], 3)
-            self.assertEqual(IndiceCNPJ(d / "i.sqlite").por_telefone("+5531988887777")[0]["cnpj"],
-                             "11222333000181")
+            with IndiceCNPJ(d / "i.sqlite") as idx:
+                self.assertEqual(idx.por_telefone("+5531988887777")[0]["cnpj"],
+                                 "11222333000181")

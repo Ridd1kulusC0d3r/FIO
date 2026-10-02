@@ -341,7 +341,16 @@ class Indice:
         return [dict(r) for r in cur.fetchall()]
 
     def fechar(self) -> None:
-        self.con.close()
+        if self.con is not None:
+            self.con.close()
+            self.con = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.fechar()
+        return False
 
 
 def indices_disponiveis(raiz: Path) -> list[Path]:

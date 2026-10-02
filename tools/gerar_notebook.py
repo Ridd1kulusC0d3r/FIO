@@ -77,13 +77,13 @@ Tudo roda na nuvem do Google, sem instalar nada no seu computador. Use o menu **
 | Seção | O que faz | Precisa de internet |
 |---|---|---|
 | 1 | Instala o F.I.O. (do GitHub ou do próprio caderno) | opcional |
-| 2 | Escolhe onde guardar: sessão temporária ou seu Google Drive | não |
+| 2 | Prepara a sessão efêmera (sem Drive) | não |
 | 3 | Confere as fontes públicas | sim |
 | 4 | Demonstração com mapa interativo | não |
 | 5 | Monta o índice da Receita Federal por UF | sim (vários GB) |
 | 6 | Caso pontual com fontes reais | sim |
 | 7 | Laudo e exportação | não |
-| 8 | Bancada web completa | não |
+| 8 | Frontend simples + acesso à bancada completa | não |
 | 9 | Benchmark com dados reais e avaliação sintética | não |
 | 10 | Testes | opcional |
 
@@ -157,34 +157,24 @@ def mostrar_html(doc, altura=720):
 
 print(f"F.I.O. Lab {{fio.__version__}} · fonte: {{usado}} · Python {{sys.version.split()[0]}}")
 cartao("F.I.O. pronto", "Escolha uma seção abaixo. O caderno usa o GitHub quando disponível e mantém uma cópia embutida como fallback.", f"v{{fio.__version__}}", usado, f"Python {{sys.version.split()[0]}}")
-os.environ.setdefault("FIO_HOME", str(TRABALHO / "fio-dados"))
+os.environ.setdefault("FIO_HOME", str(TRABALHO / "fio-runtime"))
 ''')
-    md("## 2. Onde guardar os dados\nPor padrão, tudo fica nesta sessão e some quando ela termina. Com o Drive, casos e o índice da Receita continuam lá na próxima vez.")
+    md("## 2. Sessão efêmera\nNada é montado no Google Drive. Casos, fila e índice ficam apenas no runtime e somem quando a sessão é encerrada. Baixe os relatórios que quiser preservar.")
     code('''
-#@title Escolher armazenamento { display-mode: "form" }
-guardar_no_drive = False  #@param {type:"boolean"}
-confirmo_base_legal_para_guardar_no_drive = False  #@param {type:"boolean"}
-pasta_no_drive = "FIO-Lab"  #@param {type:"string"}
-if guardar_no_drive and confirmo_base_legal_para_guardar_no_drive:
-    from google.colab import drive
-    drive.mount("/content/drive")
-    os.environ["FIO_HOME"] = f"/content/drive/MyDrive/{pasta_no_drive}"
-elif guardar_no_drive:
-    print("Drive NAO montado: marque a confirmacao de base legal (LGPD) para guardar dados no Drive.")
-    os.environ["FIO_HOME"] = str(TRABALHO / "fio-dados")
-else:
-    os.environ["FIO_HOME"] = str(TRABALHO / "fio-dados")
-FIO_HOME = pathlib.Path(os.environ["FIO_HOME"]); FIO_HOME.mkdir(parents=True, exist_ok=True)
-# indice no Drive e lido de uma copia local (o disco do Drive e lento para sqlite)
-if (FIO_HOME / "cnpj.sqlite").exists() and not str(FIO_HOME).startswith(str(TRABALHO / "fio-dados")):
-    local = TRABALHO / "cnpj-local.sqlite"
-    shutil.copy(FIO_HOME / "cnpj.sqlite", local)
-    os.environ["FIO_INDICE_CNPJ"] = str(local)
-elif (FIO_HOME / "cnpj.sqlite").exists():
+#@title Preparar sessão efêmera { display-mode: "form" }
+limpar_sessao_anterior = False  #@param {type:"boolean"}
+FIO_HOME = TRABALHO / "fio-runtime"
+if limpar_sessao_anterior and FIO_HOME.exists():
+    shutil.rmtree(FIO_HOME)
+FIO_HOME.mkdir(parents=True, exist_ok=True)
+os.environ["FIO_HOME"] = str(FIO_HOME)
+if (FIO_HOME / "cnpj.sqlite").exists():
     os.environ["FIO_INDICE_CNPJ"] = str(FIO_HOME / "cnpj.sqlite")
+else:
+    os.environ.pop("FIO_INDICE_CNPJ", None)
 livre = shutil.disk_usage(str(TRABALHO)).free / 1e9
-print(f"dados em: {FIO_HOME} · disco livre da sessao: {livre:,.0f} GB")
-print("indice da Receita:", os.environ.get("FIO_INDICE_CNPJ", "ainda nao montado (secao 5)"))
+print(f"sessao efemera: {FIO_HOME} · disco livre: {livre:,.0f} GB")
+print("Ao encerrar o runtime, estes dados somem. Exporte o relatorio antes de sair.")
 ''')
     md("## 3. Conferir as fontes públicas\nConsulta neutra a cada fonte (CNPJ do Banco do Brasil, CEP da Praça da Sé, domínio nic.br). Nenhuma pessoa é pesquisada.")
     code('''
@@ -207,9 +197,9 @@ print(f"{r['metricas']['entidades']} entidades, {r['metricas']['vinculos']} vín
 display(HTML(mapa_html(CasoEmDisco(CASO_ID).grafo(), altura=560)))
 ''')
     md("""## 5. Índice da Receita Federal por UF
-A fonte mais forte do F.I.O.: telefone → empresa → sócios → filiais, sem internet depois de pronto. O caderno descobre o mês mais recente publicado pela Receita, baixa **um arquivo por vez**, filtra pela UF, apaga e segue. Com o Drive ligado (seção 2), o índice fica guardado para as próximas sessões.
+A fonte mais forte do F.I.O.: telefone → empresa → sócios → filiais, sem internet depois de pronto. O downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte. O índice existe somente nesta sessão do Colab.
 
-São vários arquivos e vários gigabytes: conte com dezenas de minutos a algumas horas, conforme a velocidade da Receita. O filtro reduz o SQLite final e a RAM, mas não o tráfego, porque os arquivos de Estabelecimentos não são separados por UF. Mantenha esta aba aberta; o Colab gratuito desconecta sessões ociosas.""")
+Se a listagem raiz da Receita resetar a conexão, o F.I.O. tenta `urllib`, depois `curl` e, por fim, sonda diretamente pastas mensais recentes. Informar `mes` (AAAA-MM) pula a listagem raiz. O filtro reduz o SQLite final e a RAM, mas não o tráfego, porque os arquivos de Estabelecimentos não são separados por UF.""")
     code('''
 #@title Montar índice { display-mode: "form" }
 ufs = "MG"  #@param {type:"string"}
@@ -225,12 +215,14 @@ if alvo.exists() and not reconstruir:
     print("Marque 'reconstruir' para montar de novo.")
 else:
     filtro = validar_ufs({u.strip().upper() for u in ufs.split(",") if u.strip()} or None)
-    local = TRABALHO / "cnpj-local.sqlite"
-    res = montar_indice(local, ufs=filtro, mes=mes or None, pasta_tmp=TRABALHO / "receita-tmp")
-    if local.resolve() != alvo.resolve():
-        shutil.copy(local, alvo)
-    os.environ["FIO_INDICE_CNPJ"] = str(local)
-    quadro("Índice pronto", [[k, v] for k, v in res.items()], ["campo", "valor"])
+    try:
+        res = montar_indice(alvo, ufs=filtro, mes=mes or None, pasta_tmp=FIO_HOME / "receita-tmp")
+        os.environ["FIO_INDICE_CNPJ"] = str(alvo)
+        quadro("Índice pronto", [[k, v] for k, v in res.items()], ["campo", "valor"])
+    except RuntimeError as e:
+        print("A Receita não respondeu a partir deste runtime. O caso continua utilizável sem o índice local.")
+        print(str(e))
+        print("Tente preencher 'mes' (AAAA-MM) ou rode novamente mais tarde; o downloader já alterna urllib/curl.")
 ''')
     md("""## 6. Caso pontual com fontes reais
 Os valores de exemplo usam **alvos institucionais públicos**. Troque pelos seus alvos só se tiver base legal. Tipos reconhecidos sozinhos: e-mail (tem @), CNPJ, CEP (8 dígitos com hífen), domínio (tem ponto e letras) e telefone.""")
@@ -241,6 +233,7 @@ titulo = "Teste de funcionamento com alvos institucionais"  #@param {type:"strin
 base_legal = "pesquisa-academica"  #@param ["pesquisa-academica", "lgpd-7-i", "lgpd-7-ii", "lgpd-7-v", "lgpd-7-vi", "lgpd-7-ix", "lgpd-4-iii", "contrato-pentest", "resposta-incidente", "judicial"]
 finalidade = "verificar o funcionamento das fontes publicas com alvos institucionais, sem pessoa fisica"  #@param {type:"string"}
 responsavel = "Analista"  #@param {type:"string"}
+telefone = ""  #@param {type:"string"}
 alvos = "00.000.000/0001-91, 01001-000, registro.br"  #@param {type:"string"}
 usar_internet = True  #@param {type:"boolean"}
 profundidade = 1  #@param {type:"slider", min:0, max:2, step:1}
@@ -263,7 +256,8 @@ def reconhecer(v):
     t = normalizar(v)
     return "telefone", t.chave, {"ddd": t.ddd, "assinante": t.assinante, "faixa": t.faixa, "uf": t.uf, "e164": t.e164}
 
-itens = [reconhecer(x) for x in alvos.split(",") if x.strip()]
+entradas = ([telefone] if telefone.strip() else []) + [x for x in alvos.split(",") if x.strip()]
+itens = [reconhecer(x) for x in entradas]
 cd = CasoEmDisco(identificador)
 if cd.dir.exists():
     shutil.rmtree(cd.dir)
@@ -285,9 +279,23 @@ display(HTML(mapa_html(g, altura=520)))
 quadro("Vínculos mais fortes", [[l["entidade"], l["relacao"], l["vinculada_a"], l["confianca"], l["admiralty"]]
        for l in tabela_correlacao(g)[:25]], ["entidade", "relação", "vinculada a", "confiança", "grau"])
 ''')
-    md("## 7. Laudo e exportação")
+    md("## 7. Relatório e exportação\nBaixe primeiro um modelo vazio, se quiser usar o F.I.O. apenas como roteiro. Depois de um caso, exporte laudo, RELINT ou relatório técnico. Como a sessão é efêmera, o download é a forma de preservar o resultado.")
     code('''
-#@title Gerar laudo e exportar o caso { display-mode: "form" }
+#@title Baixar modelo vazio de relatório { display-mode: "form" }
+formato_modelo = "markdown"  #@param ["markdown", "html"]
+from fio.relatorio.modelo import modelo_markdown, modelo_html
+texto_modelo = modelo_html() if formato_modelo == "html" else modelo_markdown()
+ext = "html" if formato_modelo == "html" else "md"
+modelo_saida = TRABALHO / f"FIO-modelo-relatorio.{ext}"
+modelo_saida.write_text(texto_modelo, encoding="utf-8")
+try:
+    from google.colab import files
+    files.download(str(modelo_saida))
+except ImportError:
+    print(modelo_saida)
+''')
+    code('''
+#@title Gerar relatório do caso { display-mode: "form" }
 caso = "TESTE-COLAB-01"  #@param {type:"string"}
 modelo = "laudo"  #@param ["laudo", "relint", "tecnico"]
 exportar_pasta_do_caso = False  #@param {type:"boolean"}
@@ -311,7 +319,7 @@ try:
 except ImportError:
     mostrar_html(doc, 480)
 ''')
-    md("## 8. Bancada web\nA interface completa do F.I.O. (casos, mapa, abas, quesitos, experimentos), servida pelo túnel autenticado do Colab.")
+    md("## 8. Frontend do Colab\nAbre uma tela simples, com telefone, índice da Receita e exportação de relatório. A bancada completa continua disponível por um botão dentro do frontend.")
     code('''
 #@title Abrir a bancada { display-mode: "form" }
 exibir = "dentro do caderno"  #@param ["dentro do caderno", "nova aba (experimental)"]
@@ -327,7 +335,7 @@ except NameError:
 try:
     from google.colab import output
     if exibir == "dentro do caderno":
-        output.serve_kernel_port_as_iframe(porta, path=f"/#t={Estado.token}", height=760)
+        output.serve_kernel_port_as_iframe(porta, path=f"/#t={Estado.token}", height=860)
     else:
         # "nova aba" é conveniência experimental. O iframe é o caminho principal
         # porque mudanças de segurança do navegador podem bloquear o proxy direto.

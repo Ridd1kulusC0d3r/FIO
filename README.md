@@ -40,6 +40,8 @@ Três regras não negociáveis:
 | **Dois cliques** | leigos, no próprio computador | baixe a [Release](https://github.com/Ridd1kulusC0d3r/FIO/releases), descompacte e abra o lançador do seu sistema ([COMECE-AQUI.md](COMECE-AQUI.md)) |
 | **Linha de comando** | técnicos | `pip install git+https://github.com/Ridd1kulusC0d3r/FIO` e depois `fio --help` |
 
+**Colab (3.0.1):** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo e relatórios para download antes de o runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
+
 ```bash
 fio demo --abrir        # caso fictício, 100% offline, abre a bancada
 fio lab bancada         # a bancada web (http://127.0.0.1:8765)
@@ -165,7 +167,7 @@ O framework **recusa por construção**, sem flag para ligar: bases vazadas, cre
 ## Desenvolvimento
 
 ```bash
-python -m unittest discover -s testes -v     # 136 testes; o E2E usa Playwright se instalado
+python -m unittest discover -s testes -v     # 137 testes; o E2E usa Playwright se instalado
 python testes/fumaca.py                      # fumaça da CLI
 python testes/ao_vivo.py                     # contrato das fontes reais (internet)
 python tools/gerar_midia.py                  # regenera docs/img/demo.gif

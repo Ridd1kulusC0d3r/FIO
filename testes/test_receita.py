@@ -85,6 +85,14 @@ class TestReceita(unittest.TestCase):
         self.assertEqual(m, "2026-08")
         self.assertIn("Socios0.zip", arqs)
 
+
+    def test_mes_informado_pula_listagem_raiz(self):
+        # A falha vista no Colab ocorre na listagem raiz. Com mês explícito,
+        # o F.I.O. deve consultar diretamente a pasta mensal.
+        b, m, arqs = descobrir(self.base, mes="2026-08", log=lambda s: None)
+        self.assertEqual((b, m), (self.base, "2026-08"))
+        self.assertIn("Estabelecimentos0.zip", arqs)
+
     def test_monta_indice_so_de_MG_com_retomada_e_apaga_zips(self):
         import fio.receita_download as rd
         rd.time.sleep = lambda s: None           # sem espera entre tentativas
@@ -168,8 +176,16 @@ class TestModoColab(unittest.TestCase):
             try:
                 r = urllib.request.Request("http://127.0.0.1:8795/", headers={"Host": "x-8795-colab.dev"})
                 with urllib.request.urlopen(r) as x:
+                    corpo = x.read().decode("utf-8")
                     self.assertIsNone(x.headers.get("X-Frame-Options"))
                     self.assertIn("frame-ancestors *", x.headers.get("Content-Security-Policy"))
+                    self.assertIn("Investigação curta", corpo)
+                r = urllib.request.Request(
+                    "http://127.0.0.1:8795/api/modelo-relatorio?download=1&t=c0l",
+                    headers={"Host": "x-8795-colab.dev"})
+                with urllib.request.urlopen(r) as x:
+                    self.assertIn("FIO-modelo-relatorio.md", x.headers.get("Content-Disposition"))
+                    self.assertIn("Identificação do caso", x.read().decode("utf-8"))
                 r = urllib.request.Request("http://127.0.0.1:8795/api/casos", headers={"Host": "x-8795-colab.dev"})
                 with self.assertRaises(urllib.error.HTTPError) as e:
                     urllib.request.urlopen(r)
