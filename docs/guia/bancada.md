@@ -82,7 +82,7 @@ Pipeline, avaliação sintética e construção do índice da Receita rodam numa
 
 ## A bancada no Colab
 
-No Colab, `fio lab bancada` não se aplica: use a célula "Abrir a bancada" (veja [Colab](colab.md)). Ela sobe o servidor em **modo Colab** (aceita o `Host` do proxy do Google e o iframe) e mostra primeiro a tela simplificada; **bancada completa** abre esta mesma interface.
+No Colab, `fio lab bancada` não se aplica: use a célula "Abrir a bancada" (veja [Colab](colab.md)). Ela sobe o servidor em **modo Colab** (aceita o `Host` do proxy do Google e o iframe) e abre **esta mesma interface completa**. Há uma tela mínima opcional (`interface: simples`, ou o caminho `/simples/`).
 
 ## API (para scripts)
 

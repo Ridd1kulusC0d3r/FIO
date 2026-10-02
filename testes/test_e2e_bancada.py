@@ -136,7 +136,7 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
                     pass
 
                 def do_GET(self):
-                    alvo = prefixo + "/" + ("workbench/" if "wb" in self.path else "")
+                    alvo = prefixo + "/" + ("simples/" if "simples" in self.path else "")
                     h = (f'<iframe id="f" src="http://127.0.0.1:8792{alvo}#t=simtok" '
                          f'style="width:1200px;height:800px"></iframe>').encode()
                     self.send_response(200)
@@ -153,8 +153,8 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
             try:
                 with sync_playwright() as pw:
                     nav = pw.chromium.launch()
-                    for url, texto in (("http://127.0.0.1:8793/", "Telefone e caso"),
-                                       ("http://127.0.0.1:8793/?wb", "Bem-vindo ao F.I.O. Lab")):
+                    for url, texto in (("http://127.0.0.1:8793/", "Bem-vindo ao F.I.O. Lab"),
+                                       ("http://127.0.0.1:8793/?simples", "Telefone e caso")):
                         pg = nav.new_page(viewport={"width": 1300, "height": 900})
                         pg.on("pageerror", lambda e: erros.append(str(e)))
                         pg.add_init_script(
@@ -163,7 +163,7 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
                         pg.goto(url)
                         fr = pg.frame_locator("#f")
                         fr.locator(f"text={texto}").first.wait_for(timeout=10000)
-                        if "wb" not in url:
+                        if "simples" in url:
                             # frontend do Colab: a lista de base legal tem de vir
                             # do /api/estado (dict) e a versao aparecer
                             fr.locator("#baseLegal option").nth(3).wait_for(
@@ -172,7 +172,7 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
                             assert n >= 10, f"base legal com {n} opcoes"
                             assert fr.locator("#baseLegal").input_value() == ""
                             assert "F.I.O." in fr.locator("#versao").inner_text()
-                        if "wb" in url:
+                        if "simples" not in url:
                             fr.locator("#bvdemo").click()
                             fr.locator("#g circle").first.wait_for(timeout=15000)
                         pg.close()

@@ -44,6 +44,7 @@ class Estado:
     hosts_extra: tuple = ()
     permitir_iframe = False
     modo_colab = False
+    interface_simples = False    # no Colab, a tela completa e a padrao
     fila: Fila | None = None
     porta = 8765
     ator = "bancada"
@@ -172,22 +173,33 @@ class Manipulador(BaseHTTPRequestHandler):
         return cd
 
     # -------------------------------------------------------------- rotas
+    @staticmethod
+    def _caminho(bruto: str) -> tuple[str, bool]:
+        """Separa o prefixo /simples/: a tela simples do Colab e a bancada
+        completa compartilham a mesma API, mas a simples usa `./api` relativo
+        a pagina, entao `/simples/api/...` precisa chegar como `/api/...`."""
+        if bruto == "/simples" or bruto.startswith("/simples/"):
+            return (bruto[len("/simples"):] or "/"), True
+        return bruto, False
+
     def do_GET(self):
         if not self._host_ok():
             return self._erro("host nao permitido", 403)
         url = urllib.parse.urlparse(self.path)
         qs = urllib.parse.parse_qs(url.query)
-        if url.path in ("/", "/index.html"):
-            pagina = UI_COLAB if Estado.modo_colab and UI_COLAB.exists() else UI
+        caminho, simples = self._caminho(url.path)
+        if caminho in ("/", "/index.html"):
+            quer_simples = simples or (Estado.modo_colab and Estado.interface_simples)
+            pagina = UI_COLAB if quer_simples and UI_COLAB.exists() else UI
             return self._html(pagina.read_text(encoding="utf-8"))
-        if url.path in ("/workbench", "/workbench/"):
+        if caminho in ("/workbench", "/workbench/"):
             return self._html(UI.read_text(encoding="utf-8"))
-        if not url.path.startswith("/api/"):
+        if not caminho.startswith("/api/"):
             return self._erro("nao encontrado", 404)
         if not self._token_ok(qs):
             return self._erro("token ausente ou invalido", 401)
         try:
-            return self._rota_get(url.path, qs)
+            return self._rota_get(caminho, qs)
         except FileNotFoundError as e:
             return self._erro(f"nao encontrado: {e}", 404)
         except (ValueError, KeyError) as e:
@@ -200,7 +212,7 @@ class Manipulador(BaseHTTPRequestHandler):
         if not self.headers.get("X-FIO-Token") or not self._token_ok({}):
             return self._erro("token ausente ou invalido", 401)
         try:
-            return self._rota_post(url.path, self._corpo())
+            return self._rota_post(self._caminho(url.path)[0], self._corpo())
         except ViolacaoDeEscopo as e:
             return self._erro(f"politica do caso: {e}", 403)
         except FileNotFoundError as e:
@@ -349,7 +361,7 @@ class Manipulador(BaseHTTPRequestHandler):
 
 def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
            bloquear: bool = True, hosts_extra: list[str] | None = None,
-           modo_colab: bool = False):
+           modo_colab: bool = False, interface_simples: bool = False):
     """modo_colab: o Colab entrega a pagina por um proxy autenticado do
     Google, com Host proprio e dentro de iframe. Nesse modo aceitamos
     qualquer Host e a exibicao em iframe; o token segue obrigatorio."""
@@ -363,6 +375,7 @@ def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
     Estado.hosts_extra = tuple(h.lower() for h in extra)
     Estado.permitir_iframe = modo_colab
     Estado.modo_colab = modo_colab
+    Estado.interface_simples = interface_simples
     Estado.porta = porta
     (raiz() / "lab").mkdir(parents=True, exist_ok=True)
     Estado.fila = Fila(raiz() / "lab" / "fila.sqlite")

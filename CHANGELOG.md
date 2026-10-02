@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.0.6] — 2026-10-02
+
+### Alterado
+- **Colab abre a bancada completa por padrão** (painel, grafo, vínculos, observações, custódia: as telas do GIF). Antes abria a tela simplificada e a completa ficava atrás de um botão, então quem chegava pelo Colab não encontrava as telas da demonstração. A tela simples continua disponível (`interface: simples` na célula, ou `/simples/`); a API é a mesma.
+
 ## [3.0.5] — 2026-10-02
 
 ### Corrigido

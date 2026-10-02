@@ -12,7 +12,7 @@ Nada é montado no Google Drive. Casos, fila e índice da Receita ficam **só no
 
 ## Passo a passo
 
-**Comece aqui (3 células):** 1. Instalar · 2. Preparar a sessão · **3. Abrir o F.I.O.** A tela do F.I.O. abre **dentro do caderno**; é ali que se trabalha (telefone, índice da Receita com progresso na tela, relatório). Tudo o que vem depois é **avançado e opcional**.
+**Comece aqui (3 células):** 1. Instalar · 2. Preparar a sessão · **3. Abrir o F.I.O.** A **bancada completa** (a mesma do GIF do GitHub: painel, caso, grafo, vínculos, observações, custódia) abre **dentro do caderno**; é ali que se trabalha. Tudo o que vem depois é **avançado e opcional**.
 
 Menu **Ambiente de execução › Executar tudo** é seguro: o que baixa muito dado ou demora (índice, benchmark, avaliação sintética, testes) só roda quando você marca a caixa **executar**.
 
@@ -61,16 +61,19 @@ recursos suficientes para o fluxo completo.
 
 `limpar_sessao_anterior` apaga o `fio-runtime` da sessão atual.
 
-### 3. Abrir o F.I.O. (frontend e bancada)
+### 3. Abrir o F.I.O. (bancada completa)
 
-A célula abre uma tela simples (telefone, índice da Receita, exportação) **dentro do caderno**, num iframe. De lá, o botão **bancada completa** abre a [bancada](bancada.md) na mesma sessão.
+A célula sobe a bancada num servidor local do runtime e a mostra **dentro do caderno**, num iframe. O que você vê é a mesma interface da demonstração do GitHub: **Painel › Caso › Grafo › Vínculos › Observações › Custódia**, mais experimentos, ferramentas BR e a montagem do índice da Receita com progresso. Passo a passo da interface em [bancada](bancada.md).
 
-| `exibir` | Quando usar |
-|---|---|
-| `dentro do caderno` (padrão) | sempre que possível; é o caminho suportado |
-| `nova aba (experimental)` | se você quer a bancada em tela cheia; o navegador pode bloquear o proxy direto |
+| Parâmetro | Valores | Para quê |
+|---|---|---|
+| `interface` | `completa` (padrão) · `simples` | `simples` abre uma tela mínima (telefone, índice, relatório). Também fica acessível em `/simples/` |
+| `exibir` | `dentro do caderno` (padrão) · `nova aba (experimental)` | o iframe é o caminho suportado; a nova aba pode ser bloqueada pelo navegador |
+| `porta` | 8765 | só mude se estiver ocupada |
 
-O endereço contém o **token da sessão**: não compartilhe a captura de tela da célula.
+Trocar `interface` e rodar a célula de novo vale para a **próxima abertura**: recarregue o iframe (ou rode a célula outra vez). O endereço contém o **token da sessão**: não compartilhe a captura de tela da célula.
+
+Na primeira vez, clique em **Montar caso de demonstração** no painel para ver o grafo funcionando sem internet.
 
 ### 6. Índice da Receita por UF (pelo caderno)
 

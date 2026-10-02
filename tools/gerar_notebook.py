@@ -217,11 +217,12 @@ if not avisos:
 print("Ao encerrar o runtime, estes dados somem. Exporte o relatorio antes de sair.")
 ''')
     md("""## 3. Abrir o F.I.O.
-**É por aqui que se trabalha.** Abre a tela do F.I.O. dentro do caderno: informe o telefone, monte o índice da Receita (com progresso na tela) e baixe o relatório. A bancada completa (grafo, vínculos, observações, custódia) está no botão **bancada completa** da própria tela.
+**É por aqui que se trabalha.** Abre a **bancada completa** do F.I.O. dentro do caderno (a mesma da demonstração do GitHub): painel, caso, **grafo**, vínculos, observações, custódia, experimentos, ferramentas BR e o índice da Receita com progresso na tela. Se preferir uma tela mínima (só telefone, índice e relatório), escolha `interface: simples`.
 
 Tudo o que vem depois deste ponto é **opcional**: demonstração, verificação das fontes, índice pelo caderno, caso pontual, pesquisa e testes.""")
     code('''
 #@title Abrir o F.I.O. { display-mode: "form" }
+interface = "completa"  #@param ["completa", "simples"]
 exibir = "dentro do caderno"  #@param ["dentro do caderno", "nova aba (experimental)"]
 porta = 8765  #@param {type:"integer"}
 import time, contextlib, io as _io
@@ -232,6 +233,7 @@ except NameError:
     with contextlib.redirect_stdout(_io.StringIO()):
         BANCADA = servir(porta=porta, abrir=False, bloquear=False, modo_colab=True)
     time.sleep(0.5)
+Estado.interface_simples = (interface == "simples")   # vale para a proxima abertura
 try:
     from google.colab import output
     if exibir == "dentro do caderno":
