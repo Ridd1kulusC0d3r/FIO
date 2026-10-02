@@ -10,7 +10,7 @@ Cenários completos, do comando ao que ler no resultado. Todos assumem um caso a
 | 4 | [Extrair identificadores de uma ata, e-mail ou boleto](#4-extrair-identificadores-de-um-texto) | `doc extrair`, `doc boleto` |
 | 5 | [Investigar um domínio suspeito](#5-investigar-um-domínio-suspeito) | `rdap`, `crtsh`, `wayback` |
 | 6 | [Conferir se uma empresa tem sanção](#6-conferir-se-uma-empresa-tem-sanção) | `transparencia`, `querido-diario` |
-| 7 | [Buscar na web só com consultas prontas (sem rede automática)](#7-buscar-na-web-sem-deixar-o-f-i-o-consultar) | `dorks` |
+| 7 | [Buscar na web só com consultas prontas (sem rede automática)](#7-buscar-na-web-sem-deixar-o-fio-consultar) | `dorks` |
 | 8 | [Entregar um laudo ou RELINT](#8-entregar-um-laudo-ou-relint) | `quesito`, `laudo` |
 | 9 | [Provar que nada mudou](#9-provar-que-nada-mudou) | `ledger`, `manifesto` |
 | 10 | [Comparar duas execuções](#10-comparar-duas-execuções) | `lab pipeline`, `lab comparar` |
