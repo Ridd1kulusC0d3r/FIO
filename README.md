@@ -1,269 +1,178 @@
-# F.I.O. Lab — edição BR
+<p align="center">
+  <img src="assets/banner.png" alt="F.I.O. Lab: laboratório OSINT em Python para análise de vínculos entre telefones e registros públicos brasileiros" width="860">
+</p>
 
-[![testes](https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml/badge.svg)](https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml)
-[![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Ridd1kulusC0d3r/FIO/blob/main/colab/FIO_Lab_Colab.ipynb)
-![Python 3.10–3.14](https://img.shields.io/badge/python-3.10%E2%80%933.14-3776AB)
-![só biblioteca padrão](https://img.shields.io/badge/depend%C3%AAncias-nenhuma-0E7C6B)
-[![licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-555)](LICENSE)
+<p align="center">
+  <a href="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml"><img alt="testes" src="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml/badge.svg"></a>
+  <a href="https://colab.research.google.com/github/Ridd1kulusC0d3r/FIO/blob/main/colab/FIO_Lab_Colab.ipynb"><img alt="Abrir no Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a>
+  <img alt="versão 3.0.0" src="https://img.shields.io/badge/vers%C3%A3o-3.0.0-0B4F6C">
+  <img alt="Python 3.10–3.14" src="https://img.shields.io/badge/python-3.10%E2%80%933.14-3776AB">
+  <img alt="só biblioteca padrão" src="https://img.shields.io/badge/depend%C3%AAncias-nenhuma-0E7C6B">
+  <a href="LICENSE"><img alt="licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-555"></a>
+</p>
 
-**Fontes, Identificadores e Origens.** Laboratório de OSINT, em Python, para análise de
-vínculos a partir de números de telefone e registros públicos brasileiros. Usa só a
-biblioteca padrão: nenhuma dependência externa, nem na bancada web.
+<p align="center"><strong>Fontes, Identificadores e Origens.</strong><br>
+Estes números pertencem à mesma pessoa, à mesma empresa ou ao mesmo grupo? Com que confiança?<br>E com que frequência essa resposta erra?</p>
+
+<p align="center">
+  <img src="docs/img/demo.gif" alt="Bancada do F.I.O.: abrir o caso de demonstração, explorar o grafo, ver vínculos, observações e a cadeia de custódia" width="860">
+</p>
+
+---
+
+## O que é
+
+O F.I.O. Lab cruza **telefones, CNPJs, sócios, e-mails, domínios e diários oficiais** e monta um grafo de vínculos em que **toda aresta carrega a fonte que a sustenta**. Roda em Python puro (só biblioteca padrão, inclusive a bancada web), no seu computador ou no Colab.
+
+Três regras não negociáveis:
+
+| Regra | Como aparece no código |
+|---|---|
+| **Sem escopo, sem coleta.** | Todo caso exige base legal, finalidade e prazo. O escopo é conferido a cada pivô; fora dele, o coletor não roda. |
+| **Sem fonte, sem vínculo.** | A aresta nasce com ao menos uma `Fonte`. A confiança segue a escala Admiralty, combina só fontes **independentes** e nunca chega a 100%. |
+| **Sem prova, sem conclusão.** | Cada conclusão do relatório cita a aresta do grafo que a sustenta. Todo material coletado entra num ledger encadeado por SHA-256. |
 
 ## Três jeitos de usar
 
 | Jeito | Para quem | Como |
 |---|---|---|
-| **Google Colab** | quem quer testar sem instalar | botão *Abrir no Colab* acima › *Ambiente de execução › Executar tudo* |
-| **Dois cliques** | leigos, no próprio computador | baixe a última [Release](https://github.com/Ridd1kulusC0d3r/FIO/releases), descompacte e abra o lançador do seu sistema ([COMECE-AQUI.md](COMECE-AQUI.md)) |
+| **Google Colab** | testar sem instalar | botão *Abrir no Colab* › *Ambiente de execução › Executar tudo* |
+| **Dois cliques** | leigos, no próprio computador | baixe a [Release](https://github.com/Ridd1kulusC0d3r/FIO/releases), descompacte e abra o lançador do seu sistema ([COMECE-AQUI.md](COMECE-AQUI.md)) |
 | **Linha de comando** | técnicos | `pip install git+https://github.com/Ridd1kulusC0d3r/FIO` e depois `fio --help` |
 
-Manual ilustrado: [docs/MANUAL.html](https://Ridd1kulusC0d3r.github.io/FIO/) (publicado no GitHub Pages).
-Arquitetura no Colab: [docs/ARQUITETURA-COLAB.html](docs/ARQUITETURA-COLAB.html).
-
-**Colab 2.2.1:** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo/relatórios para download antes do runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
-
-Uso responsável: [USO-RESPONSAVEL.md](USO-RESPONSAVEL.md).
-
-> *Estes números pertencem à mesma pessoa, à mesma empresa ou ao mesmo
-> grupo? Com que confiança? E com que frequência essa resposta erra?*
-
-### Publicar o seu repositório
+**Colab (3.0.1):** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo e relatórios para download antes de o runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
 
 ```bash
-python tools/configurar_repositorio.py seu-usuario/fio-lab   # troca os marcadores e regenera o caderno
-git init && git add . && git commit -m "F.I.O. Lab"
-git remote add origin https://github.com/seu-usuario/fio-lab && git push -u origin main
-git tag v2.2.1 && git push --tags        # gera Release com zip, caderno e manual
+fio demo --abrir        # caso fictício, 100% offline, abre a bancada
+fio lab bancada         # a bancada web (http://127.0.0.1:8765)
 ```
 
-Depois, em *Settings › Pages*, escolha **GitHub Actions** como fonte para publicar o manual.
+## A bancada
 
----
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/painel-claro.png" alt="Painel da bancada, tema claro"></td>
+    <td width="50%"><img src="docs/img/grafo-detalhe.png" alt="Grafo com painel de detalhe de um telefone e suas fontes"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Painel.</b> Casos, caso de demonstração em um clique, verificação das fontes.</sub></td>
+    <td><sub><b>Grafo.</b> Espessura e estilo da aresta seguem a confiança; clique mostra atributos, vínculos e fontes com hash.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/observacoes.png" alt="Observações analíticas com gravidade e botão para destacar no grafo"></td>
+    <td><img src="docs/img/grafo-escuro.png" alt="Grafo no tema escuro"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Observações.</b> Padrões que merecem conferência, com o analisador que os gerou. Não são acusações.</sub></td>
+    <td><sub><b>Tema escuro</b> e layout responsivo (funciona no celular), sem fonte ou script externo.</sub></td>
+  </tr>
+</table>
 
-## O que há de novo na v2
+O servidor escuta só em loopback, exige token por sessão (no fragmento da URL, que não vai para logs nem `Referer`), confere o cabeçalho `Host` contra DNS rebinding e não envia CORS. Detalhes em [docs/guia/bancada.md](docs/guia/bancada.md).
 
-| Camada | O que faz |
-|---|---|
-| **Documentos BR** | CPF (DV + região fiscal), **CNPJ alfanumérico** (IN RFB 2.229/2024), CEP→UF, placa antiga↔Mercosul, título de eleitor (UF), PIS, RENAVAM, extração de texto com aviso de ambiguidade CPF×telefone |
-| **Fontes BR** | Querido Diário (diários oficiais municipais), ViaCEP/IBGE, Portal da Transparência (CEIS/CNEP) |
-| **Indexador universal** | Qualquer CSV/JSON/ZIP de dado aberto vira índice reverso local por *receita* (CNES, Cadastur, TSE, faixas de numeração, genérica) |
-| **Analisadores** | Coerência geográfica (DDD × CEP × região fiscal do CPF), intermediários prováveis (contabilidade/coworking), sanção no componente |
-| **Pipeline em estágios** | preparação → coleta (ingestão/normalização/enriquecimento) → análise → relatório |
-| **Plugins** | Soltou um `.py` em `~/.fio/plugins/`, o lab carrega (com SHA-256 registrado) |
-| **Experimentos** | Cada execução registra parâmetros, hash do código, versão das fontes, métricas e hash do grafo; `comparar` mostra o que mudou |
-| **Avaliação sintética** | Mundos fictícios com gabarito e armadilhas; precisão/revocação/F1 de cada heurística, com média ± desvio |
-| **Laudo / RELINT** | Modelos jurídicos BR com quesitos e cadeia de custódia mapeada nas 10 etapas do art. 158-B do CPP |
-| **Bancada web** | `http.server` local, token por sessão, grafo interativo, tarefas assíncronas |
+## Como funciona
 
-## Instalação
-
-```bash
-unzip fio-lab-2.2.1.zip && cd fio
-python3 -m fio --help            # Python 3.10+, nada para instalar
-pip install -e .                 # opcional: comando `fio`
+```text
+ alvos ─► preparação ─► coleta ───────────────► análise ─► relatório
+          plugins        ingestão   nucleo       coerência    técnico (HTML/MD/CSV)
+          hash do        normaliza  cnpj-reverso lote         laudo (art. 158-B)
+          código         enriquece  querido-diário reuso       RELINT
+                                    crt.sh · wayback · rdap   intermediários
+                                    viacep · transparência    sanções
+                          │                  │
+                          ▼                  ▼
+                 ledger SHA-256        grafo (Admiralty por fonte)
+                 + artefatos           ─► claims ─► manifesto
 ```
 
-## Uso em 8 comandos
+Desenho completo em [ARQUITETURA.md](ARQUITETURA.md).
+
+## Novidades da 3.0
+
+| | O que faz | Por que importa |
+|---|---|---|
+| **Baseline diferencial** | Antes de aceitar uma resposta, consulta um valor que **não pode existir** e compara. Resposta quase igual é descartada. | Mata o falso achado clássico: a fonte devolve "200 OK" para qualquer coisa. |
+| **Canários de contrato** | `fio/fontes.json` declara o que cada fonte deve devolver. `fio diagnostico` separa *fora do ar* de *mudou de formato*. | Avisa que um coletor quebrou antes de alguém ler um relatório vazio. |
+| **Lote de registro** | Empresas de raízes distintas abertas na mesma janela de 30 dias e ligadas por telefone, e-mail, CEP ou sócio. | Redes de empresas de fachada abrem em lote. Escritório contábil também: o texto da observação diz como distinguir. |
+| **Reuso de linha** | Telefone declarado por empresa encerrada e por outra ativa. | Evita tratar número reciclado como operador em comum. |
+| **crt.sh e Wayback** | Subdomínios por Certificate Transparency e a primeira captura de um domínio. | Idade real e infraestrutura irmã, sem tocar o alvo. |
+| **Boleto, PIX, CNH, CNS** | Linha digitável com DV mód. 10 e 11, banco, valor e vencimento; chave PIX aleatória; validação de CNH e CNS. | Extrai identificadores financeiros de texto livre sem confundir com CNPJ. |
+| **Claims rastreáveis** | `fio claims`: cada conclusão aponta a aresta que a sustenta. | Conclusão sem evidência no grafo não entra no relatório. |
+| **Manifesto SHA-256** | `fio manifesto`: hash de cada peça amarrado ao ledger. | Detecta peça alterada, manifesto adulterado e ledger reescrito. |
+| **Calibração** | `fio lab calibrar`: confiança declarada × precisão observada. | Mede se "0,76" significa 76%. |
+
+Lista completa no [CHANGELOG](CHANGELOG.md).
+
+## Quanto o F.I.O. acerta?
+
+Mundos fictícios com gabarito e armadilhas reais de análise de vínculo (contabilidade, número reciclado, laranja, homônimo, **rede de fachada**…), sempre offline. Média ± desvio em 10 mundos × 15 grupos:
+
+| Configuração | Precisão | Revocação | F1 |
+|---|---|---|---|
+| combinado, limiar 0,2, sem poda | 0,441 ± 0,154 | 0,885 ± 0,068 | 0,575 ± 0,141 |
+| combinado, limiar 0,2, **com** poda de intermediários | 0,774 ± 0,184 | 0,714 ± 0,070 | 0,727 ± 0,115 |
+| combinado, **limiar 0,4** | **0,878 ± 0,058** | 0,714 ± 0,070 | **0,785 ± 0,052** |
+| sócio só por nome (ablação) | 0,389 ± 0,146 | 0,885 ± 0,068 | 0,527 ± 0,145 |
+
+E a calibração, sem maquiagem: a confiança **ordena** certo, mas é **grosseira** (as arestas caem em três valores) e **conservadora** (a faixa 0,3–0,4 acerta 49%, e a 0,7–0,8 acerta 100% no sintético). O que vale são as comparações relativas; valide em casos reais rotulados antes de citar números absolutos. Método e leitura em [docs/guia/avaliacao.md](docs/guia/avaliacao.md).
+
+## Uso em linha de comando
 
 ```bash
-# caso com base legal, finalidade e metadados do laudo
+# caso com base legal, finalidade e escopo
 fio caso novo --id CASO-2026-020 --titulo "..." --base-legal lgpd-7-vi \
   --finalidade "instruir notificação extrajudicial ..." --responsavel "Fulano" \
   --escopo "+5531988887777" "exemplo.com.br"
-fio caso-editar --caso CASO-2026-020 --solicitante "Jurídico" --referencia "Proc. 0001234-..."
 
-# alvos e quesitos
 fio alvo --caso CASO-2026-020 --tipo telefone --valor "(31) 98888-7777"
-fio quesito add --caso CASO-2026-020 --texto "As linhas pertencem ao mesmo grupo?"
-
-# pipeline completo, virando experimento
 fio lab pipeline --caso CASO-2026-020 --profundidade 2 --expandir-escopo \
   --relatorio tecnico.html --laudo laudo.html
-
-# responder, emitir laudo ou RELINT
-fio quesito responder --caso CASO-2026-020 --n 1 --texto "Sim, com confiança alta ..."
-fio laudo --caso CASO-2026-020 --modelo relint --saida relint.html
-
-# bancada web
-fio lab bancada
+fio claims --caso CASO-2026-020              # conclusões e suas evidências
+fio relatorio --caso CASO-2026-020 --saida r.html --markdown r.md --manifesto
+fio manifesto verificar --caso CASO-2026-020 # nada mudou desde a emissão?
+fio doc extrair ata.txt                      # CPF, CNPJ, CEP, placa, boleto, chave PIX…
 ```
-
-## Bancada web
-
-```bash
-fio lab bancada --porta 8765
-```
-
-Abre `http://127.0.0.1:8765/#t=<token>`. O token vai no *fragmento* da URL,
-que não chega a logs nem ao cabeçalho `Referer`, e é exigido em toda rota
-`/api`. O servidor escuta só em loopback, confere o cabeçalho `Host` (contra
-DNS rebinding) e não envia cabeçalho CORS: outra página aberta no mesmo
-navegador não consegue disparar coleta nem ler dado do caso.
-
-Abas: grafo (arrastável, com detalhe por nó), vínculos, agrupamentos,
-observações, custódia, experimentos (com comparação entre dois) e quesitos. A
-bancada também traz ferramentas BR avulsas, a avaliação sintética e o
-inventário de plugins.
-
-## Índice da Receita por UF
-
-```bash
-# baixa o mês mais recente, retoma quedas e mantém só MG no SQLite final
-fio indice baixar --uf MG --saida ~/.fio/cnpj-mg.sqlite
-
-# múltiplas UFs; use --manter-zips só quando realmente quiser gastar disco
-fio indice baixar --uf MG,SP --tmp /caminho/temporario
-```
-
-O downloader processa **um ZIP por vez** e remove o arquivo depois. A Receita não
-distribui Estabelecimentos por estado, então `--uf` **reduz o índice final e a RAM,
-não o volume baixado**. As raízes aceitas ficam numa tabela SQLite auxiliar durante
-a construção; Empresas e Sócios são filtrados em lotes contra esse escopo, sem
-manter milhões de CNPJs em um `set` Python. Downloads parciais usam `Range` +
-`If-Range` e reiniciam apenas o arquivo atual se o objeto remoto mudar. No Colab,
-se a listagem raiz da Receita sofrer `ConnectionResetError`/timeout, o cliente tenta
-`urllib`, recua para `curl --http1.1` e então sonda diretamente os meses recentes.
-Informar `--mes AAAA-MM` pula a listagem raiz por completo. Antes do rename atômico,
-o `.parcial` é aberto e validado como ZIP; resposta HTTP completa mas corrompida
-nunca vira cache definitivo. Os índices SQLite de telefone, e-mail,
-raiz e sócio são criados **depois** da carga filtrada e então recebem `ANALYZE`,
-evitando manter seis B-trees atualizadas durante milhões de inserts.
 
 ## Fontes
+
+Cada coletor declara grau Admiralty e a **reserva** (o limite conhecido da fonte), que vai para o relatório.
 
 | Coletor | Fonte | Modo | Grau |
 |---|---|---|---|
 | `nucleo` | plano de numeração (tabela local) | offline | A2 |
-| `extrator` | documento do caso: telefones, e-mails, CPF/CNPJ/CEP/placa | offline | B2 |
-| `cnpj-reverso` | **Dados Abertos do CNPJ** (Receita), índice local | offline | A2 |
-| `dados-abertos` | todos os índices construídos por receita | offline | por receita |
+| `cnpj-reverso` | Dados Abertos do CNPJ (Receita), índice local | offline | A2 |
+| `dados-abertos` | qualquer CSV/JSON/ZIP aberto indexado por *receita* | offline | por receita |
 | `cnpj-api` | BrasilAPI (espelho da Receita) | rede | B2 |
-| `querido-diario` | texto integral de diários oficiais municipais | rede | A3 |
-| `viacep` | CEP → logradouro, IBGE, DDD da localidade | rede | B2 |
-| `transparencia` | CEIS e CNEP (CGU); requer chave gratuita | rede | A1 |
-| `rdap` | registro.br e RDAP genérico | rede | A2 |
-| `web` | consultas em todas as grafias + índice público | rede | C3 |
-| `hibp` | Have I Been Pwned (e-mail); requer chave | rede | B2 |
-| `exposicao-local` | índice por hash de corpus já detido | offline | B2 |
+| `querido-diario` | diários oficiais municipais | rede | A3 |
+| `viacep`, `rdap`, `transparencia` | CEP/IBGE, registro.br, CEIS/CNEP | rede | B2 / A2 / A1 |
+| `crtsh`, `wayback` | Certificate Transparency, Internet Archive | rede | B3 / B2 |
+| `web`, `hibp` | índice público (com baseline), Have I Been Pwned | rede | C3 / B2 |
 
-### Receitas de dados abertos
+Tabela completa, receitas de dados abertos e o índice por UF: [docs/guia/fontes.md](docs/guia/fontes.md) · [docs/guia/indice-cnpj.md](docs/guia/indice-cnpj.md).
 
-```bash
-fio receita listar
-fio receita construir --id cnes --origem cnes_estabelecimentos.zip
-fio receita construir --id generica --origem qualquer_planilha.csv
-fio receita status
-```
+## Limites e uso responsável
 
-A receita `generica` detecta sozinha as colunas de telefone, e-mail, CNPJ,
-CEP, nome, UF e município. Receitas próprias vão em `~/.fio/receitas/*.json`
-(veja `exemplos/receita_exemplo.json`). Cada índice guarda o SHA-256 do
-arquivo de origem, que entra no registro do experimento como "versão da
-fonte".
+O framework **recusa por construção**, sem flag para ligar: bases vazadas, credenciais de terceiros, interceptação, engenharia social e enumeração de plataformas de mensageria. CPF completo encontrado em documento entra no grafo **só mascarado** (LGPD, art. 6º, III). Vínculo é coocorrência documentada, não relação comprovada. Leia [USO-RESPONSAVEL.md](USO-RESPONSAVEL.md) e [SECURITY.md](SECURITY.md).
 
-**Faixas de numeração:** a Anatel não publica em dados abertos a destinação
-de faixas por prestadora. Hoje o nSAPN é operado pela ABR Telecom com acesso
-credenciado. A receita `anatel-faixas` existe para quando você tiver o
-arquivo por via legítima e, mesmo assim, indica só a prestadora **original**,
-sem considerar portabilidade.
+## Documentação
 
-## Documentos BR
-
-```bash
-fio doc cnpj 12.ABC.345/01DE-35          # alfanumérico, exemplo oficial RFB
-fio doc cpf-parcial '***456789**'        # região fiscal a partir da máscara
-fio doc placa ABC1234                     # -> ABC1C34
-fio doc extrair ata.txt                   # tudo o que houver no texto
-```
-
-O 9º dígito do CPF indica a região fiscal de emissão, e **a máscara com que
-a Receita publica o CPF de sócios (`***456789**`) deixa esse dígito
-visível**. Dá para situar regionalmente um sócio sem ver o CPF completo.
-
-## Avaliação sintética
-
-```bash
-fio lab avaliar --sementes 1,2,3,4,5,6,7,8,9,10 --grupos 15 --saida ./aval
-```
-
-O gerador fabrica um Brasil fictício (TLD reservado `.test`, sempre offline)
-com gabarito e as armadilhas que derrubam análise de vínculo na vida real:
-
-| Armadilha | O que simula |
+| | |
 |---|---|
-| contabilidade | mesmo telefone declarado por empresas de 5 grupos |
-| bloco-isca | linhas de grupos distintos no mesmo bloco de numeração |
-| sequência-isca | linhas de grupos distintos numericamente contíguas |
-| número reciclado | cadastro antigo ainda declara linha que hoje é de outro grupo |
-| laranja | mesma pessoa (mesmo CPF mascarado) sócia em dois grupos |
-| homônimo | mesmo nome, outra pessoa, em outro grupo |
-| parente | empresa irmã em nome de parente: vínculo real, invisível no cadastro |
-| sócio oculto | empresas do grupo com raízes de CNPJ diferentes |
+| [Manual ilustrado](https://Ridd1kulusC0d3r.github.io/FIO/) | passo a passo para quem está começando |
+| [Guias por tema](docs/guia/) | [analisadores](docs/guia/analisadores.md) · [fontes](docs/guia/fontes.md) · [documentos](docs/guia/documentos.md) · [avaliação](docs/guia/avaliacao.md) · [laudo e plugins](docs/guia/laudo-e-plugins.md) · [bancada](docs/guia/bancada.md) |
+| [ARQUITETURA.md](ARQUITETURA.md) | pacotes e decisões de projeto |
+| [Arquitetura no Colab](docs/ARQUITETURA-COLAB.html) | como o caderno executa |
+| [CHANGELOG.md](CHANGELOG.md) · [CONTRIBUTING.md](CONTRIBUTING.md) | histórico e como contribuir |
 
-Resultado em 10 mundos × 15 grupos (média ± desvio):
-
-| Configuração | Precisão | Revocação | F1 |
-|---|---|---|---|
-| combinado, **sem** poda de intermediários | 0,395 ± 0,152 | 0,863 ± 0,079 | 0,528 ± 0,147 |
-| combinado, **com** poda de intermediários | **0,774 ± 0,184** | 0,857 ± 0,084 | **0,796 ± 0,133** |
-| sócio por nome + máscara do CPF | 0,395 ± 0,152 | 0,863 ± 0,079 | 0,528 ± 0,147 |
-| sócio só por nome (ablação) | 0,349 ± 0,140 | 0,863 ± 0,079 | 0,484 ± 0,147 |
-| bloco de numeração isolado | 0,671 ± 0,087 | 0,104 ± 0,040 | 0,177 ± 0,061 |
-
-O que se lê daí:
-
-1. **A poda de intermediários praticamente dobra a precisão sem custo de
-   revocação.** Um único telefone de escritório contábil funde grupos
-   inteiros, e é o erro mais caro da análise de vínculo.
-2. **Desambiguar sócio pela máscara do CPF** elimina os falsos positivos de
-   homônimo.
-3. **O limiar de confiança não discrimina quando há uma fonte só.** Todas as
-   arestas da Receita valem A2 (0,76), então o que separa vínculo forte de
-   fraco é corroboração entre fontes independentes, não o limiar.
-4. **Bloco e sequência são indícios, não vínculos:** precisão razoável e
-   revocação de 10%.
-
-Os valores absolutos dependem dos parâmetros do gerador. O que tem valor são
-as **comparações relativas** (ablações). Valide com casos reais rotulados
-antes de citar números absolutos.
-
-## Laudo e RELINT
-
-`fio laudo --modelo laudo|relint` gera um documento para quem vai **ler** o
-trabalho numa peça: preâmbulo, quesitos, material, metodologia (ISO/IEC
-27037, escala Admiralty, reprodutibilidade), exames, **cadeia de custódia
-mapeada nas 10 etapas do art. 158-B do CPP**, respostas aos quesitos,
-limitações e conclusão graduada. O texto declara que a aplicação dos arts.
-158-A a 158-F a vestígio digital é analógica e nunca redige conclusão
-categórica.
-
-## Plugins
+## Desenvolvimento
 
 ```bash
-cp exemplos/plugin_exemplo.py ~/.fio/plugins/
-fio lab plugins
+python -m unittest discover -s testes -v     # 137 testes; o E2E usa Playwright se instalado
+python testes/fumaca.py                      # fumaça da CLI
+python testes/ao_vivo.py                     # contrato das fontes reais (internet)
+python tools/gerar_midia.py                  # regenera docs/img/demo.gif
 ```
 
-Coletor: subclasse de `Coletor` com `@registrar`. Analisador: subclasse de
-`Analisador` com `@registrar_analisador`. O SHA-256 de cada plugin entra em
-todo experimento que o usou.
+## Citação e licença
 
-## Limites
-
-O framework **recusa por construção**, sem flag para ligar: bases vazadas ou
-comercializadas irregularmente, credenciais de terceiros, interceptação,
-engenharia social e enumeração de mensageria. Todo caso exige base legal,
-finalidade específica, escopo verificado a cada pivô e prazo de validade.
-CPF completo encontrado em documento entra no grafo **só mascarado**
-(LGPD, art. 6º, III).
-
-## Testes
-
-```bash
-python3 -m unittest discover -s testes -v     # 82 testes
-python3 testes/fumaca.py                     # fumaça da CLI
-python3 testes/ao_vivo.py                    # fontes reais (precisa de internet)
-```
-
-Veja `ARQUITETURA.md` para o desenho interno.
+MIT. Para citar, use o [CITATION.cff](CITATION.cff).

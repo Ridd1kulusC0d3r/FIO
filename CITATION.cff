@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "Se usar o F.I.O. Lab em pesquisa, cite assim."
 title: "F.I.O. Lab: laboratório OSINT de análise de vínculos a partir de telefones e registros públicos brasileiros"
-version: 2.2.0
-date-released: 2026-09-28
+version: 3.0.1
+date-released: 2026-10-02
 license: MIT
 repository-code: "https://github.com/Ridd1kulusC0d3r/FIO"
 authors:

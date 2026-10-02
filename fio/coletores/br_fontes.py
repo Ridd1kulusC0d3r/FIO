@@ -15,7 +15,7 @@ import urllib.parse
 from .base import Coletor, Contexto, Achado, registrar
 from ..grafo.modelo import Entidade, Fonte
 from ..core.normalize import normalizar, variantes
-from ..core.documentos import (extrair_documentos, cep_uf, cep_formatar,
+from ..core.documentos import (extrair_documentos, cep_formatar,
                                cnpj_limpar, cnpj_valido)
 
 

@@ -183,6 +183,16 @@ def cmd_lab(a) -> int:
         print(md)
         return 0
 
+    if a.acao == "calibrar":
+        from .lab.calibracao import calibrar, tabela_markdown
+        sementes = [int(x) for x in a.sementes.split(",")]
+        res = calibrar(Path(a.saida), sementes, a.grupos,
+                       log=_p if a.verboso else (lambda s: None))
+        md = tabela_markdown(res)
+        (Path(a.saida) / "calibracao.md").write_text(md, encoding="utf-8")
+        print(md)
+        return 0
+
     if a.acao == "benchmark-real":
         from .lab.benchmark_real import benchmark, tabela
         from .caso import segredos
@@ -203,7 +213,8 @@ def cmd_lab(a) -> int:
 def registrar(sub) -> None:
     d = sub.add_parser("doc", help="validar/estruturar documentos BR ou extrair de texto")
     d.add_argument("tipo", choices=["cpf", "cpf-parcial", "cnpj", "cep", "placa",
-                                    "titulo", "pis", "renavam", "extrair"])
+                                    "titulo", "pis", "renavam", "boleto", "pix-evp",
+                                    "cnh", "cns", "extrair"])
     d.add_argument("valor", help="documento, ou arquivo/texto para 'extrair'")
     d.set_defaults(func=cmd_doc)
 
@@ -236,7 +247,8 @@ def registrar(sub) -> None:
 
     lab = sub.add_parser("lab", help="pipeline, experimentos, avaliacao e bancada web")
     lab.add_argument("acao", choices=["plugins", "pipeline", "experimentos", "comparar",
-                                      "sintetico", "avaliar", "bancada", "benchmark-real"])
+                                      "sintetico", "avaliar", "calibrar", "bancada",
+                                      "benchmark-real"])
     lab.add_argument("--indice", help="indice da Receita (benchmark-real)")
     lab.add_argument("--municipio", help="codigo do municipio na Receita (benchmark-real)")
     lab.add_argument("--max-raizes", type=int, default=800)

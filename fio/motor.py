@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 from .caso import CasoEmDisco, segredos
 from .coletores import REGISTRO, Contexto
 from .politica import ViolacaoDeEscopo
-from .grafo.modelo import Grafo, Entidade
 
 
 @dataclass

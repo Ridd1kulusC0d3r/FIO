@@ -30,6 +30,9 @@ DDG_HTML = (b'<html><body><a class="result-link" href="https://duckduckgo.com/l/
             b'<td>Fale conosco (31) 98888-7777 ou (31) 3333-4444, '
             b'comercial@auroratech.com.br</td></body></html>')
 
+DDG_VAZIO = (b'<html><body><p>Nenhum resultado encontrado para a sua busca. '
+             b'Tente outros termos ou verifique a ortografia.</p></body></html>')
+
 RESPOSTAS = {
     "/haveibeenpwned.com/api/v3/breachedaccount/contato@auroratech.com.br": [
         {"Name": "ExemploBreach", "Title": "Exemplo", "BreachDate": "2024-01-01",
@@ -71,11 +74,13 @@ class Falso(BaseHTTPRequestHandler):
         if caminho.startswith("/viacep.com.br/ws/00000000"):
             self.send_response(400); self.end_headers(); return
         if caminho.startswith("/lite.duckduckgo.com/lite"):
+            # valor impossivel do baseline: a fonte responde "sem resultados"
+            corpo = DDG_VAZIO if "fio-baseline" in self.path or "5500000000000" in self.path else DDG_HTML
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
-            self.send_header("Content-Length", str(len(DDG_HTML)))
+            self.send_header("Content-Length", str(len(corpo)))
             self.end_headers()
-            self.wfile.write(DDG_HTML)
+            self.wfile.write(corpo)
             return
         corpo = RESPOSTAS.get(caminho)
         if corpo is None:
@@ -258,7 +263,7 @@ class TestColetoresLocais(unittest.TestCase):
 
 class TestPluginsERelatorios(unittest.TestCase):
     def test_plugin_de_exemplo_carrega_e_entra_na_assinatura(self):
-        import os, shutil
+        import shutil
         from fio.lab import plugins
         from fio.analise import ANALISADORES
         with tempfile.TemporaryDirectory() as d:

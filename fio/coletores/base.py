@@ -23,6 +23,7 @@ from ..politica import Caso, ViolacaoDeEscopo
 from ..grafo.modelo import Grafo, Entidade, Fonte
 from ..evidencia.ledger import Ledger
 from ..evidencia.cache import CacheHTTP
+from .baseline import julgar, Veredito, LIMIAR_PADRAO
 
 UA = ("Mozilla/5.0 (X11; Linux x86_64) FIO-OSINT/1.0 "
       "(coleta passiva; contato do responsavel no caso)")
@@ -115,6 +116,24 @@ class ClienteHTTP:
             resumo=f"HTTP {status}, {len(corpo)} bytes",
             artefato=corpo, metadados={"url": url, "status": status})
         return (status, corpo)
+
+    def get_diferencial(self, url: str, url_impossivel: str, coletor: str,
+                        limiar: float = LIMIAR_PADRAO,
+                        **kw) -> tuple[int, bytes, Veredito]:
+        """GET com baseline: consulta tambem um valor que nao pode existir.
+
+        Devolve (status, corpo, veredito). Quando veredito.soft404 e
+        verdadeiro, o chamador deve descartar a resposta. Os dois GETs vao
+        para o ledger; o veredito tambem.
+        """
+        status, corpo = self.get(url, coletor, **kw)
+        status_b, corpo_b = self.get(url_impossivel, coletor, **kw)
+        v = julgar(status, corpo, status_b, corpo_b, limiar)
+        self.ctx.ledger.registrar(
+            "coleta.baseline", alvo=url, coletor=coletor,
+            resumo=("DESCARTADA: " if v.soft404 else "aceita: ") + v.motivo,
+            metadados=v.dict())
+        return status, corpo, v
 
     def get_json(self, url: str, coletor: str,
                  cabecalhos: dict | None = None) -> tuple[int, dict | list | None]:
