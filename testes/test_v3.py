@@ -3,6 +3,7 @@ claims, manifesto, calibracao, documentos financeiros e coletores passivos."""
 
 import contextlib
 import json
+import os
 import tempfile
 import threading
 import time
@@ -857,3 +858,73 @@ class TestIndicePronto(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBuscaEmUmPasso(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self._env = os.environ.get("FIO_HOME")
+        os.environ["FIO_HOME"] = self._tmp.name
+
+    def tearDown(self):
+        if self._env is None:
+            os.environ.pop("FIO_HOME", None)
+        else:
+            os.environ["FIO_HOME"] = self._env
+        self._tmp.cleanup()
+
+    def test_reconhece_tipos(self):
+        from fio.busca import reconhecer
+        casos = {"(31) 98888-7777": "telefone", "11.222.333/0001-81": "cnpj",
+                 "A@B.com": "email", "https://www.exemplo.com.br/x": "dominio",
+                 "30120-010": "cep"}
+        for v, tipo in casos.items():
+            self.assertEqual(reconhecer(v).tipo, tipo, v)
+        self.assertEqual(reconhecer("A@B.com").valor, "a@b.com")
+        self.assertEqual(reconhecer("https://www.exemplo.com.br/x").valor, "exemplo.com.br")
+        with self.assertRaises(ValueError):
+            reconhecer("123")
+        with self.assertRaises(ValueError):
+            reconhecer("")
+
+    def test_preparar_exige_base_legal_valida(self):
+        from fio import busca
+        from fio.politica import ViolacaoDeEscopo
+        with self.assertRaises(ValueError):
+            busca.preparar("(31) 98888-7777", "", "t")
+        with self.assertRaises(ViolacaoDeEscopo):
+            busca.preparar("(31) 98888-7777", "inexistente", "t")
+
+    def test_busca_offline_ponta_a_ponta(self):
+        from fio import busca
+        cd, alvo = busca.preparar("(31) 98888-7777", "lgpd-7-i", "t")
+        busca.executar(cd, "t", offline=True)
+        r = busca.resumo(cd)
+        self.assertEqual(r["alvo"]["tipo"], "telefone")
+        self.assertGreaterEqual(r["entidades"], 1)
+        self.assertTrue(r["sem_indice"])
+        self.assertTrue(any("indice" in a.lower() for a in r["avisos"]))
+        self.assertNotIn("dorks", r["alvo"]["atributos"])
+
+    def test_sem_rede_cai_para_offline(self):
+        from fio import busca
+        antes = busca.ha_rede
+        busca.ha_rede = lambda *a, **k: False
+        try:
+            cd, _ = busca.preparar("(31) 98888-7777", "lgpd-7-i", "t")
+            busca.executar(cd, "t")
+        finally:
+            busca.ha_rede = antes
+        self.assertTrue(busca.resumo(cd)["sem_rede"])
+
+    def test_cli_buscar(self):
+        import io
+        import contextlib
+        from fio import cli
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = cli.main(["buscar", "(31) 98888-7777", "--base-legal", "lgpd-7-i", "--offline"])
+        self.assertEqual(rc, 0)
+        self.assertIn("entidades:", buf.getvalue())
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(cli.main(["buscar", "123", "--base-legal", "lgpd-7-i"]), 2)

@@ -2,6 +2,19 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.2.0] — 2026-10-03
+
+### Adicionado
+- **Busca em um passo.** Antes, uma pesquisa pedia cinco etapas (criar caso, escolher base legal, incluir alvo, rodar o pipeline, abrir o resultado) e, na prática, muita gente não chegava ao fim. Agora: cole o identificador e clique em **Buscar** (Painel da bancada e tela simplificada do Colab) ou rode `fio buscar "(31) 98888-7777" --base-legal lgpd-7-i`. O tipo (telefone, CNPJ, e-mail, domínio, CEP) é reconhecido sozinho; o caso nasce com finalidade padrão e escopo de 30 dias. A política não afrouxa: a base legal continua obrigatória e não tem valor padrão na CLI.
+- **Resumo da busca** (`GET /api/casos/<id>/resumo`, `fio.busca.resumo`): entidades, vínculos, empresas e pessoas encontradas e, principalmente, **o que faltou** (sem índice da Receita, sem internet, orçamento esgotado) com o próximo passo sugerido.
+- **Verificação de rede** antes da coleta: sem saída para a internet, a busca cai para offline em segundos (com registro na custódia) em vez de ficar "rodando" por minutos esperando timeouts.
+- Módulo `fio/busca.py`, reutilizado pela CLI, pela bancada e pelo caderno do Colab (o caderno não tem mais cópia própria do reconhecimento de tipos).
+
+### Corrigido
+- Campo "Identificador" do novo caso na bancada tinha um `pattern` inválido para o Chrome (flag `v`), gerando erro no console e validação quebrada.
+- Ícone (favicon) ausente gerava 404 a cada abertura.
+- Tela simplificada do Colab: removidos campos que não faziam sentido na busca (ID do caso, título, profundidade); o caso é criado automaticamente.
+
 ## [3.1.0] — 2026-10-02
 
 ### Adicionado

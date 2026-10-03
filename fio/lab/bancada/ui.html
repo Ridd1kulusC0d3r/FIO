@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>F.I.O. Lab</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%232563eb%27/%3E%3C/svg%3E">
 <script>
 /* tema aplicado antes da pintura, para nao piscar */
 try{var t=localStorage.getItem("fio_tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}
@@ -313,7 +314,7 @@ svg#g.pan{cursor:grabbing}
 
 <dialog id="dlg" aria-labelledby="dlg-t"><form method="dialog" id="fnovo">
 <h2 id="dlg-t">Novo caso</h2><p class="mu" style="margin:4px 0 0">Sem base legal e finalidade específica nenhum coletor roda.</p>
-<label for="f-id">Identificador</label><input id="f-id" name="id" required pattern="[A-Za-z0-9._-]{1,64}" placeholder="CASO-2026-020">
+<label for="f-id">Identificador</label><input id="f-id" name="id" required pattern="[A-Za-z0-9._\-]{1,64}" placeholder="CASO-2026-020">
 <label for="f-ti">Título</label><input id="f-ti" name="titulo" required>
 <label for="bases">Base legal</label><select name="base_legal" id="bases"></select>
 <label for="f-fi">Finalidade (específica)</label><textarea id="f-fi" name="finalidade" required minlength="10" style="min-height:60px;font-family:inherit"></textarea>
@@ -434,6 +435,13 @@ function painel(){VIEW="painel";CASO=null;marcarNav("painel");setTopo("Painel","
  const demo=CASOS.find(c=>c.id==="DEMO-FRAUDE-BOLETO");
  const tarefas=(EST.tarefas||[]).slice(0,6);
  $("#main").innerHTML=`${princ()}
+ <div class="card busca" style="margin-bottom:14px"><h2>Buscar agora</h2>
+  <p class="mu" style="margin-top:6px">Cole um telefone, CNPJ, e-mail, domínio ou CEP. O F.I.O. abre o caso, consulta as fontes e mostra o resultado, num passo só.</p>
+  <form id="fbusca" class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><input id="bq-v" required autocomplete="off" placeholder="(31) 98888-7777  ·  00.000.000/0001-00  ·  nome@empresa.com" style="flex:2;min-width:220px">
+  <select id="bq-bl" title="Base legal" style="flex:1;min-width:180px"></select>
+  <button class="btn p" id="bq-go" type="submit">${IC("play","sm")}<span>Buscar</span></button></form>
+  <label class="mu" style="font-size:12px;display:block;margin-top:8px"><input type="checkbox" id="bq-full"> busca completa (mais lenta; padrão: rápida, até ~45 s)</label>
+  <div id="bq-out" style="margin-top:12px"></div></div>
  <div class="hero">
   <div class="card"><h2>Bem-vindo ao F.I.O. Lab</h2>
    <p class="mu" style="margin-top:6px">O programa organiza, num mapa, o que fontes públicas dizem sobre números de telefone, empresas e pessoas, e registra cada passo numa cadeia de custódia para que o trabalho possa ser conferido depois.</p>
@@ -456,6 +464,7 @@ function painel(){VIEW="painel";CASO=null;marcarNav("painel");setTopo("Painel","
  const mkDemo=async rec=>{const b=$("#bvdemo");b.disabled=true;b.querySelector("span").textContent="Montando…";
   try{const r=await post("/demo",{recriar:rec});await listarCasos();toast(rec?"Caso de demonstração recriado.":"Caso de demonstração pronto.","ok");abrir(r.caso,"grafo")}catch(e){falha(e);b.disabled=false;b.querySelector("span").textContent="Montar caso de demonstração"}};
  $("#bvdemo").onclick=()=>mkDemo(false);const br=$("#bvrec");if(br)br.onclick=()=>mkDemo(true);
+ buscaUI();
  $("#bvdiag").onclick=()=>diagnostico($("#bvout"));
  const nv=()=>{$("#erroNovo").textContent="";$("#dlg").showModal()};$("#bvnovo").onclick=nv;const n2=$("#bvnovo2");if(n2)n2.onclick=nv;
  $$(".cc").forEach(el=>el.onclick=()=>abrir(el.dataset.id))}
@@ -548,6 +557,26 @@ async function acompanhar(tid,fim){let t;try{t=await api("/tarefas/"+tid)}catch(
  if(t.estado==="fila"||t.estado==="rodando")return setTimeout(()=>acompanhar(tid,fim),900);
  const ok=t.estado==="concluida";$("#tarefa").innerHTML=`#${tid} <span class="${ok?"ok":"er"}">${esc(t.estado)}</span>`;
  toast(`Tarefa #${tid}: ${t.estado}.`,ok?"ok":"er");fim&&fim(t)}
+
+
+/* ------------------------------------------------------- busca em um passo */
+function buscaUI(){const f=$("#fbusca");if(!f)return;
+ $("#bq-bl").innerHTML=Object.entries(EST.bases_legais).map(([k,v])=>`<option value="${esc(k)}">${esc(v)}</option>`).join("");
+ f.onsubmit=async ev=>{ev.preventDefault();const out=$("#bq-out"),b=$("#bq-go");b.disabled=true;
+  out.innerHTML='<p class="mu">Abrindo o caso…</p>';
+  try{const r=await post("/busca",{valor:$("#bq-v").value,base_legal:$("#bq-bl").value,modo:$("#bq-full").checked?"completo":"rapido"});
+   await listarCasos();
+   const seguir=async()=>{let t;try{t=await api("/tarefas/"+r.tarefa)}catch(e){b.disabled=false;out.innerHTML="";return falha(e)}
+    if(t.estado==="fila"||t.estado==="rodando"){out.innerHTML=`<p class="mu">Consultando as fontes para <b>${esc(r.alvo.rotulo)}</b>… <span class="mono">${esc((t.progresso||"").split("\n").filter(Boolean).pop()||"")}</span></p>`;return setTimeout(seguir,900)}
+    b.disabled=false;
+    if(t.estado!=="concluida"){out.innerHTML="";return toast("A busca falhou: "+(t.erro||t.estado),"er",7000)}
+    const m=await api("/casos/"+encodeURIComponent(r.caso)+"/resumo");
+    out.innerHTML=`<div class="kpis">${kpi("users",m.entidades,"entidades")}${kpi("link",m.vinculos,"vínculos")}${kpi("oct",m.vinculos_alta,"confiança alta","er")}</div>
+     ${m.organizacoes.length?`<p><b>Empresas:</b> ${m.organizacoes.map(esc).join(" · ")}</p>`:""}${m.pessoas.length?`<p><b>Pessoas:</b> ${m.pessoas.map(esc).join(" · ")}</p>`:""}
+     ${m.avisos.map(a=>`<p class="mu">• ${esc(a)}</p>`).join("")}${m.proximo.map(a=>`<p class="mu">→ ${esc(a)}</p>`).join("")}
+     <div class="row" style="margin-top:8px"><button class="btn p" id="bq-ver">${IC("play","sm")}Abrir grafo e relatório</button></div>`;
+    $("#bq-ver").onclick=()=>abrir(r.caso,"grafo")};
+   seguir()}catch(e){b.disabled=false;out.innerHTML="";falha(e)}}}
 
 /* ------------------------------------------------------- índice da Receita */
 async function indiceStatus(){const el=$("#ixst");if(!el)return;

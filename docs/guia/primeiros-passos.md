@@ -26,7 +26,7 @@ Escolha um:
 Depois de instalar com pip, o comando é `fio`. A partir do código, use `python3 -m fio`. Os exemplos abaixo usam `fio`.
 
 ```bash
-fio --versao        # fio 3.1.0
+fio --versao        # fio 3.2.0
 ```
 
 ## 3. Rodar a demonstração
@@ -40,6 +40,17 @@ Isso monta o caso `DEMO-FRAUDE-BOLETO` (empresas, sócios, telefones e uma ata, 
 Na bancada, clique em **Abrir caso de demonstração** e passe pelas abas **Grafo**, **Vínculos**, **Observações** e **Custódia**. Cada aresta do grafo mostra a fonte que a sustenta.
 
 O que a demonstração tem de propósito: um telefone ligado a uma empresa por duas linhas, filiais da mesma raiz de CNPJ, sócios com CPF mascarado em regiões fiscais diferentes das empresas (gera observações) e uma ata de reunião (`dados_demo/ata_reuniao.txt`) de onde o extrator tira telefones, e-mail, CNPJs (um deles no formato alfanumérico), CEP, CPF e placa.
+
+## 3b. Sua primeira busca (um passo só)
+
+Se você só quer **pesquisar um identificador**, não precisa montar caso a mão:
+
+```bash
+fio buscar "(31) 98888-7777" --base-legal lgpd-7-i          # telefone, CNPJ, e-mail, domínio ou CEP
+fio buscar 00.000.000/0001-91 --base-legal pesquisa-academica --offline
+```
+
+O F.I.O. reconhece o tipo, abre o caso (escopo de 30 dias), consulta as fontes (modo rápido, até ~45 s; `--completo` tira o limite) e imprime um resumo com **o que achou e o que faltou**. Sem internet, ele percebe em segundos e segue só com as fontes locais. Na bancada e no Colab é o cartão **Buscar agora** do Painel. Os passos abaixo (seção 4) são o caminho manual, com controle total sobre o caso.
 
 ## 4. Seu primeiro caso (offline)
 

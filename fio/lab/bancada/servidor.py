@@ -59,8 +59,18 @@ def _tarefa_pipeline(caso_id: str, p: dict, log) -> dict:
                  offline=bool(p.get("offline", False)),
                  expandir_escopo=bool(p.get("expandir_escopo", False)),
                  intervalo=float(p.get("intervalo", 1.5)),
+                 rapido=bool(p.get("rapido", False)),
+                 orcamento=float(p["orcamento"]) if p.get("orcamento") else None,
                  descricao=p.get("descricao", "execucao pela bancada"))
-    exp = executar(cd, p.get("ator") or Estado.ator, cfg, log=log)
+    ator = p.get("ator") or Estado.ator
+    if not cfg.offline and p.get("verificar_rede"):
+        from ...busca import ha_rede
+        if not ha_rede():
+            cfg.offline = True
+            log("sem acesso a internet: fontes online puladas")
+            cd.ledger(ator).registrar("rede.indisponivel", alvo=cd.caso_id,
+                                      resumo="sem saida para a internet; busca feita so com dados locais")
+    exp = executar(cd, ator, cfg, log=log)
     return {"experimento": exp.id, "estado": exp.estado, "metricas": exp.metricas,
             "estagios": exp.estagios, "erro": exp.erro}
 
@@ -258,6 +268,9 @@ class Manipulador(BaseHTTPRequestHandler):
         if partes[:1] == ["casos"] and len(partes) >= 2:
             cd = self._caso(partes[1])
             sub = partes[2] if len(partes) > 2 else ""
+            if sub == "resumo":
+                from ... import busca
+                return self._json(busca.resumo(cd))
             if sub == "":
                 g = cd.grafo()
                 return self._json({"caso": cd.caso().dict(),
@@ -322,6 +335,20 @@ class Manipulador(BaseHTTPRequestHandler):
         if partes == ["avaliar"]:
             tid = Estado.fila.enfileirar("avaliar", "-", d)
             return self._json({"tarefa": tid}, 202)
+        if partes == ["busca"]:
+            from ... import busca
+            cd, alvo = busca.preparar(
+                str(d.get("valor", "")), str(d.get("base_legal", "")), ator,
+                finalidade=d.get("finalidade") or None, responsavel=d.get("responsavel") or None,
+                ddd=d.get("ddd") or None, dias=int(d.get("dias", 30)))
+            rapido = d.get("modo", "rapido") != "completo"
+            tid = Estado.fila.enfileirar("pipeline", cd.caso_id, {
+                "ator": ator, "offline": bool(d.get("offline")), "rapido": rapido,
+                "orcamento": busca.ORCAMENTO_PADRAO if rapido else None,
+                "verificar_rede": True, "descricao": "busca em um passo"})
+            return self._json({"caso": cd.caso_id, "tarefa": tid,
+                               "alvo": {"tipo": alvo.tipo, "valor": alvo.valor,
+                                        "rotulo": alvo.rotulo or alvo.valor}}, 202)
         if partes == ["demo"]:
             from ...demo import montar
             return self._json(montar(ator, recriar=bool(d.get("recriar"))), 201)

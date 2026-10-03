@@ -59,18 +59,15 @@ button.primary,.btn.primary{background:var(--fio);border-color:var(--fio);color:
 
       <div class="sep"></div>
       <div class="row">
-        <div><label for="casoId">ID do caso</label><input id="casoId" value="FIO-COLAB-01"></div>
         <div><label for="responsavel">Responsável</label><input id="responsavel" value="Analista"></div>
       </div>
-      <label for="titulo">Título</label><input id="titulo" value="Análise pontual de identificador telefônico">
       <label for="baseLegal">Base legal</label><select id="baseLegal"></select>
       <label for="finalidade">Finalidade específica</label><textarea id="finalidade">Verificar, em fontes públicas e dentro do escopo autorizado, vínculos cadastrais associados ao identificador informado.</textarea>
       <div class="row">
-        <div><label for="profundidade">Profundidade</label><select id="profundidade"><option value="0">0 · só alvo</option><option value="1" selected>1 · recomendada</option><option value="2">2 · ampliar vínculos</option></select></div>
         <div><label>&nbsp;</label><div class="check"><input id="internet" type="checkbox" checked><span>usar fontes online</span></div></div>
       </div>
       <div class="actions">
-        <button id="executar" class="primary">Criar caso e investigar</button>
+        <button id="executar" class="primary">Buscar</button>
         <a id="workbench" class="btn" href="#">Bancada completa</a>
       </div>
       <div id="execStatus" class="status muted">Nenhuma execução iniciada.</div>
@@ -117,7 +114,7 @@ async function init(){if(!token){$("#execStatus").textContent="Token da sessão 
 const bl=Array.isArray(e.bases_legais)?e.bases_legais.map(x=>[x,x]):Object.entries(e.bases_legais||{});
 $("#baseLegal").innerHTML='<option value="" disabled selected>Selecione a base legal…</option>'+bl.map(([k,v])=>`<option value="${k}" title="${String(v).replace(/"/g,"&quot;")}">${k}</option>`).join("");$("#workbench").href=`./workbench/#t=${encodeURIComponent(token)}`;$("#modeloMd").href=`${apiBase}/modelo-relatorio?${qs({formato:"md",download:1})}`;$("#modeloHtml").href=`${apiBase}/modelo-relatorio?${qs({formato:"html",download:1})}`;conferirIndice()}
 $("#validar").onclick=async()=>{const el=$("#numeroStatus");try{const r=await post("/numero",{valor:$("#telefone").value,ddd:$("#ddd").value||null});el.className="status "+(r.valido?"ok":"err");el.textContent=r.valido?`${r.formatado||r.chave}\nE.164: ${r.e164||"—"} · UF provável: ${r.uf||"—"} · faixa: ${r.faixa||"—"}`:`Inválido: ${r.justificativa||"formato não reconhecido"}`}catch(e){el.className="status err";el.textContent=e.message}}
-$("#executar").onclick=async()=>{const b=$("#executar"),el=$("#execStatus"),id=$("#casoId").value.trim();b.disabled=true;el.className="status muted";try{if(!$("#baseLegal").value)throw new Error("Escolha a base legal do caso: ela define o que pode ser coletado.");const n=await post("/numero",{valor:$("#telefone").value,ddd:$("#ddd").value||null});if(!n.valido)throw new Error(n.justificativa||"telefone inválido");try{await post("/casos",{id,titulo:$("#titulo").value,base_legal:$("#baseLegal").value,finalidade:$("#finalidade").value,responsavel:$("#responsavel").value,escopo:[n.chave]})}catch(e){if(!String(e.message).includes("ja existe"))throw e}await post(`/casos/${encodeURIComponent(id)}/alvos`,{tipo:"telefone",valor:$("#telefone").value,ddd:$("#ddd").value||null,ator:$("#responsavel").value});const q=await post(`/casos/${encodeURIComponent(id)}/pipeline`,{profundidade:+$("#profundidade").value,offline:!$("#internet").checked,expandir_escopo:false,ator:$("#responsavel").value,descricao:"consulta pontual pelo frontend Colab"});tarefa(q.tarefa,el,t=>{b.disabled=false;if(t.estado==="concluida")relatorios(id)})}catch(e){b.disabled=false;el.className="status err";el.textContent=e.message}}
+$("#executar").onclick=async()=>{const b=$("#executar"),el=$("#execStatus");b.disabled=true;el.className="status muted";try{if(!$("#baseLegal").value)throw new Error("Escolha a base legal do caso: ela define o que pode ser coletado.");const q=await post("/busca",{valor:$("#telefone").value,ddd:$("#ddd").value||null,base_legal:$("#baseLegal").value,finalidade:$("#finalidade").value||null,responsavel:$("#responsavel").value||null,offline:!$("#internet").checked,modo:"rapido"});el.textContent="Caso "+q.caso+" aberto; consultando as fontes…";tarefa(q.tarefa,el,t=>{b.disabled=false;if(t.estado==="concluida")relatorios(q.caso)})}catch(e){b.disabled=false;el.className="status err";el.textContent=e.message}}
 async function conferirIndice(){const el=$("#indiceStatus");try{const r=await api("/indice");el.className="status "+(r.existe?"ok":"muted");el.textContent=r.existe?`Índice pronto\nUF: ${r.meta.ufs||"—"} · mês: ${r.meta.mes||"—"}\nEstabelecimentos: ${r.estatisticas.estabelecimento||0}`:"Índice não montado nesta sessão."}catch(e){el.className="status err";el.textContent=e.message}}
 $("#indiceStatusBtn").onclick=conferirIndice;
 $("#indice").onclick=async()=>{const b=$("#indice"),el=$("#indiceStatus");b.disabled=true;el.className="status muted";try{const r=await post("/indice",{ufs:$("#ufs").value,mes:$("#mes").value,fonte:$("#fonte").value,reconstruir:false});tarefa(r.tarefa,el,t=>{b.disabled=false;if(t.estado==="concluida")conferirIndice()})}catch(e){b.disabled=false;el.className="status err";el.textContent=e.message}}

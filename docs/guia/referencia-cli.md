@@ -15,6 +15,7 @@ usuário do sistema. Todos os dados do caso ficam em `FIO_HOME`
 
 - [`fio caso`](#fio-caso) — abrir, listar e inspecionar casos
 - [`fio alvo`](#fio-alvo) — incluir alvo primario no caso
+- [`fio buscar`](#fio-buscar) — busca em um passo: abre o caso, consulta as fontes e resume
 - [`fio investigar`](#fio-investigar) — rodar os coletores e pivotar
 - [`fio grafo`](#fio-grafo) — exportar o grafo
 - [`fio clusters`](#fio-clusters) — agrupamentos e pontes entre alvos
@@ -92,6 +93,26 @@ fio alvo --caso CASO --tipo TIPO --valor VALOR [--ddd DDD]
 | `--tipo` `TIPO` | sim | (valores: `telefone`, `email`, `dominio`, `cnpj`, `pessoa`, `organizacao`, `documento`) |
 | `--valor` `VALOR` | sim |  |
 | `--ddd` `DDD` | não | DDD assumido para numero sem DDD |
+
+## `fio buscar`
+
+Busca em um passo: abre o caso, consulta as fontes e resume.
+
+```text
+fio buscar valor --base-legal BASE_LEGAL [--finalidade FINALIDADE] [--ddd DDD] [--dias DIAS] [--completo] [--orcamento SEGUNDOS] [--offline] [-v]
+```
+
+| Opção | Obrigatória | Descrição |
+|---|---|---|
+| `valor` (posicional) | sim | telefone, CNPJ, e-mail, dominio ou CEP |
+| `--base-legal` `BASE_LEGAL` | sim | base legal (ver `fio bases`) |
+| `--finalidade` `FINALIDADE` | não | finalidade da consulta (ha um texto padrao) |
+| `--ddd` `DDD` | não | DDD assumido para telefone sem DDD |
+| `--dias` `DIAS` | não | validade do escopo (padrao 30) (padrão: `30`) |
+| `--completo` | não | busca completa, sem orcamento de tempo |
+| `--orcamento` `SEGUNDOS` | não | limite de tempo da busca rapida (padrao 45) (padrão: `45.0`) |
+| `--offline` | não | so fontes locais |
+| `-v`, `--verboso` | não |  |
 
 ## `fio investigar`
 

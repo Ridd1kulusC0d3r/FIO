@@ -42,6 +42,33 @@ class TestBancadaNavegador(unittest.TestCase):
         else:
             os.environ["FIO_HOME"] = cls._env
 
+    def test_busca_em_um_passo(self):
+        """Cola um telefone, clica Buscar e ve o resultado: sem montar caso."""
+        erros = []
+        with sync_playwright() as pw:
+            nav = pw.chromium.launch()
+            pg = nav.new_page(viewport={"width": 1280, "height": 900})
+            pg.on("pageerror", lambda e: erros.append(str(e)))
+            pg.on("console", lambda m: m.type == "error" and erros.append(m.text))
+            pg.goto("http://127.0.0.1:8793/#t=e2e")
+            pg.wait_for_selector("#bq-v")
+            self.assertGreaterEqual(pg.locator("#bq-bl option").count(), 10)
+            pg.fill("#bq-v", "(31) 98888-7777")
+            pg.click("#bq-go")
+            pg.wait_for_selector("#bq-ver", timeout=90000)
+            self.assertIn("entidades", pg.inner_text("#bq-out"))
+            pg.click("#bq-ver")
+            pg.wait_for_selector("#g circle", timeout=15000)
+            # identificador invalido: erro claro, sem travar
+            pg.click(".nv-i[data-v='painel']")
+            pg.wait_for_selector("#bq-v")
+            pg.fill("#bq-v", "123")
+            pg.click("#bq-go")
+            pg.wait_for_selector(".toast.er")
+            self.assertTrue(pg.locator("#bq-go").is_enabled())
+            nav.close()
+        self.assertEqual([e for e in erros if "favicon" not in e and "status of 400" not in e], [])
+
     def test_jornada_do_leigo(self):
         erros = []
         with sync_playwright() as pw:

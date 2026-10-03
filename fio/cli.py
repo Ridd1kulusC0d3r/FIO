@@ -107,6 +107,33 @@ def cmd_alvo(args) -> int:
     return 0
 
 
+def cmd_buscar(args) -> int:
+    from . import busca
+    try:
+        cd, alvo = busca.preparar(args.valor, args.base_legal, _ator(args),
+                                  finalidade=args.finalidade, ddd=args.ddd,
+                                  dias=args.dias)
+    except (ValueError, ViolacaoDeEscopo) as e:
+        _p(f"nao foi possivel buscar: {e}")
+        return 2
+    print(f"alvo: {alvo.tipo} {alvo.rotulo or alvo.valor}  (caso {cd.caso_id})")
+    busca.executar(cd, _ator(args), offline=args.offline, rapido=not args.completo,
+                   orcamento=None if args.completo else args.orcamento,
+                   log=_p if args.verboso else (lambda s: None))
+    r = busca.resumo(cd)
+    print(f"entidades: {r['entidades']}  vinculos: {r['vinculos']} "
+          f"(alta confianca: {r['vinculos_alta']})")
+    for rot, itens in (("empresas", r["organizacoes"]), ("pessoas", r["pessoas"])):
+        if itens:
+            print(f"{rot}: {'; '.join(itens)}")
+    for a in r["avisos"]:
+        print(f"  ! {a}")
+    for a in r["proximo"]:
+        print(f"  -> {a}")
+    print(f"detalhes: fio relatorio --caso {cd.caso_id}   |   grafo: fio grafo --caso {cd.caso_id}")
+    return 0
+
+
 def cmd_investigar(args) -> int:
     cd = _caso(args)
     cols = args.coletores.split(",") if args.coletores else None
@@ -465,6 +492,19 @@ def construir_parser() -> argparse.ArgumentParser:
     a.add_argument("--valor", required=True)
     a.add_argument("--ddd", help="DDD assumido para numero sem DDD")
     a.set_defaults(func=cmd_alvo)
+
+    b = sub.add_parser("buscar", help="busca em um passo: abre o caso, consulta as fontes e resume")
+    b.add_argument("valor", help="telefone, CNPJ, e-mail, dominio ou CEP")
+    b.add_argument("--base-legal", required=True, help="base legal (ver `fio bases`)")
+    b.add_argument("--finalidade", help="finalidade da consulta (ha um texto padrao)")
+    b.add_argument("--ddd", help="DDD assumido para telefone sem DDD")
+    b.add_argument("--dias", type=int, default=30, help="validade do escopo (padrao 30)")
+    b.add_argument("--completo", action="store_true", help="busca completa, sem orcamento de tempo")
+    b.add_argument("--orcamento", type=float, default=45.0, metavar="SEGUNDOS",
+                   help="limite de tempo da busca rapida (padrao 45)")
+    b.add_argument("--offline", action="store_true", help="so fontes locais")
+    b.add_argument("-v", "--verboso", action="store_true")
+    b.set_defaults(func=cmd_buscar)
 
     i = sub.add_parser("investigar", help="rodar os coletores e pivotar")
     i.add_argument("--caso", required=True)

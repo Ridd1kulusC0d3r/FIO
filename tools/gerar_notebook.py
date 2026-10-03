@@ -413,14 +413,11 @@ from fio.lab.pipeline import Config, executar
 from fio.grafo.clusters import tabela_correlacao
 from fio.relatorio.mapa import mapa_html
 
+from fio.busca import reconhecer as _reconhecer, ha_rede
+
 def reconhecer(v):
-    v = v.strip()
-    if "@" in v: return "email", v.lower(), {}
-    if cnpj_valido(v): return "cnpj", cnpj_limpar(v), {"cnpj": cnpj_limpar(v)}
-    if re.fullmatch(r"\\d{5}-\\d{3}", v) and cep_valido(v): return "cep", re.sub(r"\\D", "", v), {}
-    if re.search(r"[a-zA-Z]", v) and "." in v: return "dominio", v.lower(), {}
-    t = normalizar(v)
-    return "telefone", t.chave, {"ddd": t.ddd, "assinante": t.assinante, "faixa": t.faixa, "uf": t.uf, "e164": t.e164}
+    a = _reconhecer(v)
+    return a.tipo, a.valor, a.atributos
 
 entradas = ([telefone] if telefone.strip() else []) + [x for x in alvos.split(",") if x.strip()]
 itens = [reconhecer(x) for x in entradas]
@@ -431,6 +428,9 @@ cd.criar(Caso(id=identificador, titulo=titulo, base_legal=base_legal, finalidade
               responsavel=responsavel, escopo=[v for _, v, _ in itens]), responsavel)
 for tipo, v, at in itens:
     cd.add_alvo(Entidade(tipo, v, atributos=at), responsavel)
+if usar_internet and not ha_rede():
+    print("Sem acesso à internet neste ambiente: rodando só com as fontes locais.")
+    usar_internet = False
 exp = executar(cd, responsavel, Config(profundidade=profundidade, offline=not usar_internet,
                                         expandir_escopo=expandir_escopo, intervalo=1.0,
                                         descricao="caso pontual no Colab"))

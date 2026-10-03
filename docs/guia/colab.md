@@ -14,6 +14,8 @@ Nada é montado no Google Drive. Casos, fila e índice da Receita ficam **só no
 
 **Comece aqui (3 células):** 1. Instalar · 2. Preparar a sessão · **3. Abrir o F.I.O.** A **bancada completa** (a mesma do GIF do GitHub: painel, caso, grafo, vínculos, observações, custódia) abre **dentro do caderno**; é ali que se trabalha. Tudo o que vem depois é **avançado e opcional**.
 
+Na bancada, use o cartão **Buscar agora** no topo do Painel: cole o identificador, escolha a base legal e clique em **Buscar**; sem internet no ambiente, ela cai sozinha para as fontes locais.
+
 Menu **Ambiente de execução › Executar tudo** é seguro: o que baixa muito dado ou demora (índice, benchmark, avaliação sintética, testes) só roda quando você marca a caixa **executar**.
 
 | Seção | O que faz | Internet |
