@@ -179,7 +179,22 @@ class TestModoColab(unittest.TestCase):
                     corpo = x.read().decode("utf-8")
                     self.assertIsNone(x.headers.get("X-Frame-Options"))
                     self.assertIn("frame-ancestors *", x.headers.get("Content-Security-Policy"))
-                    self.assertIn("Investigação curta", corpo)
+                    # no Colab a tela padrao e a bancada completa (a do GIF)
+                    self.assertIn("Bem-vindo ao F.I.O. Lab", corpo)
+                    self.assertNotIn("Investigação curta", corpo)
+                # a tela simples continua acessivel em /simples/ e a API chega por la
+                r = urllib.request.Request("http://127.0.0.1:8795/simples/", headers={"Host": "x-8795-colab.dev"})
+                with urllib.request.urlopen(r) as x:
+                    self.assertIn("Investigação curta", x.read().decode("utf-8"))
+                r = urllib.request.Request("http://127.0.0.1:8795/simples/api/estado",
+                                           headers={"Host": "x-8795-colab.dev", "X-FIO-Token": "c0l"})
+                with urllib.request.urlopen(r) as x:
+                    self.assertIn("bases_legais", x.read().decode("utf-8"))
+                Estado.interface_simples = True        # escolha do caderno: interface "simples"
+                r = urllib.request.Request("http://127.0.0.1:8795/", headers={"Host": "x-8795-colab.dev"})
+                with urllib.request.urlopen(r) as x:
+                    self.assertIn("Investigação curta", x.read().decode("utf-8"))
+                Estado.interface_simples = False
                 r = urllib.request.Request(
                     "http://127.0.0.1:8795/api/modelo-relatorio?download=1&t=c0l",
                     headers={"Host": "x-8795-colab.dev"})
@@ -192,7 +207,7 @@ class TestModoColab(unittest.TestCase):
                 self.assertEqual(e.exception.code, 401)
             finally:
                 srv.shutdown(); srv.server_close(); Estado.fila.parar()
-                Estado.hosts_extra = (); Estado.permitir_iframe = False
+                Estado.hosts_extra = (); Estado.permitir_iframe = False; Estado.interface_simples = False
                 os.environ.pop("FIO_HOME", None)
 
 

@@ -27,6 +27,7 @@ Sem token (por exemplo, abrir `http://127.0.0.1:8765/` em outra aba depois de fe
 
 ## Primeira vez
 
+0. **Buscar agora** (topo do Painel): cole um telefone, CNPJ, e-mail, domínio ou CEP, escolha a base legal e clique em **Buscar**. O caso é aberto sozinho, as fontes são consultadas (modo rápido, ~45 s; marque *busca completa* para tirar o limite) e o resultado aparece ali mesmo, com o que faltou (ex.: sem índice da Receita) e o botão para abrir o grafo.
 1. **Verificar conexões**: consulta neutra a cada fonte online (nenhuma pessoa). Mostra o que sua rede alcança.
 2. **Abrir caso de demonstração**: monta `DEMO-FRAUDE-BOLETO` (tudo fictício, offline) e abre direto no grafo. **Recriar** apaga e refaz.
 3. **Novo caso**: base legal, finalidade, responsável e escopo.
@@ -82,7 +83,7 @@ Pipeline, avaliação sintética e construção do índice da Receita rodam numa
 
 ## A bancada no Colab
 
-No Colab, `fio lab bancada` não se aplica: use a célula "Abrir a bancada" (veja [Colab](colab.md)). Ela sobe o servidor em **modo Colab** (aceita o `Host` do proxy do Google e o iframe) e mostra primeiro a tela simplificada; **bancada completa** abre esta mesma interface.
+No Colab, `fio lab bancada` não se aplica: use a célula "Abrir a bancada" (veja [Colab](colab.md)). Ela sobe o servidor em **modo Colab** (aceita o `Host` do proxy do Google e o iframe) e abre **esta mesma interface completa**. Há uma tela mínima opcional (`interface: simples`, ou o caminho `/simples/`).
 
 ## API (para scripts)
 
@@ -97,6 +98,8 @@ A página usa uma API JSON local, e a base é **relativa à página**, o que per
 | `GET /api/modelo-relatorio` | modelo vazio de relatório |
 | `GET /api/avaliacao` · `POST /api/avaliar` | avaliação sintética |
 | `POST /api/numero` · `POST /api/documento` | análise avulsa |
+| `POST /api/busca` | busca em um passo: `{valor, base_legal, modo, finalidade?}` abre o caso e enfileira o pipeline; devolve `{caso, tarefa}` |
+| `GET /api/casos/<id>/resumo` | o que a busca achou e o que faltou |
 | `POST /api/demo` | monta o caso de demonstração |
 | `GET /api/casos/<id>` | metadados do caso |
 | `GET /api/casos/<id>/grafo` · `/ledger` · `/experimentos` · `/comparar` | grafo, cadeia de custódia, experimentos, comparação |

@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>F.I.O. Lab</title>
+<script>
+/* tema aplicado antes da pintura, para nao piscar */
+try{var t=localStorage.getItem("fio_tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}
+</script>
+<style>
+/* ===================================================== design system */
+:root{
+  --bg:#F3F5F9;--pn:#FFFFFF;--pn2:#EEF1F7;--pn3:#E3E8F1;
+  --tx:#0F1A2E;--mu:#556079;--bd:#D6DCE8;--bd2:#C2CADB;
+  --ac:#2F45B5;--ac2:#E6EAFB;--acf:#FFFFFF;
+  --ok:#0B7A4F;--ok2:#DDF3E8;--wa:#8A5300;--wa2:#FBEBCB;--er:#B3202D;--er2:#FBE0E2;--in:#1B62B8;--in2:#DCEBFB;
+  --sb:#0E1730;--sb2:#17224A;--sbt:#C9D2EC;--sbm:#8D9AC0;--sbh:#FFFFFF;
+  --sh:0 1px 2px rgba(15,26,46,.06),0 6px 20px rgba(15,26,46,.06);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --r:12px;--r2:8px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0A1020;--pn:#121A2F;--pn2:#18223C;--pn3:#202B49;
+  --tx:#E7ECF8;--mu:#9AA6C3;--bd:#27324F;--bd2:#364467;
+  --ac:#8FA6FF;--ac2:#1E2850;--acf:#0A1020;
+  --ok:#5FD7A2;--ok2:#12372B;--wa:#F2C06B;--wa2:#3B2E12;--er:#FF909A;--er2:#40181E;--in:#7FB6F5;--in2:#142C48;
+  --sb:#070C1B;--sb2:#121A33;--sbt:#BAC5E6;--sbm:#7F8CB3;
+  --sh:0 1px 0 rgba(255,255,255,.03)}}
+:root[data-theme="dark"]{
+  --bg:#0A1020;--pn:#121A2F;--pn2:#18223C;--pn3:#202B49;
+  --tx:#E7ECF8;--mu:#9AA6C3;--bd:#27324F;--bd2:#364467;
+  --ac:#8FA6FF;--ac2:#1E2850;--acf:#0A1020;
+  --ok:#5FD7A2;--ok2:#12372B;--wa:#F2C06B;--wa2:#3B2E12;--er:#FF909A;--er2:#40181E;--in:#7FB6F5;--in2:#142C48;
+  --sb:#070C1B;--sb2:#121A33;--sbt:#BAC5E6;--sbm:#7F8CB3;
+  --sh:0 1px 0 rgba(255,255,255,.03)}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:14.5px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;line-height:1.2;letter-spacing:-.01em}
+h2{font-size:21px;font-weight:700}h3{font-size:15.5px;font-weight:650}h4{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
+p{margin:0 0 8px}a{color:var(--ac)}
+code{font-family:var(--mono);font-size:.92em;background:var(--pn2);padding:1px 5px;border-radius:5px}
+.mu{color:var(--mu)}.mono{font-family:var(--mono);font-size:12.5px;word-break:break-all}.ok{color:var(--ok)}.er{color:var(--er)}.wa{color:var(--wa)}.in{color:var(--in)}
+.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ic.sm{width:15px;height:15px}.ic.lg{width:24px;height:24px}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ac) 55%,transparent);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:8px;top:-60px;background:var(--ac);color:var(--acf);padding:8px 12px;border-radius:8px;z-index:100}
+.skip:focus{top:8px}
+
+/* ------------------------------------------------------------ layout */
+.app{display:grid;grid-template-columns:262px minmax(0,1fr);min-height:100%}
+.side{border-right:1px solid #1F2B52;background:var(--sb);color:var(--sbt);display:flex;flex-direction:column;gap:6px;padding:14px 12px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 6px 10px;color:var(--sbh)}
+.brand .lg{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#5B74F0,#38B6E8);display:grid;place-items:center;color:#fff}
+.brand b{display:block;font-size:16px;letter-spacing:.01em;color:#fff}.brand small{color:var(--sbm);font-size:11.5px}
+.side h4{color:var(--sbm);margin:14px 8px 4px}
+.nv-i{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:9px;border:0;background:none;color:var(--sbt);cursor:pointer;text-align:left}
+.nv-i:hover{background:var(--sb2);color:#fff}
+.nv-i[aria-current="page"]{background:var(--sb2);color:#fff;box-shadow:inset 3px 0 0 #7C93FF}
+.nv-i .cnt{margin-left:auto;font-size:11px;background:#2A3763;color:#DDE4FF;border-radius:99px;padding:0 7px}
+.caso{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;color:var(--sbt);padding:7px 10px;border-radius:9px;cursor:pointer}
+.caso:hover{background:var(--sb2)}.caso.on{background:var(--sb2);border-color:#2E3B6C;color:#fff}
+.caso b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.caso small{display:block;color:var(--sbm);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side .btn.p{margin:2px 0 4px;justify-content:center;background:#6F86FF;border-color:#6F86FF;color:#08102A}
+.side .btn.p:hover{filter:brightness(1.08);background:#6F86FF}
+.side-foot{margin-top:auto;padding:12px 8px 2px;font-size:11.5px;color:var(--sbm);border-top:1px solid #1F2B52}
+.side-foot b{color:#E9EDFB;display:block;font-size:12px}
+.scrim{display:none}
+.col{min-width:0;display:flex;flex-direction:column;min-height:100vh}
+.top{display:flex;align-items:center;gap:10px;padding:10px 20px;background:var(--pn);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:20;min-height:60px}
+.top .ttl{min-width:0}.top .ttl h1{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .ttl small{display:block;color:var(--mu);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .sp{flex:1}
+#menu{display:none}
+#tarefa{font-size:12.5px;color:var(--mu);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+main{padding:22px 24px 40px;min-width:0;width:100%;max-width:1500px;margin:0 auto;flex:1}
+.pill{max-width:100%;display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid var(--bd);background:var(--pn2);color:var(--mu);}
+.top .pill{white-space:nowrap}
+.pill.ok{background:var(--ok2);color:var(--ok);border-color:transparent}.pill.in{background:var(--in2);color:var(--in);border-color:transparent}
+.pill.wa{background:var(--wa2);color:var(--wa);border-color:transparent}.pill.er{background:var(--er2);color:var(--er);border-color:transparent}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+
+/* ----------------------------------------------------------- controls */
+.btn{white-space:nowrap;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--bd2);background:var(--pn);border-radius:var(--r2);padding:7px 12px;cursor:pointer;color:var(--tx);text-decoration:none;font-weight:550;line-height:1.2;min-height:34px}
+.btn:hover{background:var(--pn2)}.btn:active{transform:translateY(1px)}
+.btn.p{background:var(--ac);border-color:var(--ac);color:var(--acf)}.btn.p:hover{filter:brightness(1.1);background:var(--ac)}
+.btn.g{border-color:transparent;background:transparent}.btn.g:hover{background:var(--pn2)}
+.btn.s{padding:4px 9px;font-size:12.5px;min-height:28px}.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ico{padding:6px;min-width:34px;justify-content:center}.btn.s.ico{min-width:28px;padding:4px}
+input,select,textarea{border:1px solid var(--bd2);background:var(--pn);border-radius:var(--r2);padding:7px 10px;min-width:0;min-height:34px}
+input::placeholder,textarea::placeholder{color:var(--mu);opacity:.85}
+input[type=checkbox]{min-height:0;width:16px;height:16px;accent-color:var(--ac);vertical-align:-3px}
+textarea{width:100%;min-height:90px;font-family:var(--mono);font-size:12.5px}
+label{display:block;font-size:12.5px;color:var(--mu);margin:10px 0 4px;font-weight:550}
+label.in-l{display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--tx)}
+.fld{position:relative;display:flex;align-items:center}.fld .ic{position:absolute;left:9px;color:var(--mu);pointer-events:none}.fld input{padding-left:32px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row.sb{justify-content:space-between}.grow{flex:1;min-width:0}
+.card{background:var(--pn);border:1px solid var(--bd);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:14px}
+.card>h3:first-child{margin-bottom:8px}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:1px 9px;border-radius:99px;font-size:12px;border:1px solid var(--bd);color:var(--mu);background:var(--pn)}
+.dotc{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+
+/* callout do principio do produto */
+.princ{display:flex;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--ac2);border:1px solid color-mix(in srgb,var(--ac) 30%,transparent);color:var(--tx);margin-bottom:14px}
+.princ .ic{color:var(--ac);margin-top:2px}.princ b{display:block}.princ span{color:var(--mu);font-size:13px}
+.princ.compacto{padding:8px 11px;font-size:12.5px;margin:10px 0 0}
+
+/* metricas */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--pn);border:1px solid var(--bd);border-radius:var(--r);padding:14px;box-shadow:var(--sh);display:flex;gap:12px;align-items:flex-start;min-width:0}
+.kpi .bx{width:36px;height:36px;border-radius:10px;background:var(--ac2);color:var(--ac);display:grid;place-items:center;flex:none}
+.kpi.ok .bx{background:var(--ok2);color:var(--ok)}.kpi.wa .bx{background:var(--wa2);color:var(--wa)}.kpi.er .bx{background:var(--er2);color:var(--er)}
+.kpi b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mu)}
+
+/* abas */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--bd);margin:4px 0 16px;overflow-x:auto;scrollbar-width:thin}
+.tab{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;cursor:pointer;border:0;border-bottom:2px solid transparent;background:none;color:var(--mu);white-space:nowrap;font-weight:550;text-transform:capitalize;border-radius:6px 6px 0 0}
+.tab:hover{color:var(--tx);background:var(--pn2)}.tab[aria-selected="true"]{color:var(--ac);border-bottom-color:var(--ac);font-weight:650}
+.tab .n{font-size:11px;background:var(--pn3);color:var(--mu);border-radius:99px;padding:0 6px;text-transform:none}
+
+/* tabelas */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+tbody tr:hover td{background:color-mix(in srgb,var(--pn2) 70%,transparent)}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);font-weight:650;white-space:nowrap;background:var(--pn)}
+.thb{all:unset;cursor:pointer;display:inline-flex;gap:4px;align-items:center}.thb:focus-visible{outline:3px solid color-mix(in srgb,var(--ac) 55%,transparent);border-radius:4px}
+.thb .ar{opacity:.35;font-size:10px}th[aria-sort="ascending"] .ar,th[aria-sort="descending"] .ar{opacity:1;color:var(--ac)}
+.tb-bar{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}.tb-bar .fld{flex:1;min-width:200px;max-width:380px}
+.tb-bar .cnt{font-size:12.5px;color:var(--mu)}
+.nv{display:inline-block;padding:0 8px;border-radius:99px;font-size:11.5px;font-weight:650;color:#fff;white-space:nowrap}
+.nv.alta{background:#0B7F58}.nv.media{background:#9A6400}.nv.baixa{background:#C2501A}.nv.indiciaria{background:#5C6882}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .nv{color:#08101F}:root:not([data-theme="light"]) .nv.alta{background:#34D399}:root:not([data-theme="light"]) .nv.media{background:#F5B83D}:root:not([data-theme="light"]) .nv.baixa{background:#FB8A55}:root:not([data-theme="light"]) .nv.indiciaria{background:#9BA6BF}}
+:root[data-theme="dark"] .nv{color:#08101F}:root[data-theme="dark"] .nv.alta{background:#34D399}:root[data-theme="dark"] .nv.media{background:#F5B83D}:root[data-theme="dark"] .nv.baixa{background:#FB8A55}:root[data-theme="dark"] .nv.indiciaria{background:#9BA6BF}
+.bar{height:8px;border-radius:99px;background:var(--pn3);overflow:hidden;min-width:60px}.bar i{display:block;height:100%;border-radius:99px;background:var(--ac)}
+.stack{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--pn3)}.stack i{display:block;height:100%}
+pre{white-space:pre-wrap;background:var(--pn2);padding:12px;border-radius:var(--r2);font:12px/1.55 var(--mono);max-height:360px;overflow:auto;margin:10px 0 0;border:1px solid var(--bd)}
+
+/* estados vazios, skeleton, toasts */
+.vazio{padding:42px 18px;text-align:center;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:8px}
+.vazio .bx{width:56px;height:56px;border-radius:16px;background:var(--pn2);display:grid;place-items:center;color:var(--mu);margin-bottom:4px}
+.vazio b{color:var(--tx);font-size:15.5px}.vazio p{max-width:440px;margin:0}
+.sk{position:relative;overflow:hidden;border-radius:var(--r);background:var(--pn2);min-height:18px}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--pn) 70%,transparent),transparent);transform:translateX(-100%);animation:sh 1.3s infinite}
+@keyframes sh{to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){.sk::after{animation:none}*{scroll-behavior:auto!important}}
+#toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:200;max-width:min(380px,calc(100vw - 32px))}
+.toast{display:flex;gap:10px;align-items:flex-start;background:var(--pn);border:1px solid var(--bd2);border-left:4px solid var(--in);border-radius:10px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.22);animation:ti .18s ease-out}
+.toast .ic{margin-top:2px;color:var(--in)}
+.toast.ok{border-left-color:var(--ok)}.toast.ok .ic{color:var(--ok)}.toast.er{border-left-color:var(--er)}.toast.er .ic{color:var(--er)}.toast.wa{border-left-color:var(--wa)}.toast.wa .ic{color:var(--wa)}
+@keyframes ti{from{opacity:0;transform:translateY(8px)}}
+dialog{border:1px solid var(--bd);border-radius:14px;background:var(--pn);color:var(--tx);width:min(560px,94vw);padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(5,10,25,.55)}
+dialog input,dialog select,dialog textarea{width:100%}
+
+/* --------------------------------------------------- painel / demo */
+.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+.hero .card{margin:0}
+.demo{background:linear-gradient(135deg,var(--ac2),var(--pn));border-color:color-mix(in srgb,var(--ac) 35%,var(--bd))}
+.steps{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:10px;counter-reset:s}
+.steps li{display:flex;gap:12px;counter-increment:s}.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--ac);color:var(--acf);display:grid;place-items:center;font-weight:700;font-size:13px}
+.casos-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.cc{display:block;width:100%;text-align:left;background:var(--pn);border:1px solid var(--bd);border-radius:var(--r);padding:14px;cursor:pointer;box-shadow:var(--sh)}
+.cc:hover{border-color:var(--ac)}.cc b{display:block;margin:4px 0 2px}.cc small{color:var(--mu)}
+
+/* ------------------------------------------------------------- grafo */
+.gtools summary{margin-top:2px}.gtools{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.gt-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.gt-row .fld{flex:1;min-width:180px;max-width:300px}.gt-row select{max-width:170px}
+.gt-l{color:var(--mu);font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;min-width:74px}
+.fchip{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:99px;border:1px solid var(--bd2);background:var(--pn);cursor:pointer;font-size:12.5px;font-weight:550}
+.fchip[aria-pressed="false"]{opacity:.5;text-decoration:line-through}
+.fchip .ln{width:18px;height:0;border-top-width:3px;border-top-style:solid}
+.fchip .c{color:var(--mu);font-weight:500}
+.gmain{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:14px;align-items:start}
+.gcanvas{position:relative;border:1px solid var(--bd);border-radius:var(--r);background:var(--pn);overflow:hidden;height:clamp(440px,68vh,720px);box-shadow:var(--sh);
+  background-image:radial-gradient(color-mix(in srgb,var(--mu) 22%,transparent) 1px,transparent 1px);background-size:22px 22px}
+svg#g{width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none}
+svg#g.pan{cursor:grabbing}
+.gctl{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.gctl .btn{background:var(--pn);box-shadow:var(--sh)}
+.gleg{position:absolute;left:10px;bottom:10px;right:60px;display:flex;flex-wrap:wrap;gap:5px;max-height:34%;overflow:auto}
+.gleg .fchip{background:color-mix(in srgb,var(--pn) 92%,transparent);padding:2px 8px;font-size:11.5px}
+.gcap{position:absolute;left:12px;top:10px;font-size:11.5px;color:var(--mu);background:color-mix(in srgb,var(--pn) 88%,transparent);padding:2px 8px;border-radius:99px;border:1px solid var(--bd);display:inline-flex;gap:5px;align-items:center;max-width:calc(100% - 70px)}
+.gdet{max-height:clamp(440px,68vh,720px);overflow:auto;margin:0}
+.nl{fill:var(--tx);font:600 10.5px var(--sans);paint-order:stroke;stroke:var(--pn);stroke-width:3.2px;stroke-linejoin:round;pointer-events:none}
+.nd{cursor:pointer}.nd circle.b{stroke:var(--pn);stroke-width:1.8px}
+.nd:focus,.nd:focus-visible{outline:none}.nd:focus-visible circle.b{stroke:var(--ac);stroke-width:3.5px}
+.nd.alvo circle.b{stroke:var(--tx);stroke-width:2.6px}
+.nd.sel circle.b{stroke:var(--ac);stroke-width:4px}
+.nd.dim,.ed.dim{opacity:.13}.nd.dim .nl{opacity:0}
+.ed line.v{stroke-linecap:round}.ed.pth line.v{stroke:var(--ac)!important;stroke-width:5px!important;stroke-opacity:1!important}.ed.sel line.v{stroke-opacity:1!important;stroke-width:5px!important}
+.ring{fill:none;stroke:var(--ac);stroke-width:2.5px;stroke-dasharray:4 3;pointer-events:none}
+.hit{stroke:transparent;stroke-width:12px;cursor:pointer;fill:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12.5px;margin:8px 0}.kv dt{color:var(--mu)}.kv dd{margin:0;font-family:var(--mono);font-size:12px;word-break:break-word}
+.lig{display:block;width:100%;text-align:left;background:var(--pn2);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:7px 0;cursor:pointer}
+.lig:hover{border-color:var(--ac)}.lig .t{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.prov{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:var(--pn);border:1px dashed var(--bd2);font-size:12px}
+.prov .a{display:inline-block;font:700 11px var(--mono);background:var(--ac2);color:var(--ac);padding:0 6px;border-radius:5px;margin-right:6px}
+.conf{display:flex;align-items:center;gap:8px}.conf .bar{flex:1}.conf b{font-variant-numeric:tabular-nums}
+.pstep{display:flex;gap:8px;align-items:center;font-size:12.5px;padding:3px 0}
+
+/* observacoes */
+.obs{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;border-left:5px solid var(--in);padding-left:12px}
+.obs.alta{border-left-color:var(--er)}.obs.atencao{border-left-color:var(--wa)}.obs.info{border-left-color:var(--in)}
+.obs .bx{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--in2);color:var(--in)}
+.obs.alta .bx{background:var(--er2);color:var(--er)}.obs.atencao .bx{background:var(--wa2);color:var(--wa)}
+.obs .ents{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+
+@media (max-width:1100px){.gmain{grid-template-columns:1fr}.gdet{max-height:none}.hero{grid-template-columns:1fr}}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;left:0;top:0;bottom:0;width:282px;transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.4);visibility:hidden}
+  body.nav .side{transform:none;visibility:visible}
+  body.nav .scrim{display:block;position:fixed;inset:0;background:rgba(5,10,25,.55);z-index:35}
+  #menu{display:inline-flex}
+  .top{padding:8px 12px}.top .hide-m{display:none}
+  main{padding:14px 12px 32px}
+  .obs{grid-template-columns:auto 1fr}.obs>.act{grid-column:1/-1}
+}
+@media (max-width:520px){
+  h2{font-size:19px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpi{padding:10px;gap:8px}.kpi .bx{width:30px;height:30px}.kpi b{font-size:20px}
+  .casos-g{grid-template-columns:1fr}.gcanvas{height:62vh}.gleg{right:10px;bottom:6px;max-height:26%}
+  .gctl{flex-direction:row;right:8px;top:44px}.gcap{font-size:10.5px}
+  .card{padding:13px}.tb-bar .fld{max-width:none}
+  #bmodo,#boff{padding:2px 7px;font-size:11px}.hide-s,#boffx{display:none}#boff{padding:2px 6px}.top{gap:6px}
+}
+@media print{.side,.top,#toasts{display:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Pular para o conteúdo</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+<symbol id="i-graph" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2.4"/><circle cx="19" cy="7" r="2.4"/><circle cx="12" cy="18" r="2.4"/><path d="M7.2 7l9.4.4M6.3 8l4.5 8.2M17.9 9.2l-4.6 7"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 001.3 2.2h12.4a1.5 1.5 0 001.3-2.2L14 9V3M7.5 15h9"/></symbol>
+<symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 01-12 0zM12 17v5"/></symbol>
+<symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 005 5L21 13l-8 8-4-4 8-8zM3 21l4-4"/><path d="M15 3l-2 2 6 6 2-2"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></symbol>
+<symbol id="i-tri" viewBox="0 0 24 24"><path d="M12 3.5l10 17.5H2z"/><path d="M12 10v5M12 18v.01"/></symbol>
+<symbol id="i-oct" viewBox="0 0 24 24"><path d="M8 2.5h8L21.5 8v8L16 21.5H8L2.5 16V8z"/><path d="M12 7.5v6M12 16.5v.01"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l3 3 5-6"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+<symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 000-6H9a3 3 0 010-6h6.5"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0011 18.7l1-1"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l5 5v13H6zM14 3v5h5M9 13h6M9 17h6"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0M16 4.8a3.5 3.5 0 010 6.4M18 14a6.5 6.5 0 013.5 6"/></symbol>
+<symbol id="i-q" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.2M12 17v.01"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 00-14.5-3.5L4 9M4 4v5h5M4 13a8 8 0 0014.5 3.5L20 15M20 20v-5h-5"/></symbol>
+</defs></svg>
+
+<div class="app">
+<aside class="side" id="side" aria-label="Navegação lateral">
+  <div class="brand"><span class="lg"><svg class="ic lg" aria-hidden="true"><use href="#i-graph"/></svg></span><span><b>F.I.O. Lab</b><small>análise de vínculos · edição BR</small></span></div>
+  <button class="btn p" id="novo"><svg class="ic sm" aria-hidden="true"><use href="#i-plus"/></svg> Novo caso</button>
+  <nav aria-label="Principal">
+    <h4>Análise</h4>
+    <button class="nv-i" data-v="painel"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>Painel</button>
+    <button class="nv-i" data-v="caso"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg>Caso</button>
+    <button class="nv-i" data-v="grafo"><svg class="ic" aria-hidden="true"><use href="#i-graph"/></svg>Grafo</button>
+    <button class="nv-i" data-v="obs"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>Observações<span class="cnt" id="cnt-obs" hidden></span></button>
+    <button class="nv-i" data-v="exp"><svg class="ic" aria-hidden="true"><use href="#i-flask"/></svg>Experimentos</button>
+    <h4>Bancada</h4>
+    <button class="nv-i" data-v="aval"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Avaliação sintética</button>
+    <button class="nv-i" data-v="plug"><svg class="ic" aria-hidden="true"><use href="#i-plug"/></svg>Fontes e diagnóstico</button>
+    <button class="nv-i" data-v="ferr"><svg class="ic" aria-hidden="true"><use href="#i-tool"/></svg>Ferramentas BR</button>
+    <button class="nv-i" data-v="sobre"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>Sobre e uso responsável</button>
+  </nav>
+  <h4>Casos</h4><div id="casos" role="list"></div>
+  <div class="side-foot"><b>Modo passivo</b>Só fontes públicas. Sem login, sem invasão, sem contato com o alvo.</div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<div class="col">
+<header class="top">
+  <button class="btn ico g" id="menu" aria-label="Abrir menu de navegação" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg></button>
+  <div class="ttl"><h1 id="tit">F.I.O. Lab</h1><small id="sub">bancada local</small></div>
+  <span class="sp"></span>
+  <span id="tarefa" role="status" aria-live="polite"></span>
+  <span class="pill in" id="bmodo" title="O programa só consulta fontes públicas e nunca interage com o alvo"><span class="dot"></span><span><span class="hide-s">modo </span>passivo</span></span>
+  <span class="pill" id="boff" title="Se a última execução consultou a rede"><span class="dot"></span><span id="boffx">offline</span></span>
+  <span class="pill hide-m" id="ambiente">local</span><span class="pill hide-m" id="versao"></span>
+  <button class="btn ico g" id="tema" aria-label="Alternar tema claro e escuro" title="Alternar tema"><svg class="ic" aria-hidden="true"><use href="#i-moon" id="tema-i"/></svg></button>
+</header>
+<main id="main" tabindex="-1"></main>
+</div>
+</div>
+
+<div id="toasts" role="region" aria-label="Notificações" aria-live="polite"></div>
+
+<dialog id="dlg" aria-labelledby="dlg-t"><form method="dialog" id="fnovo">
+<h2 id="dlg-t">Novo caso</h2><p class="mu" style="margin:4px 0 0">Sem base legal e finalidade específica nenhum coletor roda.</p>
+<label for="f-id">Identificador</label><input id="f-id" name="id" required pattern="[A-Za-z0-9._-]{1,64}" placeholder="CASO-2026-020">
+<label for="f-ti">Título</label><input id="f-ti" name="titulo" required>
+<label for="bases">Base legal</label><select name="base_legal" id="bases"></select>
+<label for="f-fi">Finalidade (específica)</label><textarea id="f-fi" name="finalidade" required minlength="10" style="min-height:60px;font-family:inherit"></textarea>
+<label for="f-re">Responsável</label><input id="f-re" name="responsavel" required>
+<label for="f-es">Escopo autorizado (um por linha)</label><textarea id="f-es" name="escopo" placeholder="+5531988887777&#10;exemplo.com.br"></textarea>
+<div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" value="x">Cancelar</button>
+<button class="btn p" value="ok">Criar caso</button></div><p id="erroNovo" class="er" role="alert"></p></form></dialog>
+
+<script>
+"use strict";
+/* ============================================================ base */
+/* sessionStorage lanca SecurityError em iframe com armazenamento bloqueado (Colab) */
+const guardar={ler(k){try{return sessionStorage.getItem(k)}catch(e){return null}},gravar(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}};
+const T=(location.hash.match(/t=([^&]+)/)||[])[1]||guardar.ler("fio_t")||"";
+guardar.gravar("fio_t",T);
+/* base da API relativa a pagina: funciona atras de proxy com prefixo (Colab, Codespaces) */
+const BASE=(()=>{let b=location.pathname.replace(/workbench\/?$/,"");return b.endsWith("/")?b:b.replace(/[^\/]*$/,"")})();
+history.replaceState(null,"",location.pathname);
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const IC=(n,c="")=>`<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const pct=c=>Math.min(99,Math.round(c*100))+"%";           /* confiança nunca 100% */
+const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const ts=s=>String(s||"").replace("T"," ").slice(0,16)+" UTC";
+const humano=s=>{s=String(s||"").replace(/[-_]/g," ");return s.charAt(0).toUpperCase()+s.slice(1)};
+const CORES={telefone:"#4C7DF0",pessoa:"#E8A317",organizacao:"#1FB58A",email:"#A45CF0",dominio:"#14B8D4",
+url:"#8A96AD",faixa:"#6B7A99",cep:"#EF5350",municipio:"#F4802E",documento:"#E5336B",diario:"#2E9BEA",
+sancao:"#D92D2D","cpf-parcial":"#F26F96",prestadora:"#8CC63F",placa:"#C9A227"};
+const corTipo=t=>CORES[t]||"#8A96AD";
+const NIV={alta:"#0E9F6E",media:"#D08A00",baixa:"#E2662B",indiciaria:"#7B879E"};
+const NIVN={alta:"Alta",media:"Média",baixa:"Baixa",indiciaria:"Indiciária"};
+let EST=null,CASO=null,INFO=null,DADOS=null,EXPS=[],ABA="grafo",VIEW="painel",CASOS=[],HL=new Set(),PEND=null;
+const GR={};
+
+async function api(p,opt={}){const r=await fetch(BASE+"api"+p,{...opt,headers:{"X-FIO-Token":T,"Content-Type":"application/json",...(opt.headers||{})}});
+ const j=await r.json().catch(()=>({erro:"resposta inválida"}));if(!r.ok)throw new Error(j.erro||r.status);return j}
+const post=(p,b)=>api(p,{method:"POST",body:JSON.stringify(b)});
+
+/* ---------------------------------------------------------- toasts */
+function toast(msg,tipo="in",ms=4200){const el=document.createElement("div");el.className="toast "+tipo;
+ el.innerHTML=IC(tipo==="ok"?"check":tipo==="er"?"oct":tipo==="wa"?"tri":"info")+`<div>${esc(msg)}</div>`;
+ $("#toasts").append(el);setTimeout(()=>el.remove(),ms)}
+const falha=e=>toast(e&&e.message||String(e),"er",6000);
+
+/* ----------------------------------------------------------- tema */
+function efetivo(){const t=document.documentElement.dataset.theme;return t||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light")}
+function iconeTema(){$("#tema-i").setAttribute("href",efetivo()==="dark"?"#i-sun":"#i-moon")}
+$("#tema").onclick=()=>{const n=efetivo()==="dark"?"light":"dark";document.documentElement.dataset.theme=n;
+ try{localStorage.setItem("fio_tema",n)}catch(e){}iconeTema()};
+try{matchMedia("(prefers-color-scheme:dark)").addEventListener("change",iconeTema)}catch(e){}iconeTema();
+
+/* -------------------------------------------------- menu (mobile) */
+const menu=on=>{document.body.classList.toggle("nav",on);$("#menu").setAttribute("aria-expanded",on)};
+$("#menu").onclick=()=>menu(!document.body.classList.contains("nav"));$("#scrim").onclick=()=>menu(false);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){menu(false);if(GR.limpar&&$("#g"))GR.limpar()}
+ if(e.key==="/"&&$("#gbusca")&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();$("#gbusca").focus()}});
+
+/* ----------------------------------------------- componentes de UI */
+const kpi=(ic,v,l,tom="")=>`<div class="kpi ${tom}"><span class="bx">${IC(ic)}</span><div><b>${v}</b><span>${l}</span></div></div>`;
+const vazio=(ic,t,p,acao="")=>`<div class="vazio"><span class="bx">${IC(ic,"lg")}</span><b>${t}</b><p>${p}</p>${acao}</div>`;
+const skel=()=>`<div class="kpis">${'<div class="sk" style="height:76px"></div>'.repeat(4)}</div><div class="sk" style="height:46px;margin-bottom:14px"></div><div class="sk" style="height:320px"></div>`;
+const princ=(c="")=>`<div class="princ ${c}">${IC("shield")}<div><b>Toda aresta mostra a sua proveniência. A confiança nunca é 100%.</b>
+ <span>Cada vínculo carrega as fontes que o sustentam, com o grau Admiralty (A–F × 1–6). Corroborar aumenta a confiança, mas ela é limitada a 99%: o que o grafo diz é indício a conferir, não prova.</span></div></div>`;
+const nivBadge=n=>`<span class="nv ${esc(n)}">${esc(NIVN[n]||n)}</span>`;
+const confBar=(c,n)=>`<div class="conf"><b>${pct(c)}</b><div class="bar" role="img" aria-label="confiança ${pct(c)}"><i style="width:${Math.min(99,c*100)}%;background:${NIV[n]||"var(--ac)"}"></i></div>${nivBadge(n)}</div>`;
+
+/* tabela ordenável e filtrável
+   cols:[{t:"título",v:r=>valorParaOrdenar,h:r=>html(opcional)}] */
+function tabela(host,{cols,rows,vazioMsg="Nada para mostrar.",filtro=true,ord=null,dir=1,extra=""}){
+ const uid="tb"+Math.random().toString(36).slice(2,7);let q="",oi=ord,od=dir;
+ host.insertAdjacentHTML("beforeend",`<div class="tb-bar">${filtro?`<div class="fld">${IC("search","sm")}<input type="search" id="${uid}q" placeholder="Filtrar…" aria-label="Filtrar tabela"></div>`:""}<span class="cnt" id="${uid}c" aria-live="polite"></span>${extra}</div>
+ <div class="scroll"><table><thead><tr>${cols.map((c,i)=>`<th scope="col" data-i="${i}" ${c.v?'aria-sort="none"':""}>${c.v?`<button class="thb" type="button">${esc(c.t)}<span class="ar" aria-hidden="true">▲▼</span></button>`:esc(c.t)}</th>`).join("")}</tr></thead><tbody id="${uid}b"></tbody></table></div>`);
+ const ths=()=>host.querySelectorAll(`th[data-i]`);
+ const pintar=()=>{let r=rows.filter(x=>!q||cols.some(c=>c.v&&norm(c.v(x)).includes(q)));
+  if(oi!==null&&cols[oi].v){const f=cols[oi].v;r=r.slice().sort((a,b)=>{const x=f(a),y=f(b);return (typeof x==="number"&&typeof y==="number"?x-y:String(x).localeCompare(String(y),"pt-BR",{numeric:true}))*od})}
+  host.querySelector("#"+uid+"b").innerHTML=r.length?r.map(x=>`<tr>${cols.map(c=>`<td class="${c.cls||""}">${c.h?c.h(x):esc(c.v(x))}</td>`).join("")}</tr>`).join(""):`<tr><td colspan="${cols.length}" class="mu">${vazioMsg}</td></tr>`;
+  host.querySelector("#"+uid+"c").textContent=`${r.length} de ${rows.length}`;
+  ths().forEach(th=>{if(!cols[th.dataset.i].v)return;const on=+th.dataset.i===oi;th.setAttribute("aria-sort",on?(od>0?"ascending":"descending"):"none");
+   th.querySelector(".ar").textContent=on?(od>0?"▲":"▼"):"▲▼"});
+  if(host.afterPaint)host.afterPaint()};
+ ths().forEach(th=>{const b=th.querySelector(".thb");if(b)b.onclick=()=>{const i=+th.dataset.i;if(oi===i)od=-od;else{oi=i;od=1}pintar()}});
+ const qi=host.querySelector("#"+uid+"q");if(qi)qi.oninput=()=>{q=norm(qi.value.trim());pintar()};
+ pintar()}
+
+/* ============================================================ início */
+function setTopo(t,s){$("#tit").textContent=t;$("#sub").textContent=s||"";document.title=t+" · F.I.O. Lab"}
+function marcarNav(v){$$(".nv-i").forEach(b=>{if(b.dataset.v===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ $$("#casos .caso").forEach(b=>b.classList.toggle("on",VIEW==="caso"&&b.dataset.id===CASO))}
+function modoBadge(){const u=EXPS[EXPS.length-1];const off=!u||(u.metricas&&!u.metricas.requisicoes);
+ $("#boff").className="pill "+(off?"ok":"wa");$("#boffx").textContent=off?"offline":"consultou a rede"}
+
+async function init(){
+ if(!T){setTopo("F.I.O. Lab","token ausente");$("#main").innerHTML=vazio("lock","Token ausente","Abra o endereço impresso no terminal por <code>python -m fio lab bancada</code>. O token vai na URL e é a única credencial desta sessão.");return}
+ $("#main").innerHTML=skel();
+ try{EST=await api("/estado")}catch(e){setTopo("F.I.O. Lab","sem conexão");$("#main").innerHTML=vazio("oct","Não foi possível conectar",esc(e.message));return}
+ $("#versao").textContent="v"+EST.versao;
+ $("#ambiente").textContent=/colab|googleusercontent|prod\.colab/.test(location.hostname)?"Colab":"local";
+ $("#bases").innerHTML=Object.entries(EST.bases_legais).map(([k,v])=>`<option value="${esc(k)}">${esc(v)}</option>`).join("");
+ $$(".nv-i").forEach(b=>b.onclick=()=>{menu(false);ir(b.dataset.v)});
+ await listarCasos();painel()}
+
+async function listarCasos(){CASOS=await api("/casos");
+ $("#casos").innerHTML=CASOS.length?CASOS.map(c=>`<button class="caso" role="listitem" data-id="${esc(c.id)}"><b>${esc(c.id)}</b><small>${esc(c.titulo)}</small></button>`).join(""):'<div style="padding:4px 10px;font-size:12.5px;color:var(--sbm)">nenhum caso ainda</div>';
+ $$("#casos .caso").forEach(el=>el.onclick=()=>{menu(false);abrir(el.dataset.id)});marcarNav(VIEW)}
+
+function ir(v){
+ if(v==="painel")return painel();
+ if(["caso","grafo","obs","exp"].includes(v)){
+  const id=CASO||(CASOS[0]&&CASOS[0].id);
+  if(!id){toast("Crie um caso ou monte o caso de demonstração primeiro.","wa");return painel()}
+  const a={caso:"resumo",grafo:"grafo",obs:"observações",exp:"experimentos"}[v];
+  if(VIEW==="caso"&&CASO===id)return setAba(a);return abrir(id,a)}
+ return vista(v)}
+
+/* ============================================================ painel */
+function painel(){VIEW="painel";CASO=null;marcarNav("painel");setTopo("Painel","visão geral da bancada");
+ EXPS=[];modoBadge();
+ const demo=CASOS.find(c=>c.id==="DEMO-FRAUDE-BOLETO");
+ const tarefas=(EST.tarefas||[]).slice(0,6);
+ $("#main").innerHTML=`${princ()}
+ <div class="hero">
+  <div class="card"><h2>Bem-vindo ao F.I.O. Lab</h2>
+   <p class="mu" style="margin-top:6px">O programa organiza, num mapa, o que fontes públicas dizem sobre números de telefone, empresas e pessoas, e registra cada passo numa cadeia de custódia para que o trabalho possa ser conferido depois.</p>
+   <ol class="steps"><li><div><b>Veja um exemplo pronto.</b><br><span class="mu">Monte o caso de demonstração: tudo fictício, não usa internet.</span></div></li>
+   <li><div><b>Confira a sua conexão.</b><br><span class="mu">Veja quais fontes online o programa alcança da sua rede.</span></div></li>
+   <li><div><b>Abra o seu caso.</b><br><span class="mu">Use “Novo caso” e informe a base legal e a finalidade.</span></div></li></ol>
+   <div class="row" style="margin-top:14px"><button class="btn" id="bvdiag">${IC("plug","sm")}Verificar conexões</button><button class="btn" id="bvnovo">${IC("plus","sm")}Novo caso</button></div>
+   <div id="bvout" style="margin-top:12px"></div></div>
+  <div class="card demo"><h3>Dados de demonstração</h3>
+   <p class="mu" style="margin-top:6px">Caso fictício de <b>fraude de boleto</b>: três linhas, empresas, sócios e uma ata. Roda 100% offline e já vem com observações analíticas, ideal para conhecer o grafo.</p>
+   <div class="row" style="margin-top:12px"><button class="btn p" id="bvdemo">${IC("play","sm")}<span>${demo?"Abrir caso de demonstração":"Montar caso de demonstração"}</span></button>
+   ${demo?`<button class="btn s" id="bvrec" title="Apaga e remonta o caso de demonstração">${IC("refresh","sm")}Recriar</button>`:""}</div>
+   <p class="mu" style="font-size:12px;margin-top:10px">Nenhuma pessoa real está envolvida. Telefones, CPFs e CNPJs são inventados.</p></div>
+ </div>
+ <div class="card-h"><h3>Casos</h3><span class="mu">${CASOS.length} no total</span></div>
+ ${CASOS.length?`<div class="casos-g">${CASOS.map(c=>`<button class="cc" data-id="${esc(c.id)}"><span class="pill ${c.expirado?"er":"in"}">${esc(c.modo||"passivo")}${c.expirado?" · expirado":""}</span><b>${esc(c.titulo)}</b><small class="mono">${esc(c.id)}</small>
+   <div class="row" style="margin-top:8px;gap:12px"><small>${IC("users","sm")} ${c.escopo.length} no escopo</small><small>${IC("q","sm")} ${c.quesitos.length} quesito(s)</small></div><small style="display:block;margin-top:4px">escopo até ${esc((c.expira_em||"").slice(0,10))}</small></button>`).join("")}</div>`
+  :`<div class="card">${vazio("folder","Nenhum caso ainda","Crie um caso com base legal e finalidade, ou comece pelo caso de demonstração acima.",`<button class="btn p" id="bvnovo2">${IC("plus","sm")}Novo caso</button>`)}</div>`}
+ ${tarefas.length?`<div class="card" style="margin-top:14px"><h3>Tarefas recentes</h3><div class="scroll"><table><thead><tr><th>#</th><th>tipo</th><th>caso</th><th>estado</th><th>criada (UTC)</th></tr></thead><tbody>${tarefas.map(t=>`<tr><td>${t.id}</td><td>${esc(t.tipo)}</td><td class="mono">${esc(t.caso)}</td><td class="${t.estado==="concluida"?"ok":/erro|falh/.test(t.estado)?"er":"mu"}">${esc(t.estado)}</td><td class="mono">${esc((t.criada||"").slice(0,16))}</td></tr>`).join("")}</tbody></table></div></div>`:""}`;
+ const mkDemo=async rec=>{const b=$("#bvdemo");b.disabled=true;b.querySelector("span").textContent="Montando…";
+  try{const r=await post("/demo",{recriar:rec});await listarCasos();toast(rec?"Caso de demonstração recriado.":"Caso de demonstração pronto.","ok");abrir(r.caso,"grafo")}catch(e){falha(e);b.disabled=false;b.querySelector("span").textContent="Montar caso de demonstração"}};
+ $("#bvdemo").onclick=()=>mkDemo(false);const br=$("#bvrec");if(br)br.onclick=()=>mkDemo(true);
+ $("#bvdiag").onclick=()=>diagnostico($("#bvout"));
+ const nv=()=>{$("#erroNovo").textContent="";$("#dlg").showModal()};$("#bvnovo").onclick=nv;const n2=$("#bvnovo2");if(n2)n2.onclick=nv;
+ $$(".cc").forEach(el=>el.onclick=()=>abrir(el.dataset.id))}
+
+async function diagnostico(alvo){alvo.innerHTML='<div class="sk" style="height:120px"></div><p class="mu">Testando as fontes… (até 1 minuto)</p>';
+ try{const r=await api("/diagnostico");
+ alvo.innerHTML=`<div class="scroll"><table><thead><tr><th>fonte</th><th>situação</th><th>o que fazer</th></tr></thead><tbody>${r.map(x=>`<tr><td>${esc(x.fonte)}</td><td class="${x.ok?"ok":x.ok===false?"er":"mu"}">${x.ok?"✓ conectado":x.ok===false?"✗ sem acesso":"— sem chave"}${x.ms?` <span class="mu">${x.ms} ms</span>`:""}</td><td class="mu">${esc(x.dica)}</td></tr>`).join("")}</tbody></table></div>
+ <p class="mu" style="margin-top:8px">As fontes offline (plano de numeração, cadastro da Receita baixado, documentos) funcionam sempre.</p>`}catch(e){alvo.innerHTML="";falha(e)}}
+
+$("#novo").onclick=()=>{menu(false);$("#erroNovo").textContent="";$("#dlg").showModal()};
+$("#fnovo").onsubmit=async ev=>{if(ev.submitter?.value!=="ok")return;ev.preventDefault();
+ const f=Object.fromEntries(new FormData(ev.target));f.escopo=f.escopo.split(/\n/);
+ try{await post("/casos",f);$("#dlg").close();await listarCasos();toast("Caso criado.","ok");abrir(f.id,"resumo")}catch(e){$("#erroNovo").textContent=e.message}};
+
+/* ============================================================== caso */
+async function abrir(id,aba="grafo"){VIEW="caso";CASO=id;ABA=aba;HL=new Set();PEND=null;marcarNav("caso");
+ setTopo("Carregando…",id);$("#main").innerHTML=skel();
+ try{[INFO,DADOS,EXPS]=await Promise.all([api("/casos/"+encodeURIComponent(id)),api(`/casos/${encodeURIComponent(id)}/grafo`),api(`/casos/${encodeURIComponent(id)}/experimentos`)])}
+ catch(e){falha(e);$("#main").innerHTML=vazio("oct","Não foi possível abrir o caso",esc(e.message));return}
+ const c=INFO.caso,E=encodeURIComponent(id);
+ setTopo(c.titulo,`${c.id} · ${c.base_legal_texto}${c.expirado?" · EXPIRADO":""}`);modoBadge();
+ const obs=(DADOS.observacoes||[]);const co=$("#cnt-obs");co.hidden=!obs.length;co.textContent=obs.length;
+ const altas=DADOS.arestas.filter(a=>a.nivel==="alta").length;
+ const tabs=[["resumo",""],["grafo",""],["vínculos",DADOS.arestas.length],["agrupamentos",DADOS.clusters.length],["observações",obs.length],["custódia",INFO.ledger],["experimentos",EXPS.length],["quesitos",c.quesitos.length]];
+ $("#main").innerHTML=`<div class="row sb" style="margin-bottom:14px;align-items:flex-start">
+  <div class="row"><span class="pill ${c.expirado?"er":"in"}">${esc(c.modo||"passivo")}</span><span class="pill">${IC("lock","sm")}${esc(c.classificacao||"acesso restrito")}</span>
+  <span class="mu" style="font-size:12.5px">escopo até ${esc((c.expira_em||"").slice(0,10))} · ${c.escopo.length} identificador(es) autorizados</span></div>
+  <div class="row"><a class="btn s" target="_blank" rel="noopener" href="${BASE}api/casos/${E}/relatorio?modelo=tecnico&t=${T}">${IC("file","sm")}Relatório técnico</a>
+  <a class="btn s" target="_blank" rel="noopener" href="${BASE}api/casos/${E}/relatorio?modelo=laudo&t=${T}">${IC("file","sm")}Laudo</a>
+  <a class="btn s" target="_blank" rel="noopener" href="${BASE}api/casos/${E}/relatorio?modelo=relint&t=${T}">${IC("file","sm")}RELINT</a></div></div>
+ <div class="kpis">${kpi("graph",INFO.entidades,"entidades")}${kpi("link",INFO.vinculos,"vínculos")}${kpi("check",altas,"vínculos de confiança alta","ok")}
+  ${kpi("eye",obs.length,"observações analíticas",obs.some(o=>o.gravidade==="alta")?"er":obs.some(o=>o.gravidade==="atencao")?"wa":"")}${kpi("lock",INFO.ledger,"registros de custódia")}${kpi("q",c.quesitos.length,"quesitos")}</div>
+ <div class="tabs" role="tablist" aria-label="Seções do caso">${tabs.map(([k,n])=>`<button class="tab" role="tab" data-t="${k}">${k}${n!==""?` <span class="n">${n}</span>`:""}</button>`).join("")}</div><div id="aba" role="tabpanel"></div>`;
+ $$(".tab").forEach(el=>el.onclick=()=>setAba(el.dataset.t));
+ setAba(aba)}
+async function setAba(a){ABA=a;marcarNav(({"resumo":"caso","grafo":"grafo","observações":"obs","experimentos":"exp"})[a]||"caso");
+ $$(".tab").forEach(el=>{const on=el.dataset.t===a;el.setAttribute("aria-selected",on);if(on){const t=el.parentElement;t.scrollLeft=el.offsetLeft-t.clientWidth/2+el.offsetWidth/2}});
+ const A=$("#aba");if(!A)return;const d=DADOS,id=CASO;
+ try{
+ if(a==="resumo")return resumo(A);
+ if(a==="grafo")return grafoView(A);
+ if(a==="vínculos"){A.innerHTML=princ("compacto")+`<div class="card" id="tv" style="margin-top:14px"></div>`;
+  const acha=l=>d.arestas.find(x=>x.relacao===l.relacao&&x.origem.endsWith(":"+l.entidade)&&x.destino.endsWith(":"+l.vinculada_a))||d.arestas.find(x=>x.relacao===l.relacao&&(x.origem.endsWith(":"+l.entidade)||x.destino.endsWith(":"+l.entidade)));
+  const tv=$("#tv");tabela(tv,{rows:d.tabela.map(l=>({...l,_a:acha(l)})),ord:3,dir:-1,
+   vazioMsg:"Nenhum vínculo encontrado. Rode o pipeline na aba Resumo.",
+   cols:[{t:"entidade",v:l=>l.entidade,h:l=>`<span class="mono">${esc(l.entidade)}</span><div class="mu">${esc(l.tipo)}</div>`},
+   {t:"relação",v:l=>l.relacao,h:l=>esc(humano(l.relacao))},
+   {t:"vinculada a",v:l=>l.vinculada_a,h:l=>`<span class="mono">${esc(l.vinculada_a)}</span><div class="mu">${esc(l.tipo_vinculo)}</div>`},
+   {t:"confiança",v:l=>l.confianca,h:l=>`<div style="min-width:170px">${confBar(l.confianca,l.nivel)}</div><div class="mu">${esc(l.admiralty)} · ${l.corroboracoes} corroboração(ões)</div>`},
+   {t:"fontes",v:l=>l.coletores,h:l=>`${esc(l.coletores)}${l.evidencia?`<div class="mu mono" style="max-width:260px">${esc(String(l.evidencia).slice(0,90))}</div>`:""}`},
+   {t:"",h:l=>l._a?`<button class="btn s" data-ar="${esc(l._a.id)}">${IC("graph","sm")}No grafo</button>`:""}]});
+  tv.afterPaint=()=>$$("#tv [data-ar]").forEach(b=>b.onclick=()=>{PEND={aresta:b.dataset.ar};setAba("grafo")});tv.afterPaint();return}
+ if(a==="agrupamentos"){A.innerHTML=(d.clusters.map(c=>`<div class="card"><div class="row sb"><div><span class="pill in">${esc(humano(c.tipo))}</span> <span class="mono">${esc(c.chave)}</span></div><span class="chip">força ${esc(c.forca)}</span></div>
+  <p style="margin-top:8px">${esc(c.explicacao)}</p><p class="mu"><b>Ressalva:</b> ${esc(c.ressalva)}</p><div class="row" style="gap:5px">${c.membros.map(m=>`<span class="chip mono">${esc(m)}</span>`).join("")}</div>
+  <div style="margin-top:10px"><button class="btn s" data-hl="${esc(JSON.stringify(c.membros))}">${IC("graph","sm")}Destacar no grafo</button></div></div>`).join("")||`<div class="card">${vazio("users","Nenhum agrupamento","Agrupamentos aparecem quando duas ou mais entidades compartilham indícios (bloco de numeração, sócio, endereço).")}</div>`)
+  +(d.pontes.length?`<div class="card"><h3>Pontes entre alvos</h3><div class="scroll"><table><thead><tr><th>de</th><th>para</th><th>saltos</th><th>elo mais fraco</th><th>caminho</th></tr></thead><tbody>${d.pontes.slice(0,40).map(p=>`<tr><td class="mono">${esc(p.de)}</td><td class="mono">${esc(p.para)}</td><td>${p.saltos}</td><td>${esc(p.elo_mais_fraco)}</td><td>${p.intermediarios.map(i=>esc(i.rotulo)).join(" → ")||"direto"}</td></tr>`).join("")}</tbody></table></div></div>`:"");
+  $$("[data-hl]").forEach(b=>b.onclick=()=>{const m=JSON.parse(b.dataset.hl);destacar(m.map(x=>d.entidades.find(e=>e.id===x||e.valor===x)?.id||x))});return}
+ if(a==="observações")return observacoes(A);
+ if(a==="custódia"){A.innerHTML='<div class="sk" style="height:200px"></div>';const l=await api(`/casos/${encodeURIComponent(id)}/ledger`);if(ABA!==a)return;
+  A.innerHTML=`<div class="card"><div class="row">${l.integro?`<span class="pill ok">${IC("check","sm")}<b>Cadeia íntegra</b></span>`:`<span class="pill er">${IC("oct","sm")}<b>CADEIA COMPROMETIDA</b></span>`}<span class="mu">${l.registros.length} registros exibidos · cada registro encadeia o hash do anterior (SHA-256)</span></div>${l.problemas.map(p=>`<div class="er" style="margin-top:6px">${esc(p)}</div>`).join("")}</div><div class="card" id="tl"></div>`;
+  tabela($("#tl"),{rows:l.registros.slice().reverse(),vazioMsg:"Sem registros.",cols:[{t:"#",v:r=>r.seq},{t:"UTC",v:r=>r.ts,cls:"mono"},{t:"ação",v:r=>r.acao},{t:"coletor",v:r=>r.coletor||""},{t:"alvo",v:r=>r.alvo||"",cls:"mono"},{t:"resumo",v:r=>r.resumo||""},{t:"hash",v:r=>r.hash.slice(0,12),cls:"mono"}]});return}
+ if(a==="experimentos")return experimentos(A);
+ if(a==="quesitos")return quesitos(A);
+ }catch(e){falha(e)}}
+
+/* ------------------------------------------------------------ resumo */
+function resumo(A){const d=DADOS,id=CASO;const cols=Object.values(EST.inventario.coletores).flat();
+ const nv={alta:0,media:0,baixa:0,indiciaria:0};d.arestas.forEach(a=>nv[a.nivel]=(nv[a.nivel]||0)+1);const tot=d.arestas.length||1;
+ const tp={};d.entidades.forEach(e=>tp[e.tipo]=(tp[e.tipo]||0)+1);const mx=Math.max(1,...Object.values(tp));
+ A.innerHTML=`${princ()}
+ <div class="hero"><div class="card"><h3>Confiança dos vínculos</h3>
+  ${d.arestas.length?`<div class="stack" role="img" aria-label="distribuição por nível de confiança" style="margin:10px 0">${Object.entries(nv).map(([k,v])=>`<i style="width:${v/tot*100}%;background:${NIV[k]}" title="${NIVN[k]}: ${v}"></i>`).join("")}</div>
+  <div class="row" style="gap:14px">${Object.entries(nv).map(([k,v])=>`<span><span class="dotc" style="background:${NIV[k]}"></span> ${NIVN[k]} <b>${v}</b></span>`).join("")}</div>
+  <p class="mu" style="margin-top:10px;font-size:12.5px">Níveis: alta ≥ 75%, média ≥ 50%, baixa ≥ 25%, indiciária abaixo disso. Nenhum vínculo passa de 99%.</p>`:vazio("link","Sem vínculos","Rode o pipeline para coletar e relacionar.")}</div>
+  <div class="card"><h3>Entidades por tipo</h3><div style="display:grid;gap:7px;margin-top:10px">${Object.entries(tp).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="row" style="flex-wrap:nowrap"><span style="width:110px;display:flex;gap:6px;align-items:center"><span class="dotc" style="background:${corTipo(k)}"></span>${esc(k)}</span><div class="bar grow"><i style="width:${v/mx*100}%;background:${corTipo(k)}"></i></div><b style="width:28px;text-align:right">${v}</b></div>`).join("")||'<span class="mu">sem entidades</span>'}</div></div></div>
+ <div class="card"><h3>Adicionar alvo</h3><div class="row"><label for="atipo" class="sr">tipo</label><select id="atipo">${["telefone","email","dominio","cnpj","cep","pessoa","organizacao","documento"].map(t=>`<option>${t}</option>`).join("")}</select>
+ <label for="avalor" class="sr">valor</label><input id="avalor" placeholder="(31) 98888-7777" style="flex:1;min-width:180px"><button class="btn p" id="aadd">${IC("plus","sm")}Adicionar alvo</button></div>
+ <p class="mu" style="margin:8px 0 0;font-size:12.5px">O alvo precisa estar dentro do escopo autorizado do caso.</p></div>
+ <div class="card"><details open><summary class="card-h" style="cursor:pointer;margin:0"><h3>Executar pipeline</h3><span class="mu">coleta → vínculos → análise</span></summary>
+ <div class="row" style="margin-top:12px"><label class="in-l" for="pprof">profundidade</label><input id="pprof" type="number" min="0" max="3" value="1" style="width:68px">
+ <label class="in-l"><input type="checkbox" id="poff"> só offline</label><label class="in-l"><input type="checkbox" id="pexp"> expandir escopo</label></div>
+ <div class="row" style="margin-top:10px">${cols.map(k=>`<label class="chip in-l"><input type="checkbox" class="pcol" value="${esc(k.nome)}" checked> ${esc(k.nome)}${k.rede?' <span title="usa a rede">⇅</span>':""}</label>`).join("")}</div>
+ <div class="row" style="margin-top:12px"><button class="btn p" id="prun">${IC("play","sm")}Rodar pipeline</button><span class="mu" id="pmsg"></span></div></details></div>`;
+ $("#aadd").onclick=async()=>{try{await post(`/casos/${encodeURIComponent(id)}/alvos`,{tipo:$("#atipo").value,valor:$("#avalor").value});toast("Alvo adicionado.","ok");abrir(id,"resumo")}catch(e){falha(e)}};
+ $("#prun").onclick=async()=>{const b={profundidade:+$("#pprof").value,offline:$("#poff").checked,expandir_escopo:$("#pexp").checked,
+  coletores:$$(".pcol:checked").map(x=>x.value)};try{const r=await post(`/casos/${encodeURIComponent(id)}/pipeline`,b);$("#pmsg").textContent="tarefa #"+r.tarefa+" na fila";toast("Pipeline na fila (tarefa #"+r.tarefa+").");acompanhar(r.tarefa,()=>CASO===id&&abrir(id,"resumo"))}catch(e){falha(e)}}}
+
+async function acompanhar(tid,fim){let t;try{t=await api("/tarefas/"+tid)}catch(e){return falha(e)}
+ $("#tarefa").innerHTML=`#${tid} ${esc(t.estado)} ${esc((t.progresso||"").split("\n").pop())}`;
+ if(t.estado==="fila"||t.estado==="rodando")return setTimeout(()=>acompanhar(tid,fim),900);
+ const ok=t.estado==="concluida";$("#tarefa").innerHTML=`#${tid} <span class="${ok?"ok":"er"}">${esc(t.estado)}</span>`;
+ toast(`Tarefa #${tid}: ${t.estado}.`,ok?"ok":"er");fim&&fim(t)}
+
+/* ------------------------------------------------------- observações */
+const SEV={alta:{ic:"oct",t:"Alta",o:0},atencao:{ic:"tri",t:"Atenção",o:1},info:{ic:"info",t:"Informativa",o:2}};
+function observacoes(A){const obs=(DADOS.observacoes||[]);
+ if(!obs.length){A.innerHTML=`<div class="card">${vazio("eye","Sem observações","Observações vêm dos analisadores (incoerência geográfica, intermediário provável, sanções…) e aparecem depois que o pipeline roda.",`<button class="btn p" id="irp">${IC("play","sm")}Ir para o pipeline</button>`)}</div>`;$("#irp").onclick=()=>setAba("resumo");return}
+ const cont={};obs.forEach(o=>cont[o.gravidade]=(cont[o.gravidade]||0)+1);const ans=[...new Set(obs.map(o=>o.analisador))];
+ let fg="",fa="",fq="";
+ A.innerHTML=`<div class="kpis">${Object.entries(SEV).map(([k,s])=>kpi(s.ic,cont[k]||0,"gravidade "+s.t.toLowerCase(),k==="alta"?"er":k==="atencao"?"wa":"")).join("")}</div>
+ <div class="princ compacto">${IC("info")}<div><b>Observação não é acusação.</b> <span>Cada item é um sinal a conferir, com o analisador que o gerou. A gravidade indica prioridade de revisão, não culpa.</span></div></div>
+ <div class="tb-bar" style="margin-top:14px"><div class="fld">${IC("search","sm")}<input type="search" id="oq" placeholder="Filtrar observações…" aria-label="Filtrar observações"></div>
+ <label class="sr" for="og">gravidade</label><select id="og"><option value="">todas as gravidades</option>${Object.entries(SEV).map(([k,s])=>`<option value="${k}">${s.t}</option>`).join("")}</select>
+ <label class="sr" for="oa">analisador</label><select id="oa"><option value="">todos os analisadores</option>${ans.map(a=>`<option>${esc(a)}</option>`).join("")}</select><span class="cnt" id="oc"></span></div><div id="ol"></div>`;
+ const pintar=()=>{const r=obs.filter(o=>(!fg||o.gravidade===fg)&&(!fa||o.analisador===fa)&&(!fq||norm(o.texto+o.tipo+o.analisador).includes(fq)))
+  .sort((a,b)=>(SEV[a.gravidade]||{o:9}).o-(SEV[b.gravidade]||{o:9}).o);$("#oc").textContent=`${r.length} de ${obs.length}`;
+  $("#ol").innerHTML=r.map((o,i)=>{const s=SEV[o.gravidade]||SEV.info;return `<div class="card obs ${esc(o.gravidade)}"><span class="bx" title="${s.t}">${IC(s.ic,"lg")}</span>
+  <div><div class="row"><b>${esc(humano(o.tipo))}</b><span class="pill ${o.gravidade==="alta"?"er":o.gravidade==="atencao"?"wa":"in"}">${IC(s.ic,"sm")}${s.t}</span><span class="mu" style="font-size:12.5px">${esc(o.analisador)}</span></div>
+  <p style="margin:6px 0 0">${esc(o.texto)}</p>${(o.entidades||[]).length?`<div class="ents">${o.entidades.map(e=>`<span class="chip mono">${esc(e.split(":").slice(1).join(":")||e)}</span>`).join("")}</div>`:""}</div>
+  <div class="act">${(o.entidades||[]).length?`<button class="btn s" data-oi="${i}">${IC("graph","sm")}Destacar no grafo</button>`:""}</div></div>`}).join("")||`<div class="card">${vazio("search","Nenhuma observação com esse filtro","Ajuste a busca ou a gravidade.")}</div>`;
+  $$("#ol [data-oi]").forEach(b=>b.onclick=()=>destacar(r[+b.dataset.oi].entidades))};
+ $("#oq").oninput=e=>{fq=norm(e.target.value.trim());pintar()};$("#og").onchange=e=>{fg=e.target.value;pintar()};$("#oa").onchange=e=>{fa=e.target.value;pintar()};pintar()}
+
+function destacar(ids){HL=new Set(ids);PEND={hl:true};toast(`${HL.size} entidade(s) destacada(s) no grafo.`);setAba("grafo")}
+
+/* ------------------------------------------------------- experimentos */
+function experimentos(A){const xs=EXPS.slice().reverse();
+ if(!xs.length){A.innerHTML=`<div class="card">${vazio("flask","Nenhum experimento ainda","Cada execução do pipeline vira um experimento reprodutível, com métricas e o hash do grafo gerado.",`<button class="btn p" id="irp">${IC("play","sm")}Ir para o pipeline</button>`)}</div>`;$("#irp").onclick=()=>setAba("resumo");return}
+ const sel=new Set();
+ A.innerHTML=`<div class="card" id="tx"></div><div class="card" id="xcard" hidden><div class="card-h"><h3>Comparação</h3></div><pre id="xout"></pre></div>`;
+ const h=$("#tx");tabela(h,{rows:xs,extra:`<button class="btn" id="xcmp">Comparar 2 selecionados</button>`,
+  cols:[{t:"",h:x=>`<input type="checkbox" class="xsel" value="${esc(x.id)}" aria-label="selecionar ${esc(x.id)}" ${sel.has(x.id)?"checked":""}>`},
+  {t:"experimento",v:x=>x.id,h:x=>`<span class="mono">${esc(x.id)}</span><div class="mu">${esc(x.descricao)}</div>`},
+  {t:"estado",v:x=>x.estado,h:x=>`<span class="pill ${/conclu/.test(x.estado)?"ok":"wa"}">${esc(x.estado)}</span>`},
+  {t:"duração",v:x=>+x.duracao_s,h:x=>x.duracao_s+"s"},{t:"entidades",v:x=>x.metricas.entidades},{t:"vínculos",v:x=>x.metricas.vinculos},
+  {t:"requisições",v:x=>x.metricas.requisicoes,h:x=>`${x.metricas.requisicoes} <span class="mu">(${x.metricas.cache} cache)</span>`},
+  {t:"grafo (sha256)",v:x=>x.grafo_sha256,h:x=>`<span class="mono">${esc(x.grafo_sha256.slice(0,12))}</span>`}]});
+ h.afterPaint=()=>$$("#tx .xsel").forEach(c=>c.onchange=()=>{c.checked?sel.add(c.value):sel.delete(c.value)});h.afterPaint();
+ $("#xcmp").onclick=async()=>{const s=xs.filter(x=>sel.has(x.id)).map(x=>x.id);if(s.length!==2)return toast("Selecione exatamente dois experimentos.","wa");
+  try{const r=await api(`/casos/${encodeURIComponent(CASO)}/comparar?a=${s[1]}&b=${s[0]}`);$("#xcard").hidden=false;$("#xout").textContent=JSON.stringify(r,null,2)}catch(e){falha(e)}}}
+
+/* ---------------------------------------------------------- quesitos */
+function quesitos(A){const qs=INFO.caso.quesitos;
+ A.innerHTML=`<div class="card"><h3>Novo quesito</h3><div class="row" style="margin-top:8px"><label class="sr" for="qtxt">Quesito</label><input id="qtxt" placeholder="Os números X e Y pertencem ao mesmo grupo empresarial?" class="grow"><button class="btn p" id="qadd">${IC("plus","sm")}Adicionar</button></div></div>`+
+ (qs.length?qs.map(q=>`<div class="card"><b>Quesito ${q.n}.</b> ${esc(q.texto)}<label class="sr" for="qr${q.n}">resposta</label><textarea id="qr${q.n}" data-n="${q.n}" class="qres" placeholder="Resposta técnica, com grau de confiança" style="font-family:inherit;margin-top:8px">${esc(q.resposta)}</textarea><div style="margin-top:8px"><button class="btn s qsalvar" data-n="${q.n}">Salvar resposta</button></div></div>`).join(""):`<div class="card">${vazio("q","Nenhum quesito","Quesitos são as perguntas que a análise precisa responder. Registre a primeira acima.")}</div>`);
+ $("#qadd").onclick=async()=>{try{await post(`/casos/${encodeURIComponent(CASO)}/quesitos`,{texto:$("#qtxt").value});INFO=await api("/casos/"+encodeURIComponent(CASO));toast("Quesito adicionado.","ok");quesitos(A)}catch(e){falha(e)}};
+ $$(".qsalvar").forEach(b=>b.onclick=async()=>{try{await post(`/casos/${encodeURIComponent(CASO)}/quesitos`,{n:+b.dataset.n,resposta:$(`.qres[data-n="${b.dataset.n}"]`).value});b.textContent="salvo ✓";toast("Resposta salva.","ok")}catch(e){falha(e)}})}
+
+/* ============================================================== grafo */
+function grafoView(A){const d=DADOS;
+ const nos=d.entidades.slice(0,320).map(e=>({...e}));
+ if(!nos.length){A.innerHTML=`<div class="card">${vazio("graph","O grafo está vazio","Adicione alvos e rode o pipeline para começar a construir vínculos.",`<button class="btn p" id="irp">${IC("play","sm")}Ir para o pipeline</button>`)}</div>`;$("#irp").onclick=()=>setAba("resumo");return}
+ const idx=Object.fromEntries(nos.map((n,i)=>[n.id,i]));const ar=d.arestas.filter(a=>a.origem in idx&&a.destino in idx);
+ const grau={};ar.forEach(a=>{grau[a.origem]=(grau[a.origem]||0)+1;grau[a.destino]=(grau[a.destino]||0)+1});
+ const tipos={};nos.forEach(n=>tipos[n.tipo]=(tipos[n.tipo]||0)+1);const nvc={alta:0,media:0,baixa:0,indiciaria:0};ar.forEach(a=>nvc[a.nivel]=(nvc[a.nivel]||0)+1);
+ const nivOn=new Set(Object.keys(NIV)),tipoOff=new Set();let SEL=null,SELA=null,CAM=null,busca="";
+ const opts=nos.map(n=>`<option value="${esc(n.id)}">${esc((n.rotulo||n.valor).slice(0,38))}</option>`).join("");
+ A.innerHTML=`${nos.length<d.entidades.length?`<div class="princ compacto">${IC("info")}<div>Exibindo ${nos.length} de ${d.entidades.length} entidades.</div></div>`:""}
+ <div class="card gtools"><div class="gt-row">
+  <div class="fld">${IC("search","sm")}<input type="search" id="gbusca" list="gnos" placeholder="Buscar entidade ( / )" aria-label="Buscar entidade no grafo" autocomplete="off"></div>
+  <datalist id="gnos">${nos.map(n=>`<option value="${esc(n.rotulo||n.valor)}">`).join("")}</datalist>
+  <span class="mu" style="font-size:12.5px" id="gconta"></span><span class="grow"></span>
+  <button class="btn s" id="gexp-png">${IC("down","sm")}PNG</button><button class="btn s" id="gexp-svg">${IC("down","sm")}SVG</button><button class="btn s" id="gexp-json">${IC("down","sm")}JSON</button></div>
+  <details id="gtd" ${innerWidth>900?"open":""}><summary class="mu" style="cursor:pointer;font-weight:600">Filtros, caminho e exportação</summary>
+  <div class="gt-row" style="margin-top:8px"><div class="gt-row" role="group" aria-label="Filtro por nível de confiança"><span class="gt-l">Confiança</span>
+  ${Object.keys(NIV).map(k=>`<button class="fchip" data-n="${k}" aria-pressed="true"><span class="ln" style="border-color:${NIV[k]};${k==="baixa"?"border-top-style:dashed":k==="indiciaria"?"border-top-style:dotted":""}"></span>${NIVN[k]} <span class="c">${nvc[k]||0}</span></button>`).join("")}</div>
+  <span class="grow"></span><div class="gt-row"><span class="gt-l" style="min-width:0">Caminho</span>
+  <label class="sr" for="gde">origem</label><select id="gde"><option value="">origem…</option>${opts}</select>
+  <label class="sr" for="gate">destino</label><select id="gate"><option value="">destino…</option>${opts}</select>
+  <button class="btn s" id="gcam">${IC("route","sm")}Destacar caminho</button><button class="btn s g" id="glimpa">${IC("x","sm")}Limpar destaques</button></div></div></details></div>
+ <div class="gmain"><div class="gcanvas" id="gcv"><svg id="g" role="img" aria-label="Grafo de vínculos entre entidades. A aba vínculos traz a versão em tabela."></svg>
+  <span class="gcap">${IC("shield","sm")}<span>proveniência em toda aresta · confiança máx. 99%</span></span>
+  <div class="gctl"><button class="btn ico" id="gz-in" aria-label="Aproximar">${IC("plus")}</button><button class="btn ico" id="gz-out" aria-label="Afastar">${IC("minus")}</button><button class="btn ico" id="gz-fit" aria-label="Ajustar à tela" title="Ajustar à tela">${IC("fit")}</button><button class="btn ico" id="gz-re" aria-label="Reorganizar nós" title="Reorganizar">${IC("refresh")}</button></div>
+  <div class="gleg" id="gleg" role="group" aria-label="Tipos de entidade">${Object.entries(tipos).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<button class="fchip" data-tp="${esc(k)}" aria-pressed="true"><span class="dotc" style="background:${corTipo(k)}"></span>${esc(k)} <span class="c">${v}</span></button>`).join("")}</div></div>
+  <aside class="card gdet" id="det" aria-live="polite"></aside></div>`;
+ const svg=$("#g"),NS="http://www.w3.org/2000/svg",mk=(t,at,p)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);if(p)p.append(e);return e};
+ const W=svg.clientWidth||800,H=svg.clientHeight||560,WW=Math.max(560,W*1.15),HH=Math.max(420,H);
+ nos.forEach((n,i)=>{const a=i*2.399963,r=Math.sqrt((i+.5)/nos.length)*Math.min(WW,HH)*.42;n.x=WW/2+Math.cos(a)*r;n.y=HH/2+Math.sin(a)*r;n.vx=0;n.vy=0;n.r=6+Math.min(12,(grau[n.id]||0)*1.3)+(n.alvo_primario?4:0)});
+ const vp=mk("g",{id:"vp"},svg),gl=mk("g",{},vp),gn=mk("g",{},vp),gr=mk("g",{},vp);
+ const K=Math.sqrt(WW*HH/nos.length)*.62;let alfa=1,arr=null;
+ const passo=()=>{for(let i=0;i<nos.length;i++)for(let j=i+1;j<nos.length;j++){const a=nos[i],b=nos[j];let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||.01;
+   if(d2>160000)continue;const f=K*K/d2*.05*alfa;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}
+  ar.forEach(e=>{const a=nos[idx[e.origem]],b=nos[idx[e.destino]],dx=b.x-a.x,dy=b.y-a.y,dd=Math.sqrt(dx*dx+dy*dy)||1,f=(dd-K)/dd*.06*alfa;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f});
+  nos.forEach(n=>{n.vx+=(WW/2-n.x)*.002*alfa;n.vy+=(HH/2-n.y)*.002*alfa;if(n!==arr){n.x+=n.vx;n.y+=n.vy}n.vx*=.6;n.vy*=.6});alfa*=.985};
+ for(let i=0;i<220;i++)passo();alfa=.05;
+ /* arestas: espessura e opacidade pela confiança; tracejado para baixa/indiciaria */
+ const eg=ar.map(a=>{const g=mk("g",{class:"ed"},gl);const v=mk("line",{class:"v",stroke:NIV[a.nivel]||"#7B879E","stroke-width":(1+a.confianca*3.2).toFixed(2),"stroke-opacity":(.3+a.confianca*.6).toFixed(2)},g);
+  if(a.nivel==="baixa")v.setAttribute("stroke-dasharray","9 4");if(a.nivel==="indiciaria")v.setAttribute("stroke-dasharray","2 5");
+  const h=mk("line",{class:"hit"},g);const t=mk("title",{},g);t.textContent=`${a.relacao} · confiança ${pct(a.confianca)} (${a.nivel}) · ${a.fontes.length} fonte(s)`;
+  g._v=v;g._h=h;g._a=a;return g});
+ const nd=nos.map(n=>{const g=mk("g",{class:"nd"+(n.alvo_primario?" alvo":""),tabindex:0,role:"button","aria-label":`${n.tipo}: ${n.rotulo||n.valor}`},gn);
+  mk("circle",{class:"b",r:n.r,fill:corTipo(n.tipo)},g);const t=mk("text",{class:"nl","text-anchor":"middle",dy:n.r+12},g);t.textContent=(n.rotulo||n.valor).slice(0,28);
+  const ti=mk("title",{},g);ti.textContent=`${n.tipo}: ${n.rotulo||n.valor}`;g._n=n;g._t=t;
+  g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();selNo(n.id)}});return g});
+ /* camera */
+ const C={x:0,y:0,k:1};const cam=()=>{vp.setAttribute("transform",`translate(${C.x.toFixed(1)},${C.y.toFixed(1)}) scale(${C.k.toFixed(3)})`);rotulos()};
+ const visN=()=>nos.filter((n,i)=>nd[i].style.display!=="none");
+ const fit=(lista,kmax=2.4)=>{const L=lista&&lista.length?lista:visN();if(!L.length)return;const w=svg.clientWidth||W,h=svg.clientHeight||H;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;L.forEach(n=>{x0=Math.min(x0,n.x-n.r);y0=Math.min(y0,n.y-n.r);x1=Math.max(x1,n.x+n.r);y1=Math.max(y1,n.y+n.r+14)});
+  const lg=($("#gleg")?.offsetHeight||0)+10,hh=h-lg,bw=Math.max(x1-x0,60),bh=Math.max(y1-y0,60);C.k=Math.min((w-70)/bw,(hh-60)/bh,kmax);C.x=(w-bw*C.k)/2-x0*C.k;C.y=(hh-bh*C.k)/2-y0*C.k+10;cam()};
+ const zoom=(f,cx,cy)=>{const w=svg.clientWidth,h=svg.clientHeight;cx=cx??w/2;cy=cy??h/2;const k=Math.max(.15,Math.min(6,C.k*f));
+  C.x=cx-(cx-C.x)*(k/C.k);C.y=cy-(cy-C.y)*(k/C.k);C.k=k;cam()};
+ /* estado visual */
+ let emph=new Set(),nb=new Set();
+ const rotulos=()=>nd.forEach(g=>{const n=g._n;const show=nos.length<=40||n.r>=10||n.alvo_primario||C.k>1.5||n.id===SEL||emph.has(n.id)||nb.has(n.id);g._t.style.display=show?"":"none"});
+ const aplicar=()=>{const q=norm(busca);const match=new Set(q?nos.filter(n=>norm((n.rotulo||"")+" "+n.valor+" "+n.tipo).includes(q)).map(n=>n.id):[]);
+  const eok=ar.map(a=>nivOn.has(a.nivel)&&!tipoOff.has(nos[idx[a.origem]].tipo)&&!tipoOff.has(nos[idx[a.destino]].tipo));
+  const vd={};ar.forEach((a,i)=>{if(eok[i]){vd[a.origem]=(vd[a.origem]||0)+1;vd[a.destino]=(vd[a.destino]||0)+1}});
+  const nok=nos.map(n=>!tipoOff.has(n.tipo)&&!!(n.alvo_primario||vd[n.id]||!grau[n.id]));
+  emph=new Set([...match,...HL,...(CAM?CAM.nos:[])]);nb=new Set();
+  if(SEL)ar.forEach((a,i)=>{if(eok[i]&&(a.origem===SEL||a.destino===SEL)){nb.add(a.origem);nb.add(a.destino)}});
+  const modo=emph.size>0||SEL||SELA;
+  nd.forEach((g,i)=>{const n=g._n;g.style.display=nok[i]?"":"none";g.classList.toggle("sel",n.id===SEL);
+   g.classList.toggle("dim",!!modo&&!(emph.has(n.id)||nb.has(n.id)||n.id===SEL||(SELA&&(SELA.origem===n.id||SELA.destino===n.id))))});
+  let nv=0;eg.forEach((g,i)=>{const a=g._a;const v=eok[i]&&nok[idx[a.origem]]&&nok[idx[a.destino]];if(v)nv++;g.style.display=v?"":"none";
+   const pth=!!(CAM&&CAM.arestas.has(a.id));g.classList.toggle("pth",pth);g.classList.toggle("sel",SELA===a);
+   g.classList.toggle("dim",!!modo&&!(pth||SELA===a||(SEL&&(a.origem===SEL||a.destino===SEL))||(emph.size&&emph.has(a.origem)&&emph.has(a.destino))))});
+  gr.innerHTML="";[...HL].forEach(id=>{const n=nos[idx[id]];if(n&&nok[idx[id]]){const r=mk("circle",{class:"ring",cx:n.x,cy:n.y,r:n.r+7},gr);r._n=n}});
+  $("#gconta").textContent=`${nok.filter(Boolean).length} entidades · ${nv} vínculos visíveis`;
+  rotulos()};
+ const pos=()=>{eg.forEach(g=>{const a=g._a,s=nos[idx[a.origem]],t=nos[idx[a.destino]];for(const l of [g._v,g._h]){l.setAttribute("x1",s.x);l.setAttribute("y1",s.y);l.setAttribute("x2",t.x);l.setAttribute("y2",t.y)}});
+  nd.forEach(g=>g.setAttribute("transform",`translate(${g._n.x.toFixed(1)},${g._n.y.toFixed(1)})`));[...gr.children].forEach(r=>{r.setAttribute("cx",r._n.x);r.setAttribute("cy",r._n.y)})};
+ (function loop(){if(!document.body.contains(svg))return;if(alfa>.02||arr){passo();pos()}requestAnimationFrame(loop)})();
+ /* selecao e detalhe */
+ const nome=id=>{const n=nos[idx[id]];return n?(n.rotulo||n.valor):id.split(":").slice(1).join(":")};
+ const fontesHtml=fs=>fs.map(f=>`<div class="prov"><span class="a" title="${esc(f.admiralty_texto||"")}">${esc(f.admiralty)}</span><b>${esc(f.coletor)}</b> <span class="mu">· ${pct(f.score)}</span>
+  <div class="mu">${esc(f.admiralty_texto||"")}</div>${f.nota?`<div>${esc(f.nota)}</div>`:""}${f.url?`<div class="mono mu">${/^https?:/.test(f.url)?`<a href="${esc(f.url)}" target="_blank" rel="noopener noreferrer">${esc(f.url.slice(0,80))}</a>`:esc(f.url.slice(0,80))}</div>`:""}
+  <div class="mu" style="font-size:11.5px">${esc(ts(f.ts))}${f.artefato_sha256?` · sha256 <span class="mono">${esc(f.artefato_sha256.slice(0,12))}</span>`:""}</div></div>`).join("")||'<div class="prov er">Sem fonte registrada: um vínculo sem proveniência não deveria existir.</div>';
+ const detVazio=()=>{$("#det").innerHTML=`<h3>Detalhes</h3><p class="mu" style="margin-top:6px">Clique num nó para ver atributos, fontes e vínculos; clique numa aresta para ver a proveniência dela.</p>
+  <h4 style="margin:14px 0 6px">Como ler</h4><div class="mu" style="font-size:12.5px;display:grid;gap:5px"><div>• <b>Cor do nó</b>: tipo da entidade.</div><div>• <b>Espessura e opacidade da aresta</b>: confiança Admiralty.</div><div>• <b>Tracejada ou pontilhada</b>: confiança baixa ou indiciária.</div><div>• Arraste nós, role para dar zoom, arraste o fundo para mover.</div></div>${princ("compacto")}`};
+ const ligar=()=>{$$("#det [data-sa]").forEach(b=>b.onclick=()=>selAresta(b.dataset.sa));$$("#det [data-sn]").forEach(b=>b.onclick=()=>{selNo(b.dataset.sn);foco(b.dataset.sn)});
+  $$("#det [data-de]").forEach(b=>b.onclick=()=>{$("#gde").value=b.dataset.de;toast("Origem definida. Escolha o destino.")});$$("#det [data-ate]").forEach(b=>b.onclick=()=>{$("#gate").value=b.dataset.ate;if($("#gde").value)caminho();else toast("Destino definido. Escolha a origem.")})};
+ const vizinhos=m=>{const s=new Set(m.map(n=>n.id));ar.forEach(a=>{if(s.has(a.origem)||s.has(a.destino)){s.add(a.origem);s.add(a.destino)}});return[...s].map(i=>nos[idx[i]])};
+ const foco=id=>{const n=nos[idx[id]];if(!n)return;const w=svg.clientWidth,h=svg.clientHeight;C.x=w/2-n.x*C.k;C.y=h/2-n.y*C.k;cam()};
+ const selNo=id=>{SEL=id;SELA=null;const n=nos[idx[id]];const lig=ar.filter(a=>a.origem===id||a.destino===id).sort((a,b)=>b.confianca-a.confianca);
+  const obs=(d.observacoes||[]).filter(o=>(o.entidades||[]).includes(id));
+  const at=Object.entries(n.atributos||{}).filter(([k,v])=>v!==null&&v!==""&&!["dorks","variantes"].includes(k)&&!(Array.isArray(v)&&!v.length));
+  $("#det").innerHTML=`<div class="row"><span class="chip"><span class="dotc" style="background:${corTipo(n.tipo)}"></span>${esc(n.tipo)}</span>${n.alvo_primario?'<span class="pill in">alvo primário</span>':""}</div>
+  <h3 class="mono" style="margin:8px 0;font-size:14.5px;word-break:break-all">${esc(n.rotulo||n.valor)}</h3>
+  <div class="row"><button class="btn s" data-de="${esc(id)}">${IC("route","sm")}Origem do caminho</button><button class="btn s" data-ate="${esc(id)}">${IC("route","sm")}Destino</button></div>
+  ${at.length?`<dl class="kv">${at.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(typeof v==="object"?JSON.stringify(v):v)}</dd>`).join("")}</dl>`:""}
+  ${obs.length?`<h4 style="margin:12px 0 4px">Observações (${obs.length})</h4>${obs.map(o=>{const s=SEV[o.gravidade]||SEV.info;return `<div class="prov" style="border-style:solid"><span class="${o.gravidade==="alta"?"er":o.gravidade==="atencao"?"wa":"in"}">${IC(s.ic,"sm")}</span> <b>${esc(humano(o.tipo))}</b><div class="mu">${esc(o.texto.slice(0,220))}</div></div>`}).join("")}`:""}
+  ${(n.fontes||[]).length?`<h4 style="margin:12px 0 2px">Fontes da entidade</h4>${fontesHtml(n.fontes)}`:""}
+  <h4 style="margin:14px 0 2px">Vínculos (${lig.length})</h4>
+  ${lig.map(a=>{const o=a.origem===id?a.destino:a.origem;return `<button class="lig" data-sa="${esc(a.id)}"><div class="t"><b>${pct(a.confianca)}</b>${nivBadge(a.nivel)}<span>${esc(humano(a.relacao))}</span></div>
+   <div class="mono">${esc(nome(o))}</div><div class="mu" style="font-size:12px">${a.fontes.map(f=>esc(f.coletor+" "+f.admiralty)).join(" · ")}</div></button>`}).join("")||'<p class="mu">Sem vínculos.</p>'}`;
+  ligar();aplicar()};
+ const selAresta=aid=>{const a=ar.find(x=>x.id===aid);if(!a)return;SELA=a;SEL=null;
+  $("#det").innerHTML=`<span class="chip">${IC("link","sm")}vínculo</span><h3 style="margin:8px 0">${esc(humano(a.relacao))}</h3>
+  <div class="row" style="flex-wrap:nowrap"><button class="lig" style="margin:0" data-sn="${esc(a.origem)}"><span class="mono">${esc(nome(a.origem))}</span></button><span aria-hidden="true">→</span><button class="lig" style="margin:0" data-sn="${esc(a.destino)}"><span class="mono">${esc(nome(a.destino))}</span></button></div>
+  <div style="margin:12px 0">${confBar(a.confianca,a.nivel)}</div>
+  <div class="mu" style="font-size:12.5px">${a.fontes.length} leitura(s) de ${new Set(a.fontes.map(f=>f.coletor)).size} fonte(s) independente(s). A confiança combina só fontes independentes e nunca chega a 100%.</div>
+  ${a.observacao?`<p style="margin-top:8px">${esc(a.observacao)}</p>`:""}
+  <h4 style="margin:12px 0 2px">Proveniência</h4>${fontesHtml(a.fontes)}`;ligar();aplicar()};
+ GR.limpar=()=>{SEL=null;SELA=null;CAM=null;HL=new Set();busca="";const b=$("#gbusca");if(b)b.value="";aplicar();detVazio()};
+ /* caminho de maior confiança composta (minimiza -log do produto dos elos) */
+ const caminho=()=>{const de=$("#gde").value,ate=$("#gate").value;if(!de||!ate)return toast("Escolha origem e destino.","wa");if(de===ate)return toast("Origem e destino são iguais.","wa");
+  const adj={};ar.forEach(a=>{if(!nivOn.has(a.nivel))return;(adj[a.origem]=adj[a.origem]||[]).push([a.destino,a]);(adj[a.destino]=adj[a.destino]||[]).push([a.origem,a])});
+  const dist={[de]:0},prev={},feito=new Set();
+  while(true){let u=null;for(const k in dist)if(!feito.has(k)&&(u===null||dist[k]<dist[u]))u=k;if(u===null||u===ate)break;feito.add(u);
+   (adj[u]||[]).forEach(([v,a])=>{const w=dist[u]-Math.log(Math.max(.02,a.confianca))+.02;if(dist[v]===undefined||w<dist[v]){dist[v]=w;prev[v]=[u,a]}})}
+  if(dist[ate]===undefined){CAM=null;aplicar();return toast("Não há caminho entre as duas entidades com os filtros atuais.","wa",5200)}
+  const ns=[ate],as=[];let c=ate;while(c!==de){const [p,a]=prev[c];as.unshift(a);ns.unshift(p);c=p}
+  CAM={nos:new Set(ns),arestas:new Set(as.map(a=>a.id))};SEL=null;SELA=null;
+  const prod=as.reduce((x,a)=>x*a.confianca,1),fraco=as.reduce((m,a)=>a.confianca<m.confianca?a:m,as[0]);
+  $("#det").innerHTML=`<span class="chip">${IC("route","sm")}caminho</span><h3 style="margin:8px 0">${as.length} salto(s)</h3>
+  <div class="mu" style="font-size:12.5px;margin-bottom:8px">Caminho de maior confiança composta (produto dos elos): <b>${pct(prod)}</b>. Elo mais fraco: <b>${pct(fraco.confianca)}</b>. Cada elo é só tão forte quanto a sua fonte.</div>
+  ${ns.map((id,i)=>`<div class="pstep"><span class="dotc" style="background:${corTipo(nos[idx[id]].tipo)}"></span><button class="btn s g" data-sn="${esc(id)}"><span class="mono">${esc(nome(id))}</span></button></div>${as[i]?`<div class="pstep" style="padding-left:18px"><button class="lig" style="margin:2px 0" data-sa="${esc(as[i].id)}"><div class="t"><b>${pct(as[i].confianca)}</b>${nivBadge(as[i].nivel)}<span>${esc(humano(as[i].relacao))}</span></div></button></div>`:""}`).join("")}`;
+  ligar();aplicar();fit(ns.map(i=>nos[idx[i]]),1.6)};
+ /* interacao: arrastar no, pan, wheel, pinch */
+ const ptrs=new Map();let modo=null,mov=0,alvoP=null,pinch=0;
+ const loc=ev=>{const r=svg.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top]};
+ svg.addEventListener("pointerdown",ev=>{svg.setPointerCapture(ev.pointerId);ptrs.set(ev.pointerId,loc(ev));mov=0;
+  if(ptrs.size===2){modo="pinch";const[a,b]=[...ptrs.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);arr=null;return}
+  const gnd=ev.target.closest(".nd"),ged=ev.target.closest(".ed");alvoP=gnd?{t:"n",n:gnd._n}:ged?{t:"e",a:ged._a}:null;
+  if(gnd){modo="no";arr=gnd._n;alfa=Math.max(alfa,.25)}else{modo="pan";svg.classList.add("pan")}});
+ svg.addEventListener("pointermove",ev=>{if(!ptrs.has(ev.pointerId))return;const[x,y]=loc(ev),[px,py]=ptrs.get(ev.pointerId);ptrs.set(ev.pointerId,[x,y]);mov+=Math.abs(x-px)+Math.abs(y-py);
+  if(modo==="pinch"&&ptrs.size===2){const[a,b]=[...ptrs.values()],dd=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)zoom(dd/pinch,(a[0]+b[0])/2,(a[1]+b[1])/2);pinch=dd;return}
+  if(modo==="no"&&arr&&mov>4){arr.x=(x-C.x)/C.k;arr.y=(y-C.y)/C.k;alfa=Math.max(alfa,.25);pos()}
+  else if(modo==="pan"){C.x+=x-px;C.y+=y-py;cam()}});
+ const fim=ev=>{ptrs.delete(ev.pointerId);if(modo==="pinch"){if(ptrs.size<2)modo=null;return}
+  if(mov<5){if(alvoP&&alvoP.t==="n")selNo(alvoP.n.id);else if(alvoP&&alvoP.t==="e")selAresta(alvoP.a.id);else{SEL=null;SELA=null;aplicar();detVazio()}}
+  arr=null;modo=null;alvoP=null;svg.classList.remove("pan")};
+ svg.addEventListener("pointerup",fim);svg.addEventListener("pointercancel",fim);
+ svg.addEventListener("wheel",ev=>{ev.preventDefault();const[x,y]=loc(ev);zoom(ev.deltaY<0?1.15:1/1.15,x,y)},{passive:false});
+ $("#gz-in").onclick=()=>zoom(1.3);$("#gz-out").onclick=()=>zoom(1/1.3);$("#gz-fit").onclick=()=>fit();$("#gz-re").onclick=()=>{alfa=1};
+ $$(".fchip[data-n]").forEach(b=>b.onclick=()=>{const k=b.dataset.n,on=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",on);on?nivOn.add(k):nivOn.delete(k);aplicar()});
+ $$(".fchip[data-tp]").forEach(b=>b.onclick=()=>{const k=b.dataset.tp,on=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",on);on?tipoOff.delete(k):tipoOff.add(k);aplicar()});
+ const acha=()=>nos.filter(n=>norm((n.rotulo||"")+" "+n.valor).includes(norm(busca)));
+ $("#gbusca").oninput=e=>{busca=e.target.value.trim();aplicar();if(busca){const m=acha();if(m.length)fit(m,1.4)}};
+ $("#gbusca").onkeydown=e=>{if(e.key==="Enter"){const m=acha();if(m.length){selNo(m[0].id);foco(m[0].id)}}};
+ $("#gcam").onclick=caminho;$("#glimpa").onclick=()=>GR.limpar();
+ /* exportar */
+ const baixar=(blob,nomeArq)=>{const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=nomeArq;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)};
+ const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+ const svgTxt=()=>{const L=visN();let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;L.forEach(n=>{x0=Math.min(x0,n.x-n.r-6);y0=Math.min(y0,n.y-n.r-6);x1=Math.max(x1,n.x+n.r+60);y1=Math.max(y1,n.y+n.r+22)});
+  const pad=30,w=Math.max(Math.ceil(x1-x0+pad*2),420),h=Math.ceil(y1-y0+pad*2+30);const cl=svg.cloneNode(true);
+  ["id","class","role","aria-label","style"].forEach(k=>cl.removeAttribute(k));cl.setAttribute("xmlns",NS);cl.setAttribute("width",w);cl.setAttribute("height",h);cl.setAttribute("viewBox",`0 0 ${w} ${h}`);
+  const v=cl.querySelector("#vp");v.setAttribute("transform",`translate(${pad-x0},${pad-y0})`);v.removeAttribute("id");
+  cl.querySelectorAll(".hit,.ring,title").forEach(e=>e.remove());cl.querySelectorAll("g").forEach(g=>g.removeAttribute("tabindex"));
+  const st=document.createElementNS(NS,"style");st.textContent=`.nl{fill:${cv("--tx")};font:600 10.5px system-ui,sans-serif;paint-order:stroke;stroke:${cv("--pn")};stroke-width:3.2px;stroke-linejoin:round}.nd circle.b{stroke:${cv("--pn")};stroke-width:1.8px}.nd.alvo circle.b{stroke:${cv("--tx")};stroke-width:2.6px}.dim{opacity:.13}.ed.pth line.v{stroke:${cv("--ac")}!important;stroke-width:5px!important;stroke-opacity:1!important}`;
+  const bg=document.createElementNS(NS,"rect");bg.setAttribute("width",w);bg.setAttribute("height",h);bg.setAttribute("fill",cv("--pn"));
+  const cap=document.createElementNS(NS,"text");cap.setAttribute("x",pad);cap.setAttribute("y",h-12);cap.setAttribute("fill",cv("--mu"));cap.setAttribute("font-size","11");cap.setAttribute("font-family","system-ui,sans-serif");
+  cap.textContent=`F.I.O. Lab · ${CASO} · ${new Date().toISOString().slice(0,16).replace("T"," ")} UTC · proveniência em toda aresta; confiança máx. 99%`;
+  cl.prepend(st,bg);cl.append(cap);return{txt:new XMLSerializer().serializeToString(cl),w,h}};
+ const base=()=>`fio-${CASO}-grafo`;
+ $("#gexp-svg").onclick=()=>{baixar(new Blob([svgTxt().txt],{type:"image/svg+xml"}),base()+".svg");toast("SVG exportado.","ok")};
+ $("#gexp-json").onclick=()=>{baixar(new Blob([JSON.stringify({caso:CASO,entidades:DADOS.entidades,arestas:DADOS.arestas,observacoes:DADOS.observacoes,clusters:DADOS.clusters},null,2)],{type:"application/json"}),base()+".json");toast("JSON exportado.","ok")};
+ $("#gexp-png").onclick=()=>{const{txt,w,h}=svgTxt();const img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=w*2;c.height=h*2;const x=c.getContext("2d");x.scale(2,2);x.drawImage(img,0,0,w,h);
+  c.toBlob(b=>{if(!b)return toast("Falha ao gerar o PNG.","er");baixar(b,base()+".png");toast("PNG exportado.","ok")},"image/png")};
+  img.onerror=()=>toast("Falha ao gerar o PNG.","er");img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(txt)};
+ /* inicio */
+ aplicar();pos();detVazio();fit();
+ new ResizeObserver(()=>{if(document.body.contains(svg)&&!CAM&&!SEL&&!SELA&&!HL.size&&!ptrs.size)fit()}).observe(svg);
+ if(PEND){const p=PEND;PEND=null;
+  if(p.aresta){selAresta(p.aresta);const a=ar.find(x=>x.id===p.aresta);if(a)fit([nos[idx[a.origem]],nos[idx[a.destino]]],1.6)}
+  else if(p.hl){const m=[...HL].map(i=>nos[idx[i]]).filter(Boolean);aplicar();if(m.length)fit(vizinhos(m),1.5);
+   $("#det").innerHTML=`<span class="chip">${IC("eye","sm")}destaque</span><h3 style="margin:8px 0">${m.length} entidade(s) destacada(s)</h3><p class="mu">As entidades com anel tracejado são as citadas pela observação ou agrupamento. Clique num nó para ver fontes e vínculos.</p>${m.map(n=>`<button class="lig" data-sn="${esc(n.id)}"><span class="dotc" style="background:${corTipo(n.tipo)}"></span> <span class="mono">${esc(n.rotulo||n.valor)}</span></button>`).join("")}`;ligar()}}}
+
+/* ========================================================= ferramentas */
+const J=o=>JSON.stringify(o,null,2);
+async function vista(v){VIEW=v;CASO=null;marcarNav(v);EXPS=[];modoBadge();const M=$("#main");
+ try{
+ if(v==="ferr"){setTopo("Ferramentas BR","telefone e documentos, análise offline");
+  M.innerHTML=`<div class="princ">${IC("lock")}<div><b>Tudo aqui roda offline.</b><span>Nada digitado nestes campos sai da sua máquina.</span></div></div>
+  <div class="card"><h3>Telefone</h3><p class="mu">Análise estrutural: DDD, tipo de linha, faixa e variantes de escrita.</p><div class="row"><label class="sr" for="fn">Número</label><input id="fn" placeholder="0 21 31 9 8888-7777" class="grow"><button class="btn p" id="fnb">Analisar</button></div><pre id="fno" hidden></pre></div>
+  <div class="card"><h3>Documentos BR</h3><div class="row"><label class="sr" for="dt">Tipo</label><select id="dt">${["cpf","cpf-parcial","cnpj","cep","placa","titulo","pis","renavam"].map(x=>`<option>${x}</option>`).join("")}</select><label class="sr" for="dv">Valor</label><input id="dv" placeholder="12.ABC.345/01DE-35" class="grow"><button class="btn p" id="dvb">Validar</button></div>
+  <label for="dx">ou cole um texto para extrair CPF, CNPJ (inclusive alfanumérico), CEP e placas</label><textarea id="dx"></textarea><button class="btn" id="dxb" style="margin-top:8px">Extrair</button><pre id="do" hidden></pre></div>`;
+  const run=async(f,out)=>{try{const r=await f();out.hidden=false;out.textContent=J(r)}catch(e){falha(e)}};
+  $("#fnb").onclick=()=>run(()=>post("/numero",{valor:$("#fn").value}),$("#fno"));
+  $("#dvb").onclick=()=>run(()=>post("/documento",{tipo:$("#dt").value,valor:$("#dv").value}),$("#do"));
+  $("#dxb").onclick=()=>run(()=>post("/documento",{texto:$("#dx").value}),$("#do"));return}
+ if(v==="aval"){setTopo("Avaliação sintética","precisão das heurísticas contra gabarito");const ult=await api("/avaliacao");
+  M.innerHTML=`<div class="card"><h3>Avaliação sintética</h3><p class="mu">Gera mundos fictícios com gabarito e armadilhas (contabilidade, bloco-isca, sequência-isca, número reciclado, laranja, parente) e mede precisão e revocação de cada heurística. Execução sempre offline.</p>
+  <div class="row"><label class="in-l" for="as">sementes</label><input id="as" value="1,2,3,4,5"><label class="in-l" for="ag">grupos</label><input id="ag" type="number" value="12" style="width:76px"><button class="btn p" id="ab">${IC("play","sm")}Rodar</button></div></div><div id="ares"></div>`;
+  const f=x=>`${x.media.toFixed(3)} <span class="mu">± ${x.desvio.toFixed(3)}</span>`;
+  const tab=a=>{const R=$("#ares");if(!a||!a.heuristicas){R.innerHTML=`<div class="card">${vazio("flask","Nenhuma avaliação ainda","Rode acima para medir precisão, revocação e F1 de cada heurística.")}</div>`;return}
+   const comb=Object.entries(a.combinado);const melhor=comb.slice().sort((x,y)=>y[1].f1.media-x[1].f1.media)[0];
+   R.innerHTML=`<div class="kpis">${kpi("flask",a.sementes.length,"mundos avaliados")}${kpi("check",Object.keys(a.heuristicas).length,"heurísticas")}${melhor?kpi("graph",melhor[1].f1.media.toFixed(3),"melhor F1 combinado","ok"):""}</div><div class="card" id="th"><h3>Heurísticas isoladas</h3></div><div class="card" id="tc"><h3>Modelo combinado</h3></div>`;
+   const mk=(id,rows,nm)=>tabela($(id),{rows,filtro:false,ord:3,dir:-1,cols:[{t:nm,v:r=>r[0],h:r=>`<span class="${nm==="configuração"?"mono":""}">${esc(r[0])}</span>`},{t:"precisão",v:r=>r[1].precisao.media,h:r=>f(r[1].precisao)},{t:"revocação",v:r=>r[1].revocacao.media,h:r=>f(r[1].revocacao)},{t:"F1",v:r=>r[1].f1.media,h:r=>f(r[1].f1)}]});
+   mk("#th",Object.entries(a.heuristicas),"heurística");mk("#tc",comb,"configuração")};
+  tab(ult);$("#ab").onclick=async()=>{try{const r=await post("/avaliar",{sementes:$("#as").value,grupos:+$("#ag").value});toast("Avaliação na fila.");$("#ares").innerHTML='<div class="sk" style="height:200px"></div>';acompanhar(r.tarefa,t=>{if(VIEW==="aval")tab(t.resultado?.agregado)})}catch(e){falha(e)}};return}
+ if(v==="plug"){setTopo("Fontes e diagnóstico","coletores, analisadores e conexão");M.innerHTML='<div class="sk" style="height:260px"></div>';const inv=(await api("/estado")).inventario;if(VIEW!=="plug")return;
+  const ests=Object.entries(inv.coletores),nrede=ests.reduce((s,[,c])=>s+c.filter(x=>x.rede).length,0),ncol=ests.reduce((s,[,c])=>s+c.length,0);
+  M.innerHTML=`<div class="kpis">${kpi("plug",ncol,"coletores")}${kpi("check",ncol-nrede,"funcionam offline","ok")}${kpi("link",nrede,"usam a rede","wa")}${kpi("eye",inv.analisadores.length,"analisadores")}</div>
+  <div class="card"><div class="card-h"><h3>Conexão com as fontes</h3><button class="btn p" id="pdiag">${IC("plug","sm")}Verificar conexões</button></div><p class="mu" style="margin:0">Testa o acesso da sua rede a cada fonte online. Pode levar até 1 minuto.</p><div id="pdout" style="margin-top:10px"></div></div>`
+  +ests.map(([e],i)=>`<div class="card"><h3>Estágio: ${esc(e)}</h3><div id="pe${i}"></div></div>`).join("")+`<div class="card"><h3>Analisadores</h3><div id="pan"></div></div>`;
+  ests.forEach(([,cs],i)=>tabela($("#pe"+i),{rows:cs,filtro:cs.length>6,cols:[{t:"coletor",v:c=>c.nome,h:c=>`<b>${esc(c.nome)}</b><div class="mu">${esc(c.descricao)}</div><div class="mu">${esc(c.origem)}</div>`},{t:"grau",v:c=>c.admiralty,cls:"mono"},{t:"modo",v:c=>c.rede?"rede":"offline",h:c=>`<span class="pill ${c.rede?"wa":"ok"}">${c.rede?"rede":"offline"}</span>${c.segredo?`<div class="mu">requer ${esc(c.segredo)}</div>`:""}`},{t:"reserva",v:c=>c.reserva||"",cls:"mu"}]}));
+  tabela($("#pan"),{rows:inv.analisadores,filtro:false,cols:[{t:"analisador",v:a=>a.nome,h:a=>`<b>${esc(a.nome)}</b>`},{t:"descrição",v:a=>a.descricao},{t:"origem",v:a=>a.origem,cls:"mu"}]});
+  $("#pdiag").onclick=()=>diagnostico($("#pdout"));return}
+ if(v==="sobre"){setTopo("Sobre e uso responsável","princípios do F.I.O. Lab");
+  M.innerHTML=`${princ()}<div class="hero"><div class="card"><h3>O que é</h3><p style="margin-top:6px">O F.I.O. Lab é uma bancada local para análise de vínculos a partir de <b>fontes públicas</b>: números de telefone, empresas, sócios, documentos. Ele organiza o que as fontes dizem num grafo, mede a confiança de cada elo e registra cada passo numa cadeia de custódia com hash encadeado.</p>
+  <h3 style="margin-top:14px">Princípios</h3><ul style="padding-left:20px;margin:6px 0"><li><b>Passivo.</b> Só consulta fontes públicas. Sem login, sem invasão, sem contato com o alvo.</li><li><b>Proveniência.</b> Toda aresta mostra de onde veio.</li><li><b>Incerteza explícita.</b> A confiança nunca é 100%.</li><li><b>Auditável.</b> Cada ação entra no registro de custódia.</li><li><b>Escopo.</b> Nada roda fora do escopo autorizado do caso.</li></ul></div>
+  <div class="card"><h3>Escala Admiralty</h3><p class="mu" style="margin-top:6px">Letra para a confiabilidade da fonte, número para a credibilidade da informação. O par original fica gravado em cada aresta.</p>
+  <div class="scroll"><table><thead><tr><th>fonte</th><th>peso</th><th>informação</th><th>peso</th></tr></thead><tbody><tr><td>A · oficial</td><td>0,95</td><td>1 · confirmada</td><td>0,95</td></tr><tr><td>B · normalmente confiável</td><td>0,80</td><td>2 · provável</td><td>0,80</td></tr><tr><td>C · razoável</td><td>0,60</td><td>3 · possível</td><td>0,60</td></tr><tr><td>D · nem sempre</td><td>0,40</td><td>4 · duvidosa</td><td>0,40</td></tr><tr><td>E · não confiável</td><td>0,20</td><td>5 · improvável</td><td>0,20</td></tr><tr><td>F · não avaliável</td><td>0,50</td><td>6 · não avaliável</td><td>0,50</td></tr></tbody></table></div>
+  <p class="mu" style="margin-top:8px;font-size:12.5px">Fontes independentes se combinam por OU-ruidoso, com teto de 99%. Duas leituras da mesma fonte não valem como duas confirmações.</p></div></div>
+  <div class="card"><h3>Uso responsável</h3><ul style="padding-left:20px;margin:6px 0"><li>Informe sempre a <b>base legal</b> e uma <b>finalidade específica</b> (LGPD). Sem isso, nenhum coletor roda.</li><li>Os dados de um caso são pessoais e de acesso restrito. Não compartilhe o endereço com token nem os arquivos do caso.</li><li>Uma observação ou agrupamento é um <b>indício a conferir</b>, nunca uma acusação. Confronte com outras fontes antes de qualquer conclusão.</li><li>Homônimos, números reciclados e blocos de numeração em lote geram falsos positivos: leia as ressalvas.</li><li>Respeite os termos de uso e os limites de requisição de cada fonte.</li></ul></div>
+  <div class="card"><h3>Atalhos</h3><div class="row" style="gap:18px"><span><code>/</code> buscar no grafo</span><span><code>Esc</code> limpar seleção e destaques</span><span><code>Tab</code> navegar por nós e controles</span><span><code>Enter</code> abrir nó focado</span></div></div>`;return}
+ }catch(e){falha(e)}}
+init();
+</script>
+</body></html>

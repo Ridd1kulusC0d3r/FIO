@@ -1,0 +1,91 @@
+# Publica o indice do CNPJ ja pronto (enxuto e comprimido) numa Release fixa,
+# para ninguem precisar baixar alguns GB da Receita: `fio indice baixar --uf MG --pronto`.
+#
+# Roda todo mes (a Receita publica no inicio do mes) e sob demanda. Se o servidor
+# da Receita nao aceitar conexao deste runner (acontece com IPs de nuvem), o job
+# AVISA e termina verde; nesse caso gere o indice no seu computador e publique:
+#   fio indice baixar --uf MG --leve
+#   fio indice exportar --uf MG
+#   gh release upload indice-latest cnpj-MG.sqlite.xz cnpj-MG.sqlite.xz.json --clobber
+name: indice
+
+on:
+  schedule:
+    - cron: "17 6 8 * *"
+  workflow_dispatch:
+    inputs:
+      ufs:
+        description: "UFs separadas por virgula (um download da Receita serve a todas)"
+        default: "MG,SP,RJ,ES"
+      mes:
+        description: "AAAA-MM (vazio = o mais recente publicado)"
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: indice
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    name: Montar e publicar o indice
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      UFS: ${{ github.event.inputs.ufs || 'MG,SP,RJ,ES' }}
+      MES: ${{ github.event.inputs.mes }}
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Receita acessivel deste runner?
+        id: rfb
+        run: |
+          if curl -sS -o /dev/null --connect-timeout 20 --max-time 40 -I https://dadosabertos.rfb.gov.br/CNPJ/dados_abertos_cnpj/; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Receita inacessivel::dadosabertos.rfb.gov.br nao aceitou conexao deste runner (IP de nuvem bloqueado). Gere o indice no seu computador: fio indice baixar --uf MG --leve && fio indice exportar --uf MG, e publique com gh release upload indice-latest."
+          fi
+
+      - name: Montar o indice (leve) para todas as UFs de uma vez
+        if: steps.rfb.outputs.ok == 'true'
+        run: |
+          mkdir -p work dist
+          ARGS=(--uf "$UFS" --leve --saida work/cnpj.sqlite --tmp work/tmp)
+          if [ -n "$MES" ]; then ARGS+=(--mes "$MES"); fi
+          python -m fio indice baixar "${ARGS[@]}"
+
+      - name: Exportar um arquivo por UF
+        if: steps.rfb.outputs.ok == 'true'
+        run: |
+          IFS=',' read -ra LISTA <<< "$UFS"
+          for UF in "${LISTA[@]}"; do
+            UF=$(echo "$UF" | tr '[:lower:]' '[:upper:]' | xargs)
+            python -m fio indice exportar --saida work/cnpj.sqlite --uf "$UF" --para "dist/cnpj-$UF.sqlite.xz"
+          done
+          ls -lh dist
+
+      - name: Publicar na Release indice-latest
+        if: steps.rfb.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MES_PUB=$(python - <<'PY'
+          import json, glob
+          m = json.load(open(sorted(glob.glob("dist/*.json"))[0]))
+          print(m.get("mes") or "desconhecido")
+          PY
+          )
+          NOTAS="Indice do CNPJ (Dados Abertos da Receita Federal), mes ${MES_PUB}, modo leve: so estabelecimentos com telefone/e-mail (ou matriz). UFs: ${UFS}. Uso: fio indice baixar --uf XX --pronto. Cada arquivo traz o SHA-256 no .json ao lado."
+          if gh release view indice-latest >/dev/null 2>&1; then
+            gh release edit indice-latest --notes "$NOTAS" --prerelease=false
+          else
+            gh release create indice-latest --title "Indice do CNPJ (pronto)" --notes "$NOTAS" --latest=false
+          fi
+          gh release upload indice-latest dist/* --clobber

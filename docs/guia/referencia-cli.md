@@ -15,6 +15,7 @@ usuário do sistema. Todos os dados do caso ficam em `FIO_HOME`
 
 - [`fio caso`](#fio-caso) — abrir, listar e inspecionar casos
 - [`fio alvo`](#fio-alvo) — incluir alvo primario no caso
+- [`fio buscar`](#fio-buscar) — busca em um passo: abre o caso, consulta as fontes e resume
 - [`fio investigar`](#fio-investigar) — rodar os coletores e pivotar
 - [`fio grafo`](#fio-grafo) — exportar o grafo
 - [`fio clusters`](#fio-clusters) — agrupamentos e pontes entre alvos
@@ -43,16 +44,13 @@ usuário do sistema. Todos os dados do caso ficam em `FIO_HOME`
 Abrir, listar e inspecionar casos.
 
 ```text
-fio caso [-h] {novo,listar,ver} ...
+fio caso {novo,listar,ver} ...
 ```
 
 ### `fio caso novo`
 
 ```text
-fio caso novo [-h] --id ID --titulo TITULO --base-legal
-                     {contrato-pentest,judicial,lgpd-4-iii,lgpd-7-i,lgpd-7-ii,lgpd-7-ix,lgpd-7-v,lgpd-7-vi,pesquisa-academica,resposta-incidente}
-                     --finalidade FINALIDADE --responsavel RESPONSAVEL
-                     [--escopo [ESCOPO ...]] [--dias DIAS]
+fio caso novo --id ID --titulo TITULO --base-legal BASE_LEGAL --finalidade FINALIDADE --responsavel RESPONSAVEL [--escopo ESCOPO ...] [--dias DIAS]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -68,13 +66,13 @@ fio caso novo [-h] --id ID --titulo TITULO --base-legal
 ### `fio caso listar`
 
 ```text
-fio caso listar [-h]
+fio caso listar
 ```
 
 ### `fio caso ver`
 
 ```text
-fio caso ver [-h] --caso CASO
+fio caso ver --caso CASO
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -86,9 +84,7 @@ fio caso ver [-h] --caso CASO
 Incluir alvo primario no caso.
 
 ```text
-fio alvo [-h] --caso CASO --tipo
-                {telefone,email,dominio,cnpj,pessoa,organizacao,documento}
-                --valor VALOR [--ddd DDD]
+fio alvo --caso CASO --tipo TIPO --valor VALOR [--ddd DDD]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -98,14 +94,32 @@ fio alvo [-h] --caso CASO --tipo
 | `--valor` `VALOR` | sim |  |
 | `--ddd` `DDD` | não | DDD assumido para numero sem DDD |
 
+## `fio buscar`
+
+Busca em um passo: abre o caso, consulta as fontes e resume.
+
+```text
+fio buscar valor --base-legal BASE_LEGAL [--finalidade FINALIDADE] [--ddd DDD] [--dias DIAS] [--completo] [--orcamento SEGUNDOS] [--offline] [-v]
+```
+
+| Opção | Obrigatória | Descrição |
+|---|---|---|
+| `valor` (posicional) | sim | telefone, CNPJ, e-mail, dominio ou CEP |
+| `--base-legal` `BASE_LEGAL` | sim | base legal (ver `fio bases`) |
+| `--finalidade` `FINALIDADE` | não | finalidade da consulta (ha um texto padrao) |
+| `--ddd` `DDD` | não | DDD assumido para telefone sem DDD |
+| `--dias` `DIAS` | não | validade do escopo (padrao 30) (padrão: `30`) |
+| `--completo` | não | busca completa, sem orcamento de tempo |
+| `--orcamento` `SEGUNDOS` | não | limite de tempo da busca rapida (padrao 45) (padrão: `45.0`) |
+| `--offline` | não | so fontes locais |
+| `-v`, `--verboso` | não |  |
+
 ## `fio investigar`
 
 Rodar os coletores e pivotar.
 
 ```text
-fio investigar [-h] --caso CASO [--coletores COLETORES]
-                      [--profundidade PROFUNDIDADE] [--offline]
-                      [--intervalo INTERVALO] [--expandir-escopo] [-v]
+fio investigar --caso CASO [--coletores COLETORES] [--profundidade PROFUNDIDADE] [--offline] [--paralelo PARALELO] [--orcamento SEGUNDOS] [--rapido] [--intervalo INTERVALO] [--expandir-escopo] [-v]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -114,6 +128,9 @@ fio investigar [-h] --caso CASO [--coletores COLETORES]
 | `--coletores` `COLETORES` | não | lista separada por virgula |
 | `--profundidade` `PROFUNDIDADE` | não | (padrão: `1`) |
 | `--offline` | não | so coletores locais |
+| `--paralelo` `PARALELO` | não | coletores de rede simultaneos por alvo (1 = em sequencia) (padrão: `4`) |
+| `--orcamento` `SEGUNDOS` | não | limite de tempo de coleta; esgotado, nao abre novas consultas |
+| `--rapido` | não | modo leve: fontes lentas fazem menos consultas (ex.: 3 recortes de busca) |
 | `--intervalo` `INTERVALO` | não | segundos entre requisicoes ao mesmo host (padrão: `1.5`) |
 | `--expandir-escopo` | não | autoriza pivotar sobre entidades derivadas da coleta; cada inclusao fica registrada no ledger |
 | `-v`, `--verboso` | não |  |
@@ -123,7 +140,7 @@ fio investigar [-h] --caso CASO [--coletores COLETORES]
 Exportar o grafo.
 
 ```text
-fio grafo [-h] --caso CASO [--formato {json,csv}]
+fio grafo --caso CASO [--formato FORMATO]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -136,7 +153,7 @@ fio grafo [-h] --caso CASO [--formato {json,csv}]
 Agrupamentos e pontes entre alvos.
 
 ```text
-fio clusters [-h] --caso CASO [--json]
+fio clusters --caso CASO [--json]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -149,7 +166,7 @@ fio clusters [-h] --caso CASO [--json]
 Tabela de correlacao.
 
 ```text
-fio tabela [-h] --caso CASO [--csv CSV] [--limite LIMITE]
+fio tabela --caso CASO [--csv CSV] [--limite LIMITE]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -163,8 +180,7 @@ fio tabela [-h] --caso CASO [--csv CSV] [--limite LIMITE]
 Gerar relatorio final.
 
 ```text
-fio relatorio [-h] --caso CASO --saida SAIDA [--markdown MARKDOWN]
-                     [--csv CSV] [--manifesto]
+fio relatorio --caso CASO --saida SAIDA [--markdown MARKDOWN] [--csv CSV] [--manifesto]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -180,7 +196,7 @@ fio relatorio [-h] --caso CASO --saida SAIDA [--markdown MARKDOWN]
 Cadeia de custodia.
 
 ```text
-fio ledger [-h] --caso CASO {listar,verificar}
+fio ledger acao --caso CASO
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -193,7 +209,7 @@ fio ledger [-h] --caso CASO {listar,verificar}
 Analise offline avulsa de um numero.
 
 ```text
-fio numero [-h] [--ddd DDD] [--json] valor
+fio numero valor [--ddd DDD] [--json]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -207,8 +223,7 @@ fio numero [-h] [--ddd DDD] [--json] valor
 Gerar consultas para busca manual.
 
 ```text
-fio dorks [-h] [--tipo {telefone,email,pessoa,organizacao,dominio}]
-                 --valor VALOR [--urls]
+fio dorks [--tipo TIPO] --valor VALOR [--urls]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -222,7 +237,7 @@ fio dorks [-h] [--tipo {telefone,email,pessoa,organizacao,dominio}]
 Listar coletores e suas reservas.
 
 ```text
-fio coletores [-h]
+fio coletores
 ```
 
 ## `fio indice`
@@ -230,14 +245,12 @@ fio coletores [-h]
 Indice reverso dos Dados Abertos do CNPJ.
 
 ```text
-fio indice [-h] [--uf UF] [--mes MES] [--base BASE] [--origem ORIGEM]
-                  [--saida SAIDA] [--tmp TMP] [--manter-zips]
-                  {baixar,construir,status}
+fio indice acao [--uf UF] [--mes MES] [--base BASE] [--origem ORIGEM] [--saida SAIDA] [--tmp TMP] [--manter-zips] [--leve] [--pronto] [--de URL] [--para ARQUIVO]
 ```
 
 | Opção | Obrigatória | Descrição |
 |---|---|---|
-| `acao` (posicional) | sim | (valores: `baixar`, `construir`, `status`) |
+| `acao` (posicional) | sim | (valores: `baixar`, `construir`, `status`, `exportar`) |
 | `--uf` `UF` | não | filtrar por UF, ex.: MG ou MG,SP; reduz o indice final e a RAM, nao o trafego da Receita |
 | `--mes` `MES` | não | AAAA-MM; padrao: o mais recente publicado |
 | `--base` `BASE` | não | URL base da Receita, se o endereco mudar |
@@ -245,14 +258,17 @@ fio indice [-h] [--uf UF] [--mes MES] [--base BASE] [--origem ORIGEM]
 | `--saida` `SAIDA` | não | arquivo sqlite de destino |
 | `--tmp` `TMP` | não | pasta temporaria dos ZIPs baixados |
 | `--manter-zips` | não | nao apagar os ZIPs depois de processar |
+| `--leve` | não | indice enxuto: so estabelecimentos com telefone/e-mail (ou matriz), sem endereco completo nem CNAE |
+| `--pronto` | não | baixar: em vez de montar pela Receita, baixa o indice ja pronto (segundos; precisa de --uf) |
+| `--de` `URL` | não | baixar --pronto: URL base dos arquivos (padrao: Release do repositorio) |
+| `--para` `ARQUIVO` | não | exportar: arquivo .sqlite.xz de saida (padrao: cnpj-UF.sqlite.xz) |
 
 ## `fio exposicao`
 
 Indexar por hash um corpus ja detido legitimamente.
 
 ```text
-fio exposicao [-h] --origem ORIGEM --saida SAIDA [--id ID]
-                     [--titulo TITULO] [--descricao DESCRICAO]
+fio exposicao --origem ORIGEM --saida SAIDA [--id ID] [--titulo TITULO] [--descricao DESCRICAO]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -268,7 +284,7 @@ fio exposicao [-h] --origem ORIGEM --saida SAIDA [--id ID]
 Bases legais aceitas.
 
 ```text
-fio bases [-h]
+fio bases
 ```
 
 ## `fio manifesto`
@@ -276,7 +292,7 @@ fio bases [-h]
 SHA-256 de cada peca do caso, amarrado ao ledger.
 
 ```text
-fio manifesto [-h] --caso CASO {gerar,verificar}
+fio manifesto acao --caso CASO
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -289,8 +305,7 @@ fio manifesto [-h] --caso CASO {gerar,verificar}
 Conclusoes do caso, cada uma com a evidencia que a sustenta.
 
 ```text
-fio claims [-h] --caso CASO [--confianca-minima CONFIANCA_MINIMA]
-                  [--json]
+fio claims --caso CASO [--confianca-minima CONFIANCA_MINIMA] [--json]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -304,7 +319,7 @@ fio claims [-h] --caso CASO [--confianca-minima CONFIANCA_MINIMA]
 Testar conexao com as fontes online.
 
 ```text
-fio diagnostico [-h]
+fio diagnostico
 ```
 
 ## `fio demo`
@@ -312,7 +327,7 @@ fio diagnostico [-h]
 Montar o caso de demonstracao (ficticio, offline).
 
 ```text
-fio demo [-h] [--recriar] [--abrir]
+fio demo [--recriar] [--abrir]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -325,9 +340,7 @@ fio demo [-h] [--recriar] [--abrir]
 Validar/estruturar documentos BR ou extrair de texto.
 
 ```text
-fio doc [-h]
-               {cpf,cpf-parcial,cnpj,cep,placa,titulo,pis,renavam,boleto,pix-evp,cnh,cns,extrair}
-               valor
+fio doc tipo valor
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -340,7 +353,7 @@ fio doc [-h]
 Indexador universal de dados abertos.
 
 ```text
-fio receita [-h] [--id ID] [--origem ORIGEM] {listar,construir,status}
+fio receita acao [--id ID] [--origem ORIGEM]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -354,9 +367,7 @@ fio receita [-h] [--id ID] [--origem ORIGEM] {listar,construir,status}
 Quesitos do laudo.
 
 ```text
-fio quesito [-h] --caso CASO [--texto TEXTO] [--n N]
-                   [--entidades [ENTIDADES ...]]
-                   {add,responder,listar}
+fio quesito acao --caso CASO [--texto TEXTO] [--n N] [--entidades ENTIDADES ...]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -372,10 +383,7 @@ fio quesito [-h] --caso CASO [--texto TEXTO] [--n N]
 Metadados do laudo (solicitante, referencia...).
 
 ```text
-fio caso-editar [-h] --caso CASO [--solicitante SOLICITANTE]
-                       [--referencia REFERENCIA]
-                       [--registro-profissional REGISTRO_PROFISSIONAL]
-                       [--conclusao CONCLUSAO] [--classificacao CLASSIFICACAO]
+fio caso-editar --caso CASO [--solicitante SOLICITANTE] [--referencia REFERENCIA] [--registro-profissional REGISTRO_PROFISSIONAL] [--conclusao CONCLUSAO] [--classificacao CLASSIFICACAO]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -392,7 +400,7 @@ fio caso-editar [-h] --caso CASO [--solicitante SOLICITANTE]
 Gerar laudo tecnico ou RELINT.
 
 ```text
-fio laudo [-h] --caso CASO --saida SAIDA [--modelo {laudo,relint}]
+fio laudo --caso CASO --saida SAIDA [--modelo MODELO]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -406,15 +414,7 @@ fio laudo [-h] --caso CASO --saida SAIDA [--modelo {laudo,relint}]
 Pipeline, experimentos, avaliacao e bancada web.
 
 ```text
-fio lab [-h] [--indice INDICE] [--municipio MUNICIPIO]
-               [--max-raizes MAX_RAIZES] [--caso CASO] [--coletores COLETORES]
-               [--profundidade PROFUNDIDADE] [--offline] [--expandir-escopo]
-               [--intervalo INTERVALO] [--relatorio RELATORIO] [--laudo LAUDO]
-               [--modelo {laudo,relint}] [--descricao DESCRICAO] [--a A]
-               [--b B] [--semente SEMENTE] [--sementes SEMENTES]
-               [--grupos GRUPOS] [--saida SAIDA] [--porta PORTA]
-               [--sem-navegador] [--permitir-host PERMITIR_HOST] [-v]
-               {plugins,pipeline,experimentos,comparar,sintetico,avaliar,calibrar,bancada,benchmark-real}
+fio lab acao [--indice INDICE] [--municipio MUNICIPIO] [--max-raizes MAX_RAIZES] [--caso CASO] [--coletores COLETORES] [--profundidade PROFUNDIDADE] [--offline] [--expandir-escopo] [--intervalo INTERVALO] [--paralelo PARALELO] [--orcamento SEGUNDOS] [--rapido] [--relatorio RELATORIO] [--laudo LAUDO] [--modelo MODELO] [--descricao DESCRICAO] [--a A] [--b B] [--semente SEMENTE] [--sementes SEMENTES] [--grupos GRUPOS] [--saida SAIDA] [--porta PORTA] [--sem-navegador] [--permitir-host PERMITIR_HOST] [-v]
 ```
 
 | Opção | Obrigatória | Descrição |
@@ -429,6 +429,9 @@ fio lab [-h] [--indice INDICE] [--municipio MUNICIPIO]
 | `--offline` | não |  |
 | `--expandir-escopo` | não |  |
 | `--intervalo` `INTERVALO` | não | (padrão: `1.5`) |
+| `--paralelo` `PARALELO` | não | pipeline: coletores de rede simultaneos por alvo (padrão: `4`) |
+| `--orcamento` `SEGUNDOS` | não | pipeline: limite de tempo de coleta |
+| `--rapido` | não | pipeline: modo leve (menos consultas por fonte) |
 | `--relatorio` `RELATORIO` | não |  |
 | `--laudo` `LAUDO` | não |  |
 | `--modelo` `MODELO` | não | (valores: `laudo`, `relint`; padrão: `laudo`) |
@@ -438,7 +441,7 @@ fio lab [-h] [--indice INDICE] [--municipio MUNICIPIO]
 | `--semente` `SEMENTE` | não | (padrão: `7`) |
 | `--sementes` `SEMENTES` | não | (padrão: `1,2,3,4,5`) |
 | `--grupos` `GRUPOS` | não | (padrão: `12`) |
-| `--saida` `SAIDA` | não | (padrão: `/home/user/fio/lab-saida`) |
+| `--saida` `SAIDA` | não | (padrão: `./lab-saida`) |
 | `--porta` `PORTA` | não | (padrão: `8765`) |
 | `--sem-navegador` | não |  |
 | `--permitir-host` `PERMITIR_HOST` | não | sufixos de Host aceitos alem de localhost (ex.: colab.googleusercontent.com); o token continua obrigatorio |

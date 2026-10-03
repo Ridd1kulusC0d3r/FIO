@@ -9,6 +9,8 @@ alvo autorizado. O escopo do caso continua valendo em cada pivo.
 
 from __future__ import annotations
 
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from .caso import CasoEmDisco, segredos
@@ -31,14 +33,21 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
                profundidade: int = 1, permitir_rede: bool = True,
                intervalo: float = 1.5, expandir: bool = False,
                segredos_extra: dict | None = None,
-               log=lambda s: None) -> Resultado:
+               log=lambda s: None, paralelo: int = 4,
+               orcamento: float | None = None, rapido: bool = False) -> Resultado:
+    """paralelo: coletores de REDE de um mesmo alvo rodam em ate N threads
+    (o intervalo por host continua valendo); os locais rodam em sequencia.
+    orcamento: segundos de coleta; esgotado, para de abrir novas consultas.
+    rapido: fontes mais lentas fazem menos consultas (ex.: 3 recortes de busca)."""
     caso = cd.caso()
     grafo = cd.grafo()
     ledger = cd.ledger(ator)
     cache = cd.cache()
     ctx = Contexto(caso=caso, grafo=grafo, ledger=ledger, cache=cache,
                    permitir_rede=permitir_rede, intervalo=intervalo,
+                   rapido=rapido,
                    segredos={**segredos(), **(segredos_extra or {})})
+    inicio = time.monotonic()
 
     ordem = {"ingestao": 0, "normalizacao": 1, "enriquecimento": 2}
     nomes = sorted(coletores or list(REGISTRO),
@@ -48,6 +57,7 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
 
     fila = [e.id for e in grafo.entidades.values() if e.alvo_primario]
     visitados: set[str] = set()
+    escopo_mudou = False
 
     for nivel in range(profundidade + 1):
         if not fila:
@@ -68,7 +78,7 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
             except ViolacaoDeEscopo as e:
                 if expandir and nivel > 0:
                     caso.escopo.append(alvo.valor)
-                    cd.salvar_caso(caso)
+                    escopo_mudou = True       # grava uma vez no fim, nao a cada pivo
                     ledger.registrar(
                         "escopo.expandido", alvo=alvo.valor,
                         resumo=f"derivada de coleta no nivel {nivel}; "
@@ -81,19 +91,54 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
                     continue
             res.alvos_visitados.append(eid)
 
-            for nome in nomes:
-                col = REGISTRO.get(nome)
-                if not col or not col.aplicavel(alvo):
-                    continue
+            if orcamento is not None and time.monotonic() - inicio > orcamento:
+                ledger.registrar("orcamento.esgotado", alvo=alvo.valor,
+                                 resumo=f"{orcamento:.0f} s de coleta; alvo e seguintes nao consultados")
+                log(f"  orcamento de {orcamento:.0f} s esgotado")
+                fila = []
+                break
+
+            aplicaveis = [REGISTRO[n] for n in nomes
+                          if REGISTRO.get(n) and REGISTRO[n].aplicavel(alvo)]
+            locais = [c for c in aplicaveis if not c.requer_rede]
+            rede = [c for c in aplicaveis if c.requer_rede]
+
+            resultados: dict[str, list] = {}
+
+            def _rodar(col):
+                return col.executar(alvo, ctx)
+
+            for col in locais:
                 try:
-                    achados = col.executar(alvo, ctx)
-                except Exception as e:           # escopo, rede, parsing
-                    res.erros.append(f"{nome}/{alvo.valor}: {e}")
+                    resultados[col.nome] = _rodar(col)
+                except Exception as e:           # escopo, parsing
+                    res.erros.append(f"{col.nome}/{alvo.valor}: {e}")
+            if rede:
+                if paralelo > 1 and len(rede) > 1:
+                    with ThreadPoolExecutor(max_workers=min(paralelo, len(rede))) as ex:
+                        futuros = [(c, ex.submit(_rodar, c)) for c in rede]
+                        for col, fut in futuros:
+                            try:
+                                resultados[col.nome] = fut.result()
+                            except Exception as e:
+                                res.erros.append(f"{col.nome}/{alvo.valor}: {e}")
+                else:
+                    for col in rede:
+                        try:
+                            resultados[col.nome] = _rodar(col)
+                        except Exception as e:
+                            res.erros.append(f"{col.nome}/{alvo.valor}: {e}")
+
+            # o grafo e alterado so aqui, na thread principal e na ordem
+            # declarada dos coletores: o resultado nao depende de quem
+            # terminou primeiro
+            for nome in nomes:
+                if nome not in resultados:
                     continue
+                achados = resultados[nome]
                 if nome not in res.executados:
                     res.executados.append(nome)
                 log(f"  {nome} -> {alvo.valor}: {len(achados)} achado(s)")
-
                 for a in achados:
                     novo = a.destino.id not in grafo.entidades
                     grafo.ligar(a.origem, a.destino, a.relacao, a.fonte,
@@ -101,6 +146,8 @@ def investigar(cd: CasoEmDisco, ator: str, coletores: list[str] | None = None,
                     if novo and nivel < profundidade:
                         fila.append(a.destino.id)
 
+    if escopo_mudou:
+        cd.salvar_caso(caso)
     cd.salvar_grafo(grafo)
     res.novas_entidades = len(grafo.entidades) - antes_e
     res.novas_arestas = len(grafo.arestas) - antes_a

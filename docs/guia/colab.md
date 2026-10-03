@@ -12,20 +12,25 @@ Nada é montado no Google Drive. Casos, fila e índice da Receita ficam **só no
 
 ## Passo a passo
 
-1. Clique no botão acima e faça login no Google.
-2. Menu **Ambiente de execução › Executar tudo** (na primeira vez). Depois, mude os formulários e rode só a seção que quiser (▶ à esquerda).
+**Comece aqui (3 células):** 1. Instalar · 2. Preparar a sessão · **3. Abrir o F.I.O.** A **bancada completa** (a mesma do GIF do GitHub: painel, caso, grafo, vínculos, observações, custódia) abre **dentro do caderno**; é ali que se trabalha. Tudo o que vem depois é **avançado e opcional**.
+
+Na bancada, use o cartão **Buscar agora** no topo do Painel: cole o identificador, escolha a base legal e clique em **Buscar**; sem internet no ambiente, ela cai sozinha para as fontes locais.
+
+Menu **Ambiente de execução › Executar tudo** é seguro: o que baixa muito dado ou demora (índice, benchmark, avaliação sintética, testes) só roda quando você marca a caixa **executar**.
 
 | Seção | O que faz | Internet |
 |---|---|---|
 | 1 | Instala o F.I.O. | opcional |
 | 2 | Prepara a sessão efêmera e **mostra os recursos da máquina** | não |
-| 3 | Confere as fontes públicas | sim |
-| 4 | Demonstração com mapa interativo | não |
-| 5 | Monta o índice da Receita por UF | sim (vários GB) |
-| 6 | Caso pontual com fontes reais | sim |
-| 7 | Relatório e exportação | não |
-| 8 | Abre a bancada | não |
-| 9 | Benchmark real e avaliação sintética | índice da seção 5 |
+| **3** | **Abre o F.I.O. dentro do caderno** | não |
+| *Avançado (opcional)* | | |
+| 4 | Confere as fontes públicas | sim |
+| 5 | Demonstração com mapa interativo | não |
+| 6 | Índice da Receita pelo caderno (segundo plano, progresso ao vivo) | sim (alguns GB) |
+| 6b | Enviar índice pronto (arquivo ou URL) | não |
+| 7 | Caso pontual com fontes reais | sim |
+| 8 | Relatório e exportação | não |
+| 9 | Benchmark com dados reais e avaliação sintética | índice |
 | 10 | Testes | opcional |
 
 ### 1. Instalar
@@ -58,43 +63,61 @@ recursos suficientes para o fluxo completo.
 
 `limpar_sessao_anterior` apaga o `fio-runtime` da sessão atual.
 
-### 5. Índice da Receita por UF
+### 3. Abrir o F.I.O. (bancada completa)
 
-É a fonte mais forte do F.I.O.: **telefone → empresa → sócios → filiais**, sem internet depois de pronto. O downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte.
+A célula sobe a bancada num servidor local do runtime e a mostra **dentro do caderno**, num iframe. O que você vê é a mesma interface da demonstração do GitHub: **Painel › Caso › Grafo › Vínculos › Observações › Custódia**, mais experimentos, ferramentas BR e a montagem do índice da Receita com progresso. Passo a passo da interface em [bancada](bancada.md).
+
+| Parâmetro | Valores | Para quê |
+|---|---|---|
+| `interface` | `completa` (padrão) · `simples` | `simples` abre uma tela mínima (telefone, índice, relatório). Também fica acessível em `/simples/` |
+| `exibir` | `dentro do caderno` (padrão) · `nova aba (experimental)` | o iframe é o caminho suportado; a nova aba pode ser bloqueada pelo navegador |
+| `porta` | 8765 | só mude se estiver ocupada |
+
+Trocar `interface` e rodar a célula de novo vale para a **próxima abertura**: recarregue o iframe (ou rode a célula outra vez). O endereço contém o **token da sessão**: não compartilhe a captura de tela da célula.
+
+Na primeira vez, clique em **Montar caso de demonstração** no painel para ver o grafo funcionando sem internet.
+
+### 6. Índice da Receita por UF (pelo caderno)
+
+É a fonte mais forte do F.I.O.: **telefone → empresa → sócios → filiais**, sem internet depois de pronto.
+
+**`fonte: auto` (padrão) tenta o índice PRONTO primeiro**: um arquivo pequeno já montado, baixado em **segundos** do GitHub (que o Colab alcança). Só se ele não existir é que monta pela Receita (modo leve, lento, e a Receita costuma bloquear o Colab). `pronto` aceita só o pronto; `receita` monta direto. Detalhes em [índice do CNPJ](indice-cnpj.md) e [pesquisa rápida e leve](desempenho.md). O downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte. O mesmo índice pode ser montado **pela tela da seção 3**, que também mostra o andamento.
+
+**Roda em segundo plano e mostra o progresso ao vivo** (arquivo atual, MB baixados, velocidade, linhas lidas), atualizado a cada 3 segundos. Leva de 10 a 40 minutos conforme a banda. A célula só **acompanha**: **interromper (■) não cancela** o trabalho; rode a célula de novo para voltar a acompanhar. Marque **executar** para iniciar (sem isso, nada é baixado).
 
 - `uf`: uma ou mais, separadas por vírgula (`MG` ou `MG,SP`). **Reduz o SQLite final e a RAM, não o tráfego**: os arquivos de Estabelecimentos não são divididos por UF.
 - `mes` (AAAA-MM): pula a listagem raiz da Receita. Útil quando ela reseta a conexão.
 - Se a listagem raiz falhar, o F.I.O. tenta `urllib`, depois `curl` e, por fim, sonda diretamente pastas mensais recentes.
 - Retoma downloads interrompidos (`Range` + `If-Range`) e só promove o arquivo depois de validá-lo como ZIP.
 
-### 6. Caso pontual
+### 6b. Já tenho o índice (enviar arquivo ou URL)
+
+Para quando nem o índice pronto nem a Receita estão disponíveis a partir do Colab. No seu computador: `fio indice baixar --uf MG` (gera `cnpj.sqlite`). Na célula **Enviar índice pronto**, marque **executar** e escolha:
+
+- **enviar arquivo**: abre o seletor do navegador e envia o `cnpj.sqlite` para a sessão;
+- **baixar de uma URL**: informe uma URL `https://` sua; o download mostra progresso e retoma se cair.
+
+O arquivo é validado (precisa ter estabelecimentos); se não parecer um índice do F.I.O., é descartado. O índice enviado só existe nesta sessão, como tudo no Colab.
+
+### 7. Caso pontual
 
 Os valores de exemplo usam **alvos institucionais públicos** (CNPJ do Banco do Brasil, CEP da Praça da Sé, `registro.br`). Troque pelos seus só se tiver base legal. Tipos reconhecidos sozinhos: e-mail (tem `@`), CNPJ, CEP (8 dígitos com hífen), domínio (tem ponto e letras) e telefone.
 
-### 7. Relatório
+### 8. Relatório
 
 Baixe primeiro o **modelo vazio** se quiser usar o F.I.O. só como roteiro. Depois de um caso, exporte **laudo**, **RELINT** ou **relatório técnico**. **Como a sessão é efêmera, o download é a forma de preservar o resultado.**
-
-### 8. Frontend e bancada
-
-A célula abre uma tela simples (telefone, índice da Receita, exportação) **dentro do caderno**, num iframe. De lá, o botão **bancada completa** abre a [bancada](bancada.md) na mesma sessão.
-
-| `exibir` | Quando usar |
-|---|---|
-| `dentro do caderno` (padrão) | sempre que possível; é o caminho suportado |
-| `nova aba (experimental)` | se você quer a bancada em tela cheia; o navegador pode bloquear o proxy direto |
-
-O endereço contém o **token da sessão**: não compartilhe a captura de tela da célula.
 
 ## Não carrega? Confira nesta ordem
 
 | Sintoma | Causa provável | Solução |
 |---|---|---|
-| Iframe em branco ou "carregando…" para sempre | célula executada com a versão antiga do F.I.O. em memória | rode a seção 1 de novo e a 8 (o instalador limpa os módulos antigos) |
-| "Token da sessão ausente" | iframe aberto sem rodar a célula 8 nesta sessão | rode a célula 8 de novo |
+| Iframe em branco ou "carregando…" para sempre | célula executada com a versão antiga do F.I.O. em memória | rode a seção 1 de novo e a 3 (o instalador limpa os módulos antigos) |
+| "Token da sessão ausente" | iframe aberto sem rodar a célula da seção 3 nesta sessão | rode a célula da seção 3 de novo |
 | Navegador bloqueia cookies/armazenamento de terceiros | iframe sem acesso a `sessionStorage` | a versão ≥ 3.0.2 funciona assim; se estiver na 3.0.1 ou antes, atualize (seção 1 com `origem: github`) |
-| Seção 5 reseta a conexão | listagem raiz da Receita instável | informe `mes` (AAAA-MM) |
-| Seção 5 estoura o disco | runtime com pouco espaço | reinicie o runtime e use uma UF |
+| `tempo esgotado` / `Failed to connect to dadosabertos.rfb.gov.br` | **a Receita bloqueia faixas de IP de nuvem** (Colab incluído); nenhuma configuração do caderno resolve | monte o índice no **seu computador** (`fio indice baixar --uf MG`) e traga-o pela célula **6b: Enviar índice pronto** (enviar arquivo ou baixar de uma URL sua). Ou siga sem índice: as demais fontes funcionam |
+| Seção 6 reseta a conexão | listagem raiz da Receita instável | informe `mes` (AAAA-MM) |
+| A célula do índice parece travada | antes da 3.0.4 não havia progresso; um arquivo de Estabelecimentos leva minutos | atualize; a célula agora mostra o andamento a cada 3 s. Se o último aviso tiver mais de 2 minutos, rode a célula de novo (retoma o download) |
+| Seção 6 estoura o disco | runtime com pouco espaço | reinicie o runtime e use uma UF |
 | "GitHub indisponível; usando a versão embutida" | sem acesso ao GitHub | normal; o caderno segue com a cópia embutida |
 | Tudo some | o runtime foi encerrado | por design; baixe os relatórios antes |
 

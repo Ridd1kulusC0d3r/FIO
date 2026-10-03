@@ -72,18 +72,26 @@ def montar_celulas(b64: str, versao: str, repo: str) -> None:
 
 **Fontes, Identificadores e Origens** · versão {versao} · análise de vínculos a partir de telefones e registros públicos brasileiros.
 
-Tudo roda na nuvem do Google, sem instalar nada no seu computador. Use o menu **Ambiente de execução › Executar tudo** na primeira vez; depois, altere os formulários e rode só a seção que quiser (▶ à esquerda).
+Tudo roda na nuvem do Google, sem instalar nada no seu computador.
 
-| Seção | O que faz | Precisa de internet |
+### Comece aqui (3 células)
+
+1. **Instalar** (seção 1) e **Preparar a sessão** (seção 2).
+2. **Abrir o F.I.O.** (seção 3): a tela do F.I.O. abre dentro do caderno. É ali que se trabalha: informe o telefone, monte o índice da Receita com progresso na tela e baixe o relatório.
+
+Use **Ambiente de execução › Executar tudo** à vontade: o que baixa muito dado ou demora (índice, benchmark, avaliação, testes) só roda quando você marca **executar**.
+
+| Seção | O que faz | Internet |
 |---|---|---|
 | 1 | Instala o F.I.O. (do GitHub ou do próprio caderno) | opcional |
-| 2 | Prepara a sessão efêmera (sem Drive) | não |
-| 3 | Confere as fontes públicas | sim |
-| 4 | Demonstração com mapa interativo | não |
-| 5 | Monta o índice da Receita Federal por UF | sim (vários GB) |
-| 6 | Caso pontual com fontes reais | sim |
-| 7 | Laudo e exportação | não |
-| 8 | Frontend simples + acesso à bancada completa | não |
+| 2 | Prepara a sessão efêmera (sem Drive) e mostra os recursos da máquina | não |
+| **3** | **Abre o F.I.O. dentro do caderno** | não |
+| *Avançado (opcional)* | | |
+| 4 | Confere as fontes públicas | sim |
+| 5 | Demonstração com mapa interativo | não |
+| 6 | Índice da Receita pelo caderno (segundo plano, progresso ao vivo) | sim (alguns GB) |
+| 7 | Caso pontual com fontes reais | sim |
+| 8 | Relatório e exportação | não |
 | 9 | Benchmark com dados reais e avaliação sintética | não |
 | 10 | Testes | opcional |
 
@@ -208,7 +216,42 @@ if not avisos:
     print("recursos suficientes para o fluxo completo.")
 print("Ao encerrar o runtime, estes dados somem. Exporte o relatorio antes de sair.")
 ''')
-    md("## 3. Conferir as fontes públicas\nConsulta neutra a cada fonte (CNPJ do Banco do Brasil, CEP da Praça da Sé, domínio nic.br). Nenhuma pessoa é pesquisada.")
+    md("""## 3. Abrir o F.I.O.
+**É por aqui que se trabalha.** Abre a **bancada completa** do F.I.O. dentro do caderno (a mesma da demonstração do GitHub): painel, caso, **grafo**, vínculos, observações, custódia, experimentos, ferramentas BR e o índice da Receita com progresso na tela. Se preferir uma tela mínima (só telefone, índice e relatório), escolha `interface: simples`.
+
+Tudo o que vem depois deste ponto é **opcional**: demonstração, verificação das fontes, índice pelo caderno, caso pontual, pesquisa e testes.""")
+    code('''
+#@title Abrir o F.I.O. { display-mode: "form" }
+interface = "completa"  #@param ["completa", "simples"]
+exibir = "dentro do caderno"  #@param ["dentro do caderno", "nova aba (experimental)"]
+porta = 8765  #@param {type:"integer"}
+import time, contextlib, io as _io
+from fio.lab.bancada.servidor import servir, Estado
+try:
+    BANCADA
+except NameError:
+    with contextlib.redirect_stdout(_io.StringIO()):
+        BANCADA = servir(porta=porta, abrir=False, bloquear=False, modo_colab=True)
+    time.sleep(0.5)
+Estado.interface_simples = (interface == "simples")   # vale para a proxima abertura
+try:
+    from google.colab import output
+    if exibir == "dentro do caderno":
+        output.serve_kernel_port_as_iframe(porta, path=f"/#t={Estado.token}", height=860)
+    else:
+        # "nova aba" é conveniência experimental. O iframe é o caminho principal
+        # porque mudanças de segurança do navegador podem bloquear o proxy direto.
+        from google.colab.output import eval_js
+        url = eval_js(f"google.colab.kernel.proxyPort({porta})")
+        display(HTML(f'<a href="{url.rstrip("/")}/#t={Estado.token}" target="_blank" rel="noopener" style="font-size:16px;font-weight:700">Abrir o F.I.O. em nova aba</a><p>Se o navegador bloquear, use <b>dentro do caderno</b>.</p>'))
+except ImportError:
+    display(HTML(f'<a href="http://127.0.0.1:{porta}/#t={Estado.token}" target="_blank">Abrir o F.I.O.</a>'))
+print("O endereço contém a senha desta sessão. Não compartilhe.")
+''')
+    md("""---
+## Avançado (opcional)
+As seções abaixo **não são necessárias** para usar o F.I.O. As que baixam muito dado ou demoram (índice, benchmark, avaliação, testes) só rodam quando você marca a caixa **executar**, para que *Executar tudo* não dispare nada pesado sem querer.""")
+    md("## 4. Conferir as fontes públicas\nConsulta neutra a cada fonte (CNPJ do Banco do Brasil, CEP da Praça da Sé, domínio nic.br). Nenhuma pessoa é pesquisada.")
     code('''
 #@title Verificar conexões { display-mode: "form" }
 from fio.diagnostico import sondar
@@ -218,7 +261,7 @@ quadro("Fontes online", [[r["fonte"], "✓ conectado" if r["ok"] else ("— sem 
                           r.get("ms", ""), r["dica"]] for r in res], ["fonte", "situação", "ms", "o que fazer"])
 print(f"{sum(1 for r in res if r['ok'])} de {len(res)} fontes respondendo.")
 ''')
-    md("## 4. Demonstração\nEmpresas e pessoas inventadas, sem internet. Mapa interativo: arraste os círculos, filtre por confiança e clique para ver detalhes.")
+    md("## 5. Demonstração\nEmpresas e pessoas inventadas, sem internet. Mapa interativo: arraste os círculos, filtre por confiança e clique para ver detalhes.")
     code('''
 #@title Montar a demonstração { display-mode: "form" }
 from fio.demo import montar, CASO_ID
@@ -228,35 +271,126 @@ r = montar(recriar=True)
 print(f"{r['metricas']['entidades']} entidades, {r['metricas']['vinculos']} vínculos, {r['metricas']['observacoes']} observações")
 display(HTML(mapa_html(CasoEmDisco(CASO_ID).grafo(), altura=560)))
 ''')
-    md("""## 5. Índice da Receita Federal por UF
-A fonte mais forte do F.I.O.: telefone → empresa → sócios → filiais, sem internet depois de pronto. O downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte. O índice existe somente nesta sessão do Colab.
+    md("""## 6. Índice da Receita Federal por UF (pelo caderno)
+A fonte mais forte do F.I.O.: telefone → empresa → sócios → filiais, sem internet depois de pronto. O mesmo índice pode ser montado pela tela da seção 3; aqui é a versão pelo caderno.
+
+**`fonte: auto` (padrão) tenta primeiro o índice PRONTO** (um arquivo pequeno e já montado, baixado em segundos do GitHub) e só se ele não existir monta pela Receita. `pronto` aceita só o pronto; `receita` monta direto (o modo lento: alguns GB, de 10 a 40 minutos, e a Receita costuma bloquear IPs de nuvem).
+
+**Roda em segundo plano e mostra o progresso ao vivo.** Pela Receita, o downloader trabalha **um arquivo por vez**, filtra pela UF e apaga o ZIP antes do seguinte. A célula só **acompanha**: se você interromper (■), o trabalho continua e basta rodar a célula de novo para voltar a acompanhar.
 
 Se a listagem raiz da Receita resetar a conexão, o F.I.O. tenta `urllib`, depois `curl` e, por fim, sonda diretamente pastas mensais recentes. Informar `mes` (AAAA-MM) pula a listagem raiz. O filtro reduz o SQLite final e a RAM, mas não o tráfego, porque os arquivos de Estabelecimentos não são separados por UF.""")
     code('''
-#@title Montar índice { display-mode: "form" }
+#@title Montar índice (segundo plano, com progresso) { display-mode: "form" }
+executar = False  #@param {type:"boolean"}
 ufs = "MG"  #@param {type:"string"}
+fonte = "auto"  #@param ["auto", "pronto", "receita"]
 mes = ""  #@param {type:"string"}
 reconstruir = False  #@param {type:"boolean"}
-from fio.receita_download import montar as montar_indice, validar_ufs
+import threading, time, collections, datetime
+from IPython.display import clear_output
+from fio.receita_download import validar_ufs
+from fio.indice_pronto import instalar as montar_indice
 from fio.indice import IndiceCNPJ
 alvo = FIO_HOME / "cnpj.sqlite"
-if alvo.exists() and not reconstruir:
+
+def _hora():
+    return datetime.datetime.now().strftime("%H:%M:%S")
+
+def _acompanhar(job):
+    """Mostra o andamento a cada 3 s. Interromper (■) so para de acompanhar."""
+    try:
+        while job["fio"].is_alive():
+            dec = int(time.time() - job["t0"])
+            clear_output(wait=True)
+            print(f"Montando o indice da Receita (UF: {job['ufs']}) · {dec // 60} min {dec % 60:02d} s")
+            print("-" * 72)
+            for l in list(job["linhas"])[-10:]:
+                print(l)
+            print("-" * 72)
+            print("Acompanhando. Interromper (■) NAO cancela: rode a celula de novo para voltar.")
+            time.sleep(3)
+    except KeyboardInterrupt:
+        print("\\nParou de acompanhar; o indice continua sendo montado. Rode a celula para ver o andamento.")
+        return
+    clear_output(wait=True)
+    if job["erro"]:
+        print("A Receita nao respondeu a partir deste runtime (ou o processo falhou). O caso continua utilizavel sem o indice local.")
+        print(job["erro"])
+        print("Tente preencher 'mes' (AAAA-MM) ou rode novamente mais tarde; o downloader ja alterna urllib/curl.")
+        for l in list(job["linhas"])[-6:]:
+            print(l)
+    else:
+        os.environ["FIO_INDICE_CNPJ"] = str(alvo)
+        quadro("Índice pronto", [[k, v] for k, v in job["res"].items()], ["campo", "valor"])
+
+job = globals().get("INDICE_JOB")
+if job and job["fio"].is_alive():
+    _acompanhar(job)                       # ja ha um em andamento: so acompanha
+elif alvo.exists() and not reconstruir:
     with IndiceCNPJ(os.environ.get("FIO_INDICE_CNPJ", str(alvo))) as _idx:
         m = _idx.meta()
     print("Ja existe um indice:", {k: m.get(k) for k in ("ufs", "mes", "estabelecimentos", "construido_em")})
-    print("Marque 'reconstruir' para montar de novo.")
+    print("Marque 'reconstruir' (e 'executar') para montar de novo.")
+elif not executar:
+    print("Nada foi baixado. Marque 'executar' e rode a celula (▶) para montar o indice.")
+    print("Prefira a tela da secao 3 se quiser acompanhar sem sair dela.")
 else:
     filtro = validar_ufs({u.strip().upper() for u in ufs.split(",") if u.strip()} or None)
-    try:
-        res = montar_indice(alvo, ufs=filtro, mes=mes or None, pasta_tmp=FIO_HOME / "receita-tmp")
-        os.environ["FIO_INDICE_CNPJ"] = str(alvo)
-        quadro("Índice pronto", [[k, v] for k, v in res.items()], ["campo", "valor"])
-    except RuntimeError as e:
-        print("A Receita não respondeu a partir deste runtime. O caso continua utilizável sem o índice local.")
-        print(str(e))
-        print("Tente preencher 'mes' (AAAA-MM) ou rode novamente mais tarde; o downloader já alterna urllib/curl.")
+    job = INDICE_JOB = {"linhas": collections.deque(maxlen=300), "res": None, "erro": None,
+                        "t0": time.time(), "ufs": ",".join(sorted(filtro)) if filtro else "todas"}
+    def _log(msg):
+        job["linhas"].append(f"{_hora()}  {msg}")
+    def _rodar():
+        try:
+            job["res"] = montar_indice(alvo, filtro, mes=mes or None, fonte=fonte,
+                                       pasta_tmp=FIO_HOME / "receita-tmp", log=_log)
+        except BaseException as e:      # noqa: BLE001 - o erro vai para a tela
+            job["erro"] = f"{type(e).__name__}: {e}"
+    job["fio"] = threading.Thread(target=_rodar, daemon=True)
+    job["fio"].start()
+    _acompanhar(job)
 ''')
-    md("""## 6. Caso pontual com fontes reais
+    md("""### 6b. Já tenho o índice (enviar arquivo ou baixar de uma URL)
+**Use esta opção se a Receita não responde a partir do Colab** (a Receita costuma bloquear faixas de IP de nuvem, e o erro será "tempo esgotado ao conectar"). Monte o índice no **seu computador** (`fio indice baixar --uf MG`, gera `cnpj.sqlite`) e traga-o para cá:
+
+- **enviar arquivo**: abre o seletor do navegador e envia o `cnpj.sqlite` para esta sessão;
+- **baixar de uma URL**: se o arquivo estiver publicado em algum endereço seu (https), informe em `url`; o download mostra o progresso e retoma se cair.""")
+    code('''
+#@title Enviar índice pronto (cnpj.sqlite) { display-mode: "form" }
+executar = False  #@param {type:"boolean"}
+modo = "enviar arquivo"  #@param ["enviar arquivo", "baixar de uma URL"]
+url = ""  #@param {type:"string"}
+import shutil as _sh
+from fio.indice import IndiceCNPJ
+alvo = FIO_HOME / "cnpj.sqlite"
+if not executar:
+    print("Marque 'executar' e rode (▶) para trazer um indice que voce ja montou no seu computador.")
+else:
+    if modo == "baixar de uma URL":
+        from fio.receita_download import baixar
+        if not url.startswith("https://"):
+            raise ValueError("informe uma URL https:// no campo 'url'")
+        baixar(url, alvo, log=print)
+    else:
+        try:
+            from google.colab import files
+        except ImportError:
+            raise RuntimeError("o envio de arquivo so existe no Colab; fora dele, aponte FIO_INDICE_CNPJ para o seu cnpj.sqlite")
+        enviados = files.upload()
+        if not enviados:
+            raise RuntimeError("nenhum arquivo enviado")
+        nome = next(iter(enviados))
+        _sh.move(nome, alvo)
+    with IndiceCNPJ(str(alvo)) as _idx:
+        est = _idx.estatisticas()
+        meta = _idx.meta()
+    if not est.get("estabelecimento"):
+        alvo.unlink(missing_ok=True)
+        raise ValueError("o arquivo nao parece um indice do F.I.O. (sem estabelecimentos); descartado")
+    os.environ["FIO_INDICE_CNPJ"] = str(alvo)
+    quadro("Índice pronto", [[k, v] for k, v in {**est, **{k: meta.get(k) for k in ("ufs", "mes", "construido_em")}}.items()], ["campo", "valor"])
+''')
+    md("""## 7. Caso pontual com fontes reais
 Os valores de exemplo usam **alvos institucionais públicos**. Troque pelos seus alvos só se tiver base legal. Tipos reconhecidos sozinhos: e-mail (tem @), CNPJ, CEP (8 dígitos com hífen), domínio (tem ponto e letras) e telefone.""")
     code('''
 #@title Rodar o caso { display-mode: "form" }
@@ -279,14 +413,11 @@ from fio.lab.pipeline import Config, executar
 from fio.grafo.clusters import tabela_correlacao
 from fio.relatorio.mapa import mapa_html
 
+from fio.busca import reconhecer as _reconhecer, ha_rede
+
 def reconhecer(v):
-    v = v.strip()
-    if "@" in v: return "email", v.lower(), {}
-    if cnpj_valido(v): return "cnpj", cnpj_limpar(v), {"cnpj": cnpj_limpar(v)}
-    if re.fullmatch(r"\\d{5}-\\d{3}", v) and cep_valido(v): return "cep", re.sub(r"\\D", "", v), {}
-    if re.search(r"[a-zA-Z]", v) and "." in v: return "dominio", v.lower(), {}
-    t = normalizar(v)
-    return "telefone", t.chave, {"ddd": t.ddd, "assinante": t.assinante, "faixa": t.faixa, "uf": t.uf, "e164": t.e164}
+    a = _reconhecer(v)
+    return a.tipo, a.valor, a.atributos
 
 entradas = ([telefone] if telefone.strip() else []) + [x for x in alvos.split(",") if x.strip()]
 itens = [reconhecer(x) for x in entradas]
@@ -297,6 +428,9 @@ cd.criar(Caso(id=identificador, titulo=titulo, base_legal=base_legal, finalidade
               responsavel=responsavel, escopo=[v for _, v, _ in itens]), responsavel)
 for tipo, v, at in itens:
     cd.add_alvo(Entidade(tipo, v, atributos=at), responsavel)
+if usar_internet and not ha_rede():
+    print("Sem acesso à internet neste ambiente: rodando só com as fontes locais.")
+    usar_internet = False
 exp = executar(cd, responsavel, Config(profundidade=profundidade, offline=not usar_internet,
                                         expandir_escopo=expandir_escopo, intervalo=1.0,
                                         descricao="caso pontual no Colab"))
@@ -311,7 +445,7 @@ display(HTML(mapa_html(g, altura=520)))
 quadro("Vínculos mais fortes", [[l["entidade"], l["relacao"], l["vinculada_a"], l["confianca"], l["admiralty"]]
        for l in tabela_correlacao(g)[:25]], ["entidade", "relação", "vinculada a", "confiança", "grau"])
 ''')
-    md("## 7. Relatório e exportação\nBaixe primeiro um modelo vazio, se quiser usar o F.I.O. apenas como roteiro. Depois de um caso, exporte laudo, RELINT ou relatório técnico. Como a sessão é efêmera, o download é a forma de preservar o resultado.")
+    md("## 8. Relatório e exportação\nBaixe primeiro um modelo vazio, se quiser usar o F.I.O. apenas como roteiro. Depois de um caso, exporte laudo, RELINT ou relatório técnico. Como a sessão é efêmera, o download é a forma de preservar o resultado.")
     code('''
 #@title Baixar modelo vazio de relatório { display-mode: "form" }
 formato_modelo = "markdown"  #@param ["markdown", "html"]
@@ -351,74 +485,57 @@ try:
 except ImportError:
     mostrar_html(doc, 480)
 ''')
-    md("## 8. Frontend do Colab\nAbre uma tela simples, com telefone, índice da Receita e exportação de relatório. A bancada completa continua disponível por um botão dentro do frontend.")
-    code('''
-#@title Abrir a bancada { display-mode: "form" }
-exibir = "dentro do caderno"  #@param ["dentro do caderno", "nova aba (experimental)"]
-porta = 8765  #@param {type:"integer"}
-import time, contextlib, io as _io
-from fio.lab.bancada.servidor import servir, Estado
-try:
-    BANCADA
-except NameError:
-    with contextlib.redirect_stdout(_io.StringIO()):
-        BANCADA = servir(porta=porta, abrir=False, bloquear=False, modo_colab=True)
-    time.sleep(0.5)
-try:
-    from google.colab import output
-    if exibir == "dentro do caderno":
-        output.serve_kernel_port_as_iframe(porta, path=f"/#t={Estado.token}", height=860)
-    else:
-        # "nova aba" é conveniência experimental. O iframe é o caminho principal
-        # porque mudanças de segurança do navegador podem bloquear o proxy direto.
-        # mantemos como conveniência. O iframe acima é o modo suportado principal.
-        from google.colab.output import eval_js
-        url = eval_js(f"google.colab.kernel.proxyPort({porta})")
-        display(HTML(f'<a href="{url.rstrip("/")}/#t={Estado.token}" target="_blank" rel="noopener" style="font-size:16px;font-weight:700">Abrir a bancada em nova aba</a><p>Se o navegador bloquear, use <b>dentro do caderno</b>.</p>'))
-except ImportError:
-    display(HTML(f'<a href="http://127.0.0.1:{porta}/#t={Estado.token}" target="_blank">Abrir a bancada</a>'))
-print("O endereço contém a senha desta sessão. Não compartilhe.")
-''')
     md("""## 9. Pesquisa: benchmark com dados reais e avaliação sintética
-**Benchmark real** (precisa do índice da seção 5): esconde a raiz do CNPJ e mede quanto cada evidência pública (e-mail, domínio, endereço, nome fantasia, telefone compartilhado, numeração) reúne as filiais de uma mesma empresa sem juntar empresas diferentes. Saída só agregada, sem nomes.
+**Benchmark real** (precisa do índice da seção 6): esconde a raiz do CNPJ e mede quanto cada evidência pública (e-mail, domínio, endereço, nome fantasia, telefone compartilhado, numeração) reúne as filiais de uma mesma empresa sem juntar empresas diferentes. Saída só agregada, sem nomes.
 
 **Avaliação sintética**: mundos fictícios com armadilhas e gabarito.""")
     code('''
 #@title Benchmark com dados reais { display-mode: "form" }
+executar = False  #@param {type:"boolean"}
 municipio = ""  #@param {type:"string"}
 max_raizes = 800  #@param {type:"integer"}
 semente = 7  #@param {type:"integer"}
 from fio.lab.benchmark_real import benchmark, tabela
 idx = os.environ.get("FIO_INDICE_CNPJ")
-if not idx:
-    print("Monte o indice na secao 5 primeiro.")
+if not executar:
+    print("Marque 'executar' e rode (▶). Precisa do indice da secao 6 (ou da tela da secao 3).")
+elif not idx:
+    print("Monte o indice primeiro (secao 6 ou a tela da secao 3).")
 else:
     r = benchmark(idx, municipio=municipio or None, max_raizes=max_raizes, semente=semente)
     print(tabela(r))
 ''')
     code('''
 #@title Avaliação sintética { display-mode: "form" }
+executar = False  #@param {type:"boolean"}
 sementes = "1,2,3,4,5"  #@param {type:"string"}
 grupos = 12  #@param {type:"integer"}
 from fio.lab.avaliacao import avaliar_lote, tabela_lote
-agg = avaliar_lote(TRABALHO / "avaliacao", [int(s) for s in sementes.split(",") if s.strip()], grupos)
-print(tabela_lote(agg))
+if not executar:
+    print("Marque 'executar' e rode (▶). Leva alguns minutos; nao usa internet.")
+else:
+    agg = avaliar_lote(TRABALHO / "avaliacao", [int(s) for s in sementes.split(",") if s.strip()], grupos)
+    print(tabela_lote(agg))
 ''')
     md("## 10. Testes\nSuíte completa e, com internet, o teste de contrato contra as APIs reais (alvos neutros).")
     code('''
 #@title Rodar os testes { display-mode: "form" }
+executar = False  #@param {type:"boolean"}
 testar_fontes_reais = True  #@param {type:"boolean"}
 import subprocess
-env = {**os.environ, "FIO_SEM_E2E": "1", "PYTHONPATH": str(RAIZ)}
-env.pop("FIO_HOME", None); env.pop("FIO_INDICE_CNPJ", None)
-p = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "testes"], cwd=RAIZ,
-                   capture_output=True, text=True, env=env)
-print("Suíte:", " ".join(l for l in p.stderr.splitlines() if l.startswith(("Ran", "OK", "FAILED"))))
-if p.returncode:
-    print(p.stderr[-3000:])
-if testar_fontes_reais:
-    q = subprocess.run([sys.executable, "testes/ao_vivo.py"], cwd=RAIZ, capture_output=True, text=True, env=env)
-    print("\\nFontes reais:\\n" + q.stdout + q.stderr[-1500:])
+if not executar:
+    print("Marque 'executar' e rode (▶) para rodar a suite; ela leva alguns minutos.")
+else:
+    env = {**os.environ, "FIO_SEM_E2E": "1", "PYTHONPATH": str(RAIZ)}
+    env.pop("FIO_HOME", None); env.pop("FIO_INDICE_CNPJ", None)
+    p = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "testes"], cwd=RAIZ,
+                       capture_output=True, text=True, env=env)
+    print("Suíte:", " ".join(l for l in p.stderr.splitlines() if l.startswith(("Ran", "OK", "FAILED"))))
+    if p.returncode:
+        print(p.stderr[-3000:])
+    if testar_fontes_reais:
+        q = subprocess.run([sys.executable, "testes/ao_vivo.py"], cwd=RAIZ, capture_output=True, text=True, env=env)
+        print("\\nFontes reais:\\n" + q.stdout + q.stderr[-1500:])
 ''')
     md("---\nManual completo: `docs/MANUAL.html` · Coleta passiva, só fontes públicas. O F.I.O. recusa bases vazadas, senhas de terceiros, interceptação e enumeração de mensageria.")
 

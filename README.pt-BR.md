@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml"><img alt="testes" src="https://github.com/Ridd1kulusC0d3r/FIO/actions/workflows/testes.yml/badge.svg"></a>
   <a href="https://colab.research.google.com/github/Ridd1kulusC0d3r/FIO/blob/main/colab/FIO_Lab_Colab.ipynb"><img alt="Abrir no Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a>
-  <img alt="versão 3.0.2" src="https://img.shields.io/badge/vers%C3%A3o-3.0.2-0B4F6C">
+  <img alt="versão 3.2.0" src="https://img.shields.io/badge/vers%C3%A3o-3.2.0-0B4F6C">
   <img alt="Python 3.10–3.14" src="https://img.shields.io/badge/python-3.10%E2%80%933.14-3776AB">
   <img alt="só biblioteca padrão" src="https://img.shields.io/badge/depend%C3%AAncias-nenhuma-0E7C6B">
   <a href="LICENSE"><img alt="licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-555"></a>
@@ -42,7 +42,7 @@ Três regras não negociáveis:
 | **Dois cliques** | leigos, no próprio computador | baixe a [Release](https://github.com/Ridd1kulusC0d3r/FIO/releases), descompacte e abra o lançador do seu sistema ([COMECE-AQUI.md](COMECE-AQUI.md)) |
 | **Linha de comando** | técnicos | `pip install git+https://github.com/Ridd1kulusC0d3r/FIO` e depois `fio --help` |
 
-**Colab (3.0.2):** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo e relatórios para download antes de o runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
+**Colab (3.2.0):** a sessão é deliberadamente efêmera: nada é montado no Google Drive. O caderno e a tela simplificada recebem telefone diretamente, constroem o índice por UF e oferecem modelo e relatórios para download antes de o runtime encerrar. A bancada completa continua disponível pelo mesmo servidor local.
 
 ```bash
 fio demo --abrir        # caso fictício, 100% offline, abre a bancada
@@ -99,6 +99,8 @@ Desenho completo em [ARQUITETURA.md](ARQUITETURA.md).
 | **Reuso de linha** | Telefone declarado por empresa encerrada e por outra ativa. | Evita tratar número reciclado como operador em comum. |
 | **crt.sh e Wayback** | Subdomínios por Certificate Transparency e a primeira captura de um domínio. | Idade real e infraestrutura irmã, sem tocar o alvo. |
 | **Boleto, PIX, CNH, CNS** | Linha digitável com DV mód. 10 e 11, banco, valor e vencimento; chave PIX aleatória; validação de CNH e CNS. | Extrai identificadores financeiros de texto livre sem confundir com CNPJ. |
+| **Índice do CNPJ pronto** | `fio indice baixar --uf MG --pronto` baixa um índice enxuto e comprimido em **segundos** (SHA-256 conferido, retomável), em vez de montá-lo a partir de GBs da Receita. | O servidor da Receita costuma bloquear IPs de nuvem; o índice pronto fica no GitHub, que o Colab alcança. |
+| **Pesquisa rápida e leve** | Fontes de rede em paralelo; `--rapido` e `--orcamento` limitam o trabalho; pontos quentes do ledger e do grafo corrigidos. | O pipeline offline foi de 40 s para 3,8 s num mundo sintético de 60 grupos. Veja [docs/guia/desempenho.md](docs/guia/desempenho.md). |
 | **Claims rastreáveis** | `fio claims`: cada conclusão aponta a aresta que a sustenta. | Conclusão sem evidência no grafo não entra no relatório. |
 | **Manifesto SHA-256** | `fio manifesto`: hash de cada peça amarrado ao ledger. | Detecta peça alterada, manifesto adulterado e ledger reescrito. |
 | **Calibração** | `fio lab calibrar`: confiança declarada × precisão observada. | Mede se "0,76" significa 76%. |

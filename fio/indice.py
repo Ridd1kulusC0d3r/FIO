@@ -93,7 +93,7 @@ class Construtor:
     LOTE_SQL_IN = 800  # abaixo do limite de variáveis do SQLite mais antigo
 
     def __init__(self, saida: str | Path, ufs: set[str] | None = None,
-                 log=lambda s: print(s, file=sys.stderr)):
+                 log=lambda s: print(s, file=sys.stderr), leve: bool = False):
         self.saida = Path(saida)
         self.con = sqlite3.connect(str(self.saida))
         # O arquivo é provisório durante a construção. Priorizar throughput é
@@ -106,8 +106,12 @@ class Construtor:
         self.con.execute("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)")
         self.ufs = {u.upper() for u in ufs} if ufs else None
         self.log = log
+        # modo leve: guarda so o que serve a busca por telefone/e-mail (veja
+        # `estabelecimentos`); o filtro por raiz aceita tambem sem UF
+        self.leve = leve
+        self._escopo = bool(self.ufs) or leve
         self._viu_estabelecimentos = False
-        if self.ufs:
+        if self._escopo:
             self.con.execute(
                 "CREATE TABLE IF NOT EXISTS escopo_uf (cnpj_basico TEXT PRIMARY KEY) WITHOUT ROWID"
             )
@@ -115,23 +119,51 @@ class Construtor:
                          "telefones": 0, "descartados_por_uf": 0,
                          "raizes_uf": 0}
 
+    def _pulso(self, linhas, rotulo: str, a_cada: float = 20.0):
+        """Repassa as linhas e avisa o progresso a cada `a_cada` segundos.
+
+        Um arquivo de Estabelecimentos tem milhoes de linhas e leva minutos
+        para ser filtrado por UF; sem aviso, quem acompanha (terminal, Colab)
+        acha que travou.
+        """
+        import time
+        n, t = 0, time.monotonic()
+        for c in linhas:
+            n += 1
+            if n % 50000 == 0 and time.monotonic() - t >= a_cada:
+                t = time.monotonic()
+                self.log(f"  {rotulo}: {n:,} linhas lidas")
+            yield c
+        self.log(f"  {rotulo}: {n:,} linhas lidas (fim do arquivo)")
+
     def estabelecimentos(self, arq: Path) -> None:
         self.log(f"estabelecimentos: {arq.name}")
         self._viu_estabelecimentos = True
         lote = []
         raizes = set()
-        for c in _linhas(arq):
+        for c in self._pulso(_linhas(arq), arq.name):
             if len(c) < 28:
                 continue
             if self.ufs and c[19].upper() not in self.ufs:
                 self.contagem["descartados_por_uf"] += 1
                 continue
-            if self.ufs:
-                raizes.add(c[0])
             t1, t2 = _e164(c[21], c[22]), _e164(c[23], c[24])
+            email = (c[27] or "").lower().strip()
+            if self.leve and not (t1 or t2 or email or c[3] == "1"):
+                # sem telefone nem e-mail e nao e a matriz: nao ha como chegar
+                # nele por busca reversa, so pesaria no arquivo
+                self.contagem["descartados_leve"] = self.contagem.get("descartados_leve", 0) + 1
+                continue
+            if self._escopo:
+                raizes.add(c[0])
+            if self.leve:
+                bairro, logradouro, cnae = "", "", ""
+            else:
+                bairro, logradouro = c[17], f"{c[13]} {c[14]}, {c[15]}".strip()
+                cnae = c[11]
             lote.append((f"{c[0]}{c[1]}{c[2]}", c[0], 1 if c[3] == "1" else 0, c[4], c[5],
-                         c[19], c[20], c[17], f"{c[13]} {c[14]}, {c[15]}".strip(),
-                         c[18], (c[27] or "").lower().strip(), t1, t2, c[10], c[11]))
+                         c[19], c[20], bairro, logradouro,
+                         c[18], email, t1, t2, c[10], cnae))
             self.contagem["telefones"] += bool(t1) + bool(t2)
             if len(lote) >= self.LOTE_EST:
                 self._gravar_est(lote, raizes)
@@ -144,19 +176,19 @@ class Construtor:
         self.con.executemany("INSERT OR REPLACE INTO estabelecimento "
                              "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", lote)
         self.contagem["estabelecimentos"] += len(lote)
-        if self.ufs and raizes:
+        if self._escopo and raizes:
             self.con.executemany("INSERT OR IGNORE INTO escopo_uf VALUES (?)",
                                  ((r,) for r in raizes))
 
     def _garantir_escopo(self) -> None:
-        if self.ufs and not self._viu_estabelecimentos:
+        if self._escopo and not self._viu_estabelecimentos:
             raise RuntimeError(
                 "filtro por UF exige processar Estabelecimentos antes de Empresas/Socios"
             )
 
     def _filtrar_escopo(self, lote):
         """Filtra um lote por raízes aceitas sem manter o escopo inteiro em RAM."""
-        if not self.ufs or not lote:
+        if not self._escopo or not lote:
             return lote
         self._garantir_escopo()
         chaves = list({r[0] for r in lote})
@@ -181,7 +213,7 @@ class Construtor:
         self.log(f"empresas: {arq.name}")
         self._garantir_escopo()
         lote = []
-        for c in _linhas(arq):
+        for c in self._pulso(_linhas(arq), arq.name):
             if len(c) < 6:
                 continue
             lote.append((c[0], c[1], c[2], c[4], c[5]))
@@ -201,7 +233,7 @@ class Construtor:
         self.log(f"socios: {arq.name}")
         self._garantir_escopo()
         lote = []
-        for c in _linhas(arq):
+        for c in self._pulso(_linhas(arq), arq.name):
             if len(c) < 6:
                 continue
             lote.append((c[0], c[2], c[3], c[4], c[5], c[8] if len(c) > 8 else ""))
@@ -222,16 +254,17 @@ class Construtor:
 
     def finalizar(self, **meta) -> dict:
         import datetime as _dt
-        if self.ufs:
+        if self._escopo:
             self.contagem["raizes_uf"] = self.con.execute(
                 "SELECT COUNT(*) FROM escopo_uf"
             ).fetchone()[0]
         info = {"ufs": ",".join(sorted(self.ufs)) if self.ufs else "todas",
+                "leve": "1" if self.leve else "0",
                 "construido_em": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
                 **{k: str(v) for k, v in self.contagem.items()},
                 **{k: str(v) for k, v in meta.items()}}
         self.con.executemany("INSERT OR REPLACE INTO meta VALUES (?,?)", info.items())
-        if self.ufs:
+        if self._escopo:
             self.con.execute("DROP TABLE IF EXISTS escopo_uf")
         self.log("criando indices SQLite finais")
         self.con.executescript(INDICES)
@@ -246,10 +279,11 @@ def _ordem(arq: Path) -> tuple:
 
 
 def construir(origem: str | Path, saida: str | Path,
-              log=lambda s: print(s, file=sys.stderr), ufs: set[str] | None = None) -> dict:
+              log=lambda s: print(s, file=sys.stderr), ufs: set[str] | None = None,
+              leve: bool = False) -> dict:
     """Le os arquivos da Receita (CSV ou .zip) em `origem` e monta o sqlite."""
     origem = Path(origem)
-    c = Construtor(saida, ufs, log)
+    c = Construtor(saida, ufs, log, leve)
     for arq in sorted((a for a in origem.glob("*") if a.is_file()), key=_ordem):
         c.processar(arq)
     return c.finalizar(origem=str(origem))

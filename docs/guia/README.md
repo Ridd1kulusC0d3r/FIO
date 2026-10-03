@@ -13,6 +13,7 @@ Escolha pelo que você quer fazer agora.
 | **Configurar** (pasta de dados, chaves de API, índice, plugins) | [Configuração](configuracao.md) |
 | **Saber o que cada comando aceita** | [Referência da CLI](referencia-cli.md) |
 | **Saber de onde vêm os dados e o que cada fonte não garante** | [Fontes e coletores](fontes.md) · [Índice do CNPJ](indice-cnpj.md) |
+| **Deixar a pesquisa mais rápida e leve** (índice pronto, paralelo, orçamento) | [Pesquisa rápida e leve](desempenho.md) |
 | **Entender o que cada alerta significa** | [Analisadores](analisadores.md) |
 | **Extrair CPF, CNPJ, boleto, chave PIX…** | [Documentos brasileiros](documentos.md) |
 | **Emitir laudo ou RELINT; escrever plugin** | [Laudo e plugins](laudo-e-plugins.md) |

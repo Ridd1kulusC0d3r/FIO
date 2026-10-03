@@ -44,6 +44,8 @@
 | `fio.lab.bancada` | servidor local + SPA |
 | `fio.relatorio` | relatório técnico, Markdown, laudo/RELINT, mapa interativo para cadernos |
 | `fio.lab.benchmark_real` | benchmark com a raiz do CNPJ como gabarito oculto |
+| `fio.indice_pronto` | indice do CNPJ pronto: `exportar` (VACUUM + xz + manifesto SHA-256), `importar` (baixa, confere, instala; mescla UFs) e `instalar` (auto: pronto, com plano B pela Receita) |
+| `fio.motor` | coleta de rede em paralelo por alvo (grafo montado na thread principal, em ordem), `--orcamento`, `--rapido` |
 | `fio.coletores.baseline` | baseline diferencial: descarta resposta indistinguível da de um valor impossível |
 | `fio.coletores.passivos` | `crtsh` (Certificate Transparency) e `wayback` |
 | `fio.core.financeiro` | boleto, chave PIX (EVP), CNH, CNS |

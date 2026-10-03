@@ -107,6 +107,33 @@ def cmd_alvo(args) -> int:
     return 0
 
 
+def cmd_buscar(args) -> int:
+    from . import busca
+    try:
+        cd, alvo = busca.preparar(args.valor, args.base_legal, _ator(args),
+                                  finalidade=args.finalidade, ddd=args.ddd,
+                                  dias=args.dias)
+    except (ValueError, ViolacaoDeEscopo) as e:
+        _p(f"nao foi possivel buscar: {e}")
+        return 2
+    print(f"alvo: {alvo.tipo} {alvo.rotulo or alvo.valor}  (caso {cd.caso_id})")
+    busca.executar(cd, _ator(args), offline=args.offline, rapido=not args.completo,
+                   orcamento=None if args.completo else args.orcamento,
+                   log=_p if args.verboso else (lambda s: None))
+    r = busca.resumo(cd)
+    print(f"entidades: {r['entidades']}  vinculos: {r['vinculos']} "
+          f"(alta confianca: {r['vinculos_alta']})")
+    for rot, itens in (("empresas", r["organizacoes"]), ("pessoas", r["pessoas"])):
+        if itens:
+            print(f"{rot}: {'; '.join(itens)}")
+    for a in r["avisos"]:
+        print(f"  ! {a}")
+    for a in r["proximo"]:
+        print(f"  -> {a}")
+    print(f"detalhes: fio relatorio --caso {cd.caso_id}   |   grafo: fio grafo --caso {cd.caso_id}")
+    return 0
+
+
 def cmd_investigar(args) -> int:
     cd = _caso(args)
     cols = args.coletores.split(",") if args.coletores else None
@@ -120,7 +147,8 @@ def cmd_investigar(args) -> int:
         res = investigar(cd, _ator(args), coletores=cols,
                          profundidade=args.profundidade,
                          permitir_rede=not args.offline,
-                         intervalo=args.intervalo,
+                         intervalo=args.intervalo, paralelo=args.paralelo,
+                         orcamento=args.orcamento, rapido=args.rapido,
                          expandir=args.expandir_escopo,
                          log=_p if args.verboso else (lambda s: None))
     except ViolacaoDeEscopo as e:
@@ -290,11 +318,43 @@ def cmd_indice(args) -> int:
         return 2
 
     saida = Path(args.saida or (raiz() / "cnpj.sqlite")).expanduser()
+    if args.acao == "exportar":
+        from .indice_pronto import exportar
+        origem = Path(args.origem).expanduser() if args.origem else saida
+        uf = (args.uf or "").strip().upper() or None
+        if uf and "," in uf:
+            _p("erro: --uf do exportar aceita uma UF por arquivo (ex.: --uf MG)")
+            return 2
+        destino = Path(args.para or f"cnpj-{uf or 'todas'}.sqlite.xz")
+        try:
+            man = exportar(origem, destino, uf=uf, log=_p)
+        except FileNotFoundError as e:
+            _p(f"erro: {e}")
+            return 2
+        print(json.dumps(man, ensure_ascii=False, indent=2))
+        print(f"publique {destino} e {destino}.json (ex.: gh release upload indice-latest ...)")
+        return 0
+
+    if args.acao == "baixar" and args.pronto:
+        from .indice_pronto import importar, IndiceProntoIndisponivel
+        if not ufs:
+            _p("erro: --pronto exige --uf (uma ou mais UFs)")
+            return 2
+        saida.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            res = importar(saida, sorted(ufs), base=args.de, log=_p)
+        except IndiceProntoIndisponivel as e:
+            _p(f"erro: {e}")
+            return 3
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
     if args.acao == "baixar":
         from .receita_download import montar
         saida.parent.mkdir(parents=True, exist_ok=True)
         cont = montar(saida, ufs=ufs, mes=args.mes, base=args.base,
-                      pasta_tmp=args.tmp, manter_zips=args.manter_zips, log=_p)
+                      pasta_tmp=args.tmp, manter_zips=args.manter_zips, log=_p,
+                      leve=args.leve)
         print(json.dumps(cont, ensure_ascii=False, indent=2))
         return 0
 
@@ -307,7 +367,7 @@ def cmd_indice(args) -> int:
             _p(f"erro: origem inexistente ou nao e diretorio: {origem}")
             return 2
         saida.parent.mkdir(parents=True, exist_ok=True)
-        cont = construir(origem, saida, log=_p, ufs=ufs)
+        cont = construir(origem, saida, log=_p, ufs=ufs, leve=args.leve)
         print(json.dumps(cont, ensure_ascii=False, indent=2))
         print(f"indice em {saida}")
         return 0
@@ -433,11 +493,30 @@ def construir_parser() -> argparse.ArgumentParser:
     a.add_argument("--ddd", help="DDD assumido para numero sem DDD")
     a.set_defaults(func=cmd_alvo)
 
+    b = sub.add_parser("buscar", help="busca em um passo: abre o caso, consulta as fontes e resume")
+    b.add_argument("valor", help="telefone, CNPJ, e-mail, dominio ou CEP")
+    b.add_argument("--base-legal", required=True, help="base legal (ver `fio bases`)")
+    b.add_argument("--finalidade", help="finalidade da consulta (ha um texto padrao)")
+    b.add_argument("--ddd", help="DDD assumido para telefone sem DDD")
+    b.add_argument("--dias", type=int, default=30, help="validade do escopo (padrao 30)")
+    b.add_argument("--completo", action="store_true", help="busca completa, sem orcamento de tempo")
+    b.add_argument("--orcamento", type=float, default=45.0, metavar="SEGUNDOS",
+                   help="limite de tempo da busca rapida (padrao 45)")
+    b.add_argument("--offline", action="store_true", help="so fontes locais")
+    b.add_argument("-v", "--verboso", action="store_true")
+    b.set_defaults(func=cmd_buscar)
+
     i = sub.add_parser("investigar", help="rodar os coletores e pivotar")
     i.add_argument("--caso", required=True)
     i.add_argument("--coletores", help="lista separada por virgula")
     i.add_argument("--profundidade", type=int, default=1)
     i.add_argument("--offline", action="store_true", help="so coletores locais")
+    i.add_argument("--paralelo", type=int, default=4,
+                   help="coletores de rede simultaneos por alvo (1 = em sequencia)")
+    i.add_argument("--orcamento", type=float, default=None, metavar="SEGUNDOS",
+                   help="limite de tempo de coleta; esgotado, nao abre novas consultas")
+    i.add_argument("--rapido", action="store_true",
+                   help="modo leve: fontes lentas fazem menos consultas (ex.: 3 recortes de busca)")
     i.add_argument("--intervalo", type=float, default=1.5,
                    help="segundos entre requisicoes ao mesmo host")
     i.add_argument("--expandir-escopo", action="store_true",
@@ -493,7 +572,7 @@ def construir_parser() -> argparse.ArgumentParser:
     co.set_defaults(func=cmd_coletores)
 
     ix = sub.add_parser("indice", help="indice reverso dos Dados Abertos do CNPJ")
-    ix.add_argument("acao", choices=["baixar", "construir", "status"])
+    ix.add_argument("acao", choices=["baixar", "construir", "status", "exportar"])
     ix.add_argument("--uf", help="filtrar por UF, ex.: MG ou MG,SP; reduz o indice final e a RAM, nao o trafego da Receita")
     ix.add_argument("--mes", help="AAAA-MM; padrao: o mais recente publicado")
     ix.add_argument("--base", help="URL base da Receita, se o endereco mudar")
@@ -502,6 +581,12 @@ def construir_parser() -> argparse.ArgumentParser:
     ix.add_argument("--tmp", help="pasta temporaria dos ZIPs baixados")
     ix.add_argument("--manter-zips", action="store_true",
                     help="nao apagar os ZIPs depois de processar")
+    ix.add_argument("--leve", action="store_true",
+                    help="indice enxuto: so estabelecimentos com telefone/e-mail (ou matriz), sem endereco completo nem CNAE")
+    ix.add_argument("--pronto", action="store_true",
+                    help="baixar: em vez de montar pela Receita, baixa o indice ja pronto (segundos; precisa de --uf)")
+    ix.add_argument("--de", metavar="URL", help="baixar --pronto: URL base dos arquivos (padrao: Release do repositorio)")
+    ix.add_argument("--para", metavar="ARQUIVO", help="exportar: arquivo .sqlite.xz de saida (padrao: cnpj-UF.sqlite.xz)")
     ix.set_defaults(func=cmd_indice)
 
     ex = sub.add_parser("exposicao",

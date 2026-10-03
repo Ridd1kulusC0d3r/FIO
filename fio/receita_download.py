@@ -23,6 +23,7 @@ import ssl
 import subprocess
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -73,6 +74,40 @@ def _get_curl(url: str, timeout: int = 60) -> str:
     if p.returncode:
         raise RuntimeError(p.stderr.decode("utf-8", "replace").strip() or f"curl rc={p.returncode}")
     return p.stdout.decode("utf-8", "replace")
+
+
+_SEM_ROTA = ("timed out", "timeout", "failed to connect", "network is unreachable",
+             "no route to host", "name or service not known", "connection refused",
+             "temporary failure in name resolution")
+
+
+class ReceitaInacessivel(RuntimeError):
+    """O runtime nao consegue nem abrir conexao com o servidor da Receita."""
+
+
+def _sem_rota(mensagem: str) -> bool:
+    """Falha de conexao (timeout, sem rota, DNS) e nao resposta do servidor.
+
+    Reset de conexao e HTTP 4xx/5xx sao respostas e merecem nova tentativa em
+    outra pasta/transporte; timeout de conexao nao: o host inteiro esta fora
+    de alcance e testar mes por mes so gasta minutos (15 s x 3 transportes x
+    cada mes).
+    """
+    baixa = mensagem.lower()
+    return any(k in baixa for k in _SEM_ROTA)
+
+
+def _aviso_inacessivel(host: str) -> str:
+    return (
+        f"Este runtime nao consegue abrir conexao com {host} (tempo esgotado). "
+        "A Receita costuma bloquear faixas de IP de nuvem (Google Colab, GitHub "
+        "Actions, provedores de hospedagem).\n"
+        "O que fazer:\n"
+        "  1) no SEU computador: fio indice baixar --uf MG   (gera cnpj.sqlite);\n"
+        "  2) envie esse arquivo para o Colab (celula 'Enviar indice pronto') ou "
+        "aponte FIO_INDICE_CNPJ para ele;\n"
+        "  3) ou siga sem o indice: as demais fontes continuam funcionando."
+    )
 
 
 def _get(url: str, timeout: int = 60) -> str:
@@ -127,10 +162,12 @@ def descobrir(base: str | None = None, mes: str | None = None,
     Receita retornou ``Connection reset by peer``.
     """
     erros = []
+    inacessiveis: list[str] = []
     base = base or os.environ.get("FIO_RECEITA_BASE")
     mes = mes or os.environ.get("FIO_RECEITA_MES") or None
     for b in ([base] if base else BASES):
         b = b.rstrip("/") + "/"
+        host = urllib.parse.urlparse(b).netloc
 
         # Mês explícito: não desperdice uma requisição na listagem raiz.
         if mes:
@@ -142,6 +179,8 @@ def descobrir(base: str | None = None, mes: str | None = None,
                 return b, mes, arquivos
             except Exception as e:
                 erros.append(f"{b}{mes}/: {type(e).__name__}: {e}")
+                if _sem_rota(str(e)):
+                    inacessiveis.append(host)
                 continue
 
         # Caminho normal: listar meses na raiz.
@@ -158,6 +197,12 @@ def descobrir(base: str | None = None, mes: str | None = None,
                 erros.append(f"{b}: indice sem pastas AAAA-MM")
         except Exception as e:
             erros.append(f"{b}: {type(e).__name__}: {e}")
+            if _sem_rota(str(e)):
+                # o host inteiro esta fora de alcance: sondar mes a mes so
+                # gastaria minutos (cada tentativa espera o timeout)
+                inacessiveis.append(host)
+                log(f"  sem conexao com {host}; nao vou sondar os meses um a um")
+                continue
 
         # Fallback Colab: a raiz pode falhar enquanto a pasta mensal responde.
         for m in _meses_recentes():
@@ -168,7 +213,12 @@ def descobrir(base: str | None = None, mes: str | None = None,
                     return b, m, arquivos
             except Exception as e:
                 erros.append(f"{b}{m}/: {type(e).__name__}: {e}")
+                if _sem_rota(str(e)):
+                    inacessiveis.append(host)
+                    break
 
+    if inacessiveis:
+        raise ReceitaInacessivel(_aviso_inacessivel(", ".join(sorted(set(inacessiveis)))))
     resumo = erros[-18:]
     raise RuntimeError(
         "nao encontrei a base da Receita. A fonte pode estar bloqueando ou "
@@ -211,19 +261,21 @@ def _zip_ok(caminho: Path) -> bool:
         return False
 
 
-def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
+def baixar(url: str, destino: Path, log=print, tentativas: int = 5,
+           validar=None) -> Path:
     """Baixa ``url`` de forma retomável e grava atomicamente em ``destino``.
 
     Um ``.parcial`` sobrevivente é retomado com ``Range``. ``If-Range`` evita
     concatenar conteúdo antigo quando a Receita substitui o objeto remoto.
     Ao final, o arquivo parcial é movido atomicamente para o nome definitivo.
     """
+    validar = validar or _zip_ok     # Receita: ZIP; indice pronto: xz + SHA-256
     destino = Path(destino)
     destino.parent.mkdir(parents=True, exist_ok=True)
     parcial = destino.with_suffix(destino.suffix + ".parcial")
 
     if destino.exists():
-        if _zip_ok(destino):
+        if validar(destino):
             log(f"  usando download ja concluido: {destino.name}")
             return destino
         log(f"  cache invalido: {destino.name}; baixando novamente")
@@ -273,7 +325,7 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
                 feito = ja if retomou else 0
                 _salvar_meta(parcial, url, r.headers)
                 proximo = ((feito / total) // 0.1 + 1) * 0.1 if total else 1.1
-                t0 = time.time()
+                t0 = ultimo_aviso = time.time()
                 with parcial.open(modo) as fh:
                     while True:
                         bloco = r.read(1 << 20)
@@ -281,19 +333,24 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
                             break
                         fh.write(bloco)
                         feito += len(bloco)
-                        if total and feito / total >= proximo:
-                            vel = (feito - ja) / max(time.time() - t0, 0.1) / 1e6
+                        # a cada 10% OU a cada 15 s: arquivo de GB com banda
+                        # modesta fica minutos entre dois 10%, e parece travado
+                        agora = time.time()
+                        if total and (feito / total >= proximo or agora - ultimo_aviso >= 15):
+                            vel = (feito - ja) / max(agora - t0, 0.1) / 1e6
                             log(f"  {destino.name}: {feito / 1e6:,.0f} de {total / 1e6:,.0f} MB ({vel:.1f} MB/s)")
-                            proximo += 0.1
+                            ultimo_aviso = agora
+                            while feito / total >= proximo:
+                                proximo += 0.1
 
             if total is not None and feito != total:
                 raise ConnectionError(f"recebidos {feito} de {total} bytes")
             # O tamanho HTTP pode estar correto e o objeto ainda assim estar
             # truncado/corrompido. Só promovemos o parcial depois de validar
             # a estrutura ZIP inteira.
-            if not _zip_ok(parcial):
+            if not validar(parcial):
                 _limpar_parcial(parcial)
-                raise ConnectionError("download concluido, mas o ZIP e invalido")
+                raise ConnectionError("download concluido, mas o arquivo e invalido (truncado ou corrompido)")
             os.replace(parcial, destino)
             _meta_path(parcial).unlink(missing_ok=True)
             return destino
@@ -316,12 +373,13 @@ def baixar(url: str, destino: Path, log=print, tentativas: int = 5) -> Path:
     # Alguns runtimes Colab observados resetam urllib, mas aceitam curl.
     # Como último recurso, baixa o objeto inteiro e valida o ZIP antes de usar.
     try:
-        return _baixar_curl_inteiro(url, destino, log=log)
+        return _baixar_curl_inteiro(url, destino, log=log, validar=validar)
     except Exception as curl_erro:
         raise RuntimeError(f"nao consegui baixar {url}: urllib={ultimo}; curl={curl_erro}")
 
 
-def _baixar_curl_inteiro(url: str, destino: Path, log=print, timeout: int = 3600) -> Path:
+def _baixar_curl_inteiro(url: str, destino: Path, log=print, timeout: int = 3600,
+                         validar=None) -> Path:
     """Último fallback de transporte: baixa o arquivo inteiro com curl.
 
     O caminho urllib continua sendo o principal porque oferece retomada com
@@ -341,16 +399,16 @@ def _baixar_curl_inteiro(url: str, destino: Path, log=print, timeout: int = 3600
     if p.returncode:
         parcial.unlink(missing_ok=True)
         raise RuntimeError(p.stderr.decode("utf-8", "replace").strip() or f"curl rc={p.returncode}")
-    if not _zip_ok(parcial):
+    if not (validar or _zip_ok)(parcial):
         parcial.unlink(missing_ok=True)
-        raise RuntimeError("curl concluiu, mas o ZIP e invalido")
+        raise RuntimeError("curl concluiu, mas o arquivo e invalido")
     os.replace(parcial, destino)
     return destino
 
 
 def montar(saida: str | Path, ufs: set[str] | None = None, mes: str | None = None,
            base: str | None = None, pasta_tmp: str | Path | None = None,
-           manter_zips: bool = False, log=print) -> dict:
+           manter_zips: bool = False, log=print, leve: bool = False) -> dict:
     """Descobre, baixa, processa e apaga a base, um ZIP por vez."""
     ufs = validar_ufs(ufs)
     b, m, arquivos = descobrir(base, mes, log)
@@ -366,7 +424,7 @@ def montar(saida: str | Path, ufs: set[str] | None = None, mes: str | None = Non
     provisoria = saida.with_suffix(saida.suffix + ".construindo")
     provisoria.unlink(missing_ok=True)
 
-    c = Construtor(provisoria, ufs, log)
+    c = Construtor(provisoria, ufs, log, leve)
     t0 = time.time()
     try:
         for i, nome in enumerate(alvo, 1):

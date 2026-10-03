@@ -3,7 +3,10 @@ claims, manifesto, calibracao, documentos financeiros e coletores passivos."""
 
 import contextlib
 import json
+import os
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -510,5 +513,418 @@ class TestMundoFachada(unittest.TestCase):
             self.assertEqual(len(lotes), 1)
 
 
+# ------------------------------------------ Receita inacessivel (Colab)
+class TestReceitaInacessivel(unittest.TestCase):
+    """O Colab nao alcanca dadosabertos.rfb.gov.br (timeout de conexao): em vez
+    de sondar mes a mes por 10 minutos, falha na hora com o que fazer."""
+
+    def _tempo_esgotado(self, chamadas):
+        def falso(url, timeout=60):
+            chamadas.append(url)
+            raise RuntimeError("urllib: URLError: <urlopen error timed out>; "
+                               "curl: RuntimeError: curl: (28) Failed to connect to "
+                               "dadosabertos.rfb.gov.br port 443 after 15002 ms")
+        return falso
+
+    def test_timeout_na_raiz_nao_sonda_meses(self):
+        from fio import receita_download as rd
+        chamadas = []
+        with mock.patch.object(rd, "_get", self._tempo_esgotado(chamadas)):
+            with self.assertRaises(rd.ReceitaInacessivel) as cm:
+                rd.descobrir("https://exemplo.test/cnpj/", log=lambda s: None)
+        self.assertEqual(len(chamadas), 1)            # so a raiz, nenhum mes
+        msg = str(cm.exception)
+        self.assertIn("bloquear faixas de IP de nuvem", msg)
+        self.assertIn("fio indice baixar", msg)
+
+    def test_timeout_com_mes_informado_tambem_falha_rapido(self):
+        from fio import receita_download as rd
+        chamadas = []
+        with mock.patch.object(rd, "_get", self._tempo_esgotado(chamadas)):
+            with self.assertRaises(rd.ReceitaInacessivel):
+                rd.descobrir("https://exemplo.test/cnpj/", mes="2026-08", log=lambda s: None)
+        self.assertEqual(len(chamadas), 1)
+
+    def test_reset_de_conexao_continua_sondando_meses(self):
+        from fio import receita_download as rd
+        chamadas = []
+
+        def falso(url, timeout=60):
+            chamadas.append(url)
+            if url.endswith("/cnpj/"):
+                raise RuntimeError("urllib: ConnectionResetError: Connection reset by peer")
+            return '<a href="Empresas0.zip">x</a>' if url.endswith("-07/") else "<html></html>"
+        with mock.patch.object(rd, "_get", falso):
+            b, m, arqs = rd.descobrir("https://exemplo.test/cnpj/", log=lambda s: None)
+        self.assertEqual(arqs, ["Empresas0.zip"])
+        self.assertGreater(len(chamadas), 1)          # reset NAO e falta de rota
+
+    def test_sem_rota_classifica_mensagens(self):
+        from fio.receita_download import _sem_rota
+        self.assertTrue(_sem_rota("curl: (28) Failed to connect ... Timeout was reached"))
+        self.assertTrue(_sem_rota("Network is unreachable"))
+        self.assertFalse(_sem_rota("HTTP Error 404: Not Found"))
+        self.assertFalse(_sem_rota("Connection reset by peer"))
+
+
+# ---------------------------------------- tarefa de indice (auto/pronto/receita)
+class TestTarefaIndice(unittest.TestCase):
+    def _rodar(self, params, pronto=None, receita=None):
+        from fio.lab.bancada import servidor as sv
+        from fio import indice_pronto as ip
+        from fio import receita_download as rd
+        logs = []
+        chamadas = {"pronto": 0, "receita": []}
+
+        def f_pronto(destino, ufs, base=None, log=print, **k):
+            chamadas["pronto"] += 1
+            if isinstance(pronto, Exception):
+                raise pronto
+            return {"estado": "pronto", "origem": "indice pronto"}
+
+        def f_receita(saida, ufs=None, mes=None, base=None, pasta_tmp=None,
+                      manter_zips=False, log=print, leve=False):
+            chamadas["receita"].append({"leve": leve, "ufs": ufs})
+            return {"mes": "2026-09"}
+        with tempfile.TemporaryDirectory() as t, \
+                mock.patch.dict("os.environ", {"FIO_HOME": t}), \
+                mock.patch.object(ip, "importar", f_pronto), \
+                mock.patch.object(rd, "montar", f_receita):
+            try:
+                res = sv._tarefa_indice("-", params, logs.append)
+            except Exception as e:
+                res = e
+        return res, chamadas, logs
+
+    def test_auto_usa_o_pronto_e_nao_toca_a_receita(self):
+        res, ch, _ = self._rodar({"ufs": "MG", "reconstruir": True})
+        self.assertEqual(ch["pronto"], 1)
+        self.assertEqual(ch["receita"], [])
+        self.assertEqual(res["origem"], "indice pronto")
+
+    def test_auto_cai_para_a_receita_em_modo_leve(self):
+        from fio.indice_pronto import IndiceProntoIndisponivel
+        res, ch, logs = self._rodar({"ufs": "MG", "reconstruir": True},
+                                    pronto=IndiceProntoIndisponivel("404"))
+        self.assertEqual(ch["pronto"], 1)
+        self.assertEqual(len(ch["receita"]), 1)
+        self.assertTrue(ch["receita"][0]["leve"])
+        self.assertTrue(any("indisponivel" in l for l in logs))
+
+    def test_pronto_estrito_nao_cai_para_a_receita(self):
+        from fio.indice_pronto import IndiceProntoIndisponivel
+        res, ch, _ = self._rodar({"ufs": "MG", "fonte": "pronto", "reconstruir": True},
+                                 pronto=IndiceProntoIndisponivel("404"))
+        self.assertIsInstance(res, IndiceProntoIndisponivel)
+        self.assertEqual(ch["receita"], [])
+
+    def test_receita_direta_e_sem_uf_nao_tem_pronto(self):
+        res, ch, _ = self._rodar({"fonte": "receita", "ufs": "MG", "reconstruir": True})
+        self.assertEqual(ch["pronto"], 0)
+        self.assertEqual(len(ch["receita"]), 1)
+        res, ch, _ = self._rodar({"ufs": "", "reconstruir": True})     # auto sem UF
+        self.assertEqual(ch["pronto"], 0)
+        self.assertEqual(len(ch["receita"]), 1)
+
+
+# ------------------------------------------------- coleta em paralelo
+class TestColetaParalela(unittest.TestCase):
+    """Fontes de rede de um mesmo alvo rodam juntas; o resultado nao muda."""
+
+    def _montar(self, tmp, n=4, espera=0.4):
+        from fio.coletores.base import Coletor, Achado, REGISTRO
+        from fio.caso import CasoEmDisco
+        from fio.politica import Caso
+
+        class Lenta(Coletor):
+            requer_rede = True
+            tipos_alvo = ("dominio",)
+            admiralty = "B2"
+
+            def coletar(self, alvo, ctx):
+                # Event.wait, nao time.sleep: outro teste da suite pode deixar
+                # time.sleep trocado por um falso
+                threading.Event().wait(espera)
+                return [Achado(alvo, "rel", Entidade("dominio", f"{self.nome}.exemplo.test"),
+                               Fonte(self.nome, "B2"))]
+
+        nomes = []
+        for i in range(n):
+            c = type(f"Lenta{i}", (Lenta,), {"nome": f"lenta{i}"})()
+            REGISTRO[c.nome] = c
+            nomes.append(c.nome)
+        cd = CasoEmDisco("PAR", base=Path(tmp))
+        cd.criar(Caso(id="PAR", titulo="paralelo", base_legal="pesquisa-academica",
+                      finalidade="medir o ganho da coleta em paralelo",
+                      responsavel="ci", escopo=["exemplo.test"]), "ci")
+        cd.add_alvo(Entidade("dominio", "exemplo.test"), "ci")
+        return cd, nomes
+
+    def test_paralelo_e_mais_rapido_e_igual(self):
+        from fio.motor import investigar
+        from fio.coletores.base import REGISTRO
+        with tempfile.TemporaryDirectory() as t1, tempfile.TemporaryDirectory() as t2:
+            cd1, nomes = self._montar(t1)
+            t = time.perf_counter()
+            r1 = investigar(cd1, "ci", coletores=nomes, paralelo=1, intervalo=0)
+            seq = time.perf_counter() - t
+            self.assertEqual(sorted(r1.executados), sorted(nomes), r1.erros)
+            cd2, _ = self._montar(t2)
+            t = time.perf_counter()
+            investigar(cd2, "ci", coletores=nomes, paralelo=4, intervalo=0)
+            par = time.perf_counter() - t
+            for n in nomes:
+                REGISTRO.pop(n, None)
+            self.assertGreaterEqual(seq, 1.5)           # 4 x 0,4 s em sequencia
+            self.assertLess(par, seq * 0.6)             # em paralelo: ~0,4 s
+            g1, g2 = cd1.grafo(), cd2.grafo()
+            self.assertEqual(sorted(g1.entidades), sorted(g2.entidades))
+            self.assertEqual(sorted(g1.arestas), sorted(g2.arestas))
+            # a cadeia de custodia sobrevive a gravacoes concorrentes
+            for cd in (cd1, cd2):
+                ok, probs = cd.ledger().verificar()
+                self.assertTrue(ok, probs)
+
+    def test_orcamento_para_de_abrir_consultas(self):
+        from fio.motor import investigar
+        from fio.coletores.base import REGISTRO
+        with tempfile.TemporaryDirectory() as t:
+            cd, nomes = self._montar(t, n=2, espera=0.3)
+            # segundo alvo para o orcamento (0 s) cortar antes de consulta-lo
+            cd.add_alvo(Entidade("dominio", "outro.exemplo.test"), "ci")
+            investigar(cd, "ci", coletores=nomes, paralelo=1, intervalo=0, orcamento=0.0)
+            for n in nomes:
+                REGISTRO.pop(n, None)
+            acoes = [r.acao for r in cd.ledger().registros()]
+            self.assertIn("orcamento.esgotado", acoes)
+
+
+class TestLedgerRapido(unittest.TestCase):
+    def test_gravar_nao_reler_o_arquivo_inteiro(self):
+        with tempfile.TemporaryDirectory() as t:
+            led = Ledger(Path(t), "T", "ci")
+            for i in range(300):
+                led.registrar("a", alvo=str(i), metadados={"x": "y" * 50})
+            ini = time.perf_counter()
+            for i in range(300):
+                led.registrar("b", alvo=str(i))
+            dt = time.perf_counter() - ini
+            self.assertLess(dt, 1.5)                    # antes: O(n^2), varios segundos
+            ok, probs = led.verificar()
+            self.assertTrue(ok, probs)
+            self.assertEqual(len(led), 600)
+
+    def test_instancias_diferentes_encadeiam_corretamente(self):
+        with tempfile.TemporaryDirectory() as t:
+            a, b = Ledger(Path(t), "T", "ci"), Ledger(Path(t), "T", "ci")
+            for i in range(20):
+                (a if i % 2 else b).registrar("x", alvo=str(i))
+            ok, probs = a.verificar()
+            self.assertTrue(ok, probs)
+
+    def test_registro_longo_com_ultima_linha_maior_que_o_bloco(self):
+        with tempfile.TemporaryDirectory() as t:
+            led = Ledger(Path(t), "T", "ci")
+            led.registrar("curto")
+            led.registrar("longo", metadados={"lixo": "z" * 30000})
+            r = led.registrar("depois")
+            self.assertEqual(r.seq, 3)
+            self.assertTrue(led.verificar()[0])
+
+
+class TestGrafoRapido(unittest.TestCase):
+    def test_vizinhos_e_caminho_com_cache_invalidam_ao_crescer(self):
+        from fio.grafo.modelo import Aresta
+        g = Grafo("T")
+        ents = [g.add_entidade(Entidade("telefone", f"+55319999{i:04d}")) for i in range(5)]
+        for a, b in zip(ents, ents[1:]):
+            g.add_aresta(Aresta(a.id, b.id, "r", [Fonte("t", "B2")]))
+        self.assertEqual(len(g.vizinhos(ents[2].id)), 2)
+        self.assertEqual(g.caminho(ents[0].id, ents[4].id),
+                         [e.id for e in ents])
+        # atalho: o cache precisa perceber a aresta nova
+        g.add_aresta(Aresta(ents[0].id, ents[4].id, "atalho", [Fonte("t", "B2")]))
+        self.assertEqual(len(g.vizinhos(ents[0].id)), 2)
+        self.assertEqual(g.caminho(ents[0].id, ents[4].id), [ents[0].id, ents[4].id])
+        self.assertIsNone(g.caminho(ents[0].id, "telefone:inexistente"))
+
+
+# ------------------------------------------- indice leve, exportar e pronto
+class TestIndicePronto(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import csv
+        from fio.lab.sintetico import Gerador
+        from fio.indice import construir
+        cls.tmp = tempfile.TemporaryDirectory()
+        d = Path(cls.tmp.name)
+        cls.mundo = Gerador(5).gerar(8)
+        Gerador(5).gravar(cls.mundo, d / "mundo")
+        rec = d / "mundo" / "receita"
+        # estabelecimentos "mortos para a busca": filiais sem telefone nem e-mail
+        extras = []
+        for raiz in {e["raiz"] for e in cls.mundo.estabelecimentos}:
+            extras.append([raiz, "0099", "00", "2", "FILIAL SEM CONTATO", "02", "", "0", "", "",
+                           "20200101", "4930202", "", "RUA", "MORTA", "1", "", "CENTRO",
+                           "30100000", "MG", "0001", "", "", "", "", "", "", "", "", ""])
+        with (rec / "Estabelecimentos0.csv").open("a", encoding="latin-1", newline="") as fh:
+            csv.writer(fh, delimiter=";", quoting=csv.QUOTE_ALL).writerows(extras)
+        cls.n_mortos = len(extras)
+        cls.cheio = d / "cheio.sqlite"
+        cls.leve = d / "leve.sqlite"
+        construir(rec, cls.cheio, log=lambda s: None)
+        construir(rec, cls.leve, log=lambda s: None, leve=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _n(self, db):
+        import sqlite3
+        c = sqlite3.connect(str(db))
+        try:
+            return c.execute("SELECT COUNT(*) FROM estabelecimento").fetchone()[0]
+        finally:
+            c.close()
+
+    def test_leve_descarta_so_o_que_a_busca_nao_alcanca(self):
+        self.assertEqual(self._n(self.cheio) - self._n(self.leve), self.n_mortos)
+        self.assertLess(self.leve.stat().st_size, self.cheio.stat().st_size)
+
+    def test_busca_por_telefone_e_identica_no_leve(self):
+        from fio.indice import IndiceCNPJ
+        with IndiceCNPJ(self.cheio) as a, IndiceCNPJ(self.leve) as b:
+            for tel in self.mundo.telefones:
+                ca = {r["cnpj"] for r in a.por_telefone(tel)}
+                cb = {r["cnpj"] for r in b.por_telefone(tel)}
+                self.assertEqual(ca, cb, tel)
+                self.assertTrue(ca)
+            meta = b.meta()
+            self.assertEqual(meta.get("leve"), "1")
+
+    def test_exportar_e_importar_pronto_por_uf(self):
+        import functools
+        import http.server
+        import threading
+        from fio.indice import IndiceCNPJ
+        from fio.indice_pronto import exportar, importar, IndiceProntoIndisponivel
+        ufs = sorted({e["uf"] for e in self.mundo.estabelecimentos})
+        uf = ufs[0]
+        pub = Path(self.tmp.name) / "pub"
+        pub.mkdir(exist_ok=True)
+        man = exportar(self.leve, pub / f"cnpj-{uf}.sqlite.xz", uf=uf, log=lambda s: None)
+        self.assertEqual(man["uf"], uf)
+        self.assertLess(man["bytes"], man["bytes_banco"])           # comprimiu
+        self.assertTrue(man["leve"])
+
+        class H(http.server.SimpleHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+        srv = http.server.ThreadingHTTPServer(
+            ("127.0.0.1", 8803), functools.partial(H, directory=str(pub)))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            base = "http://127.0.0.1:8803/"
+            destino = Path(self.tmp.name) / "instalado.sqlite"
+            res = importar(destino, [uf], base=base, log=lambda s: None)
+            self.assertEqual(res["origem"], "indice pronto")
+            with IndiceCNPJ(destino) as inst, IndiceCNPJ(self.leve) as ref:
+                esperado = {t for t, g in self.mundo.telefones.items()
+                            if any(e["uf"] == uf and f"+55{e['ddd1']}{e['tel1']}" == t
+                                   for e in self.mundo.estabelecimentos)}
+                self.assertTrue(esperado)
+                for tel in esperado:
+                    self.assertEqual({r["cnpj"] for r in inst.por_telefone(tel)},
+                                     {r["cnpj"] for r in ref.por_telefone(tel)
+                                      if r["uf"] == uf})
+            # UF sem arquivo publicado: mensagem clara, nada instalado
+            with self.assertRaises(IndiceProntoIndisponivel):
+                importar(Path(self.tmp.name) / "nao.sqlite", ["ZZ"], base=base, log=lambda s: None)
+            self.assertFalse((Path(self.tmp.name) / "nao.sqlite").exists())
+            # arquivo adulterado: o SHA-256 recusa e nada e instalado
+            xz = pub / f"cnpj-{uf}.sqlite.xz"
+            dados = bytearray(xz.read_bytes())
+            dados[len(dados) // 2] ^= 0xFF
+            xz.write_bytes(bytes(dados))
+            with mock.patch("fio.receita_download.time.sleep"):
+                with self.assertRaises(Exception):
+                    importar(Path(self.tmp.name) / "adulterado.sqlite", [uf], base=base,
+                             log=lambda s: None)
+            self.assertFalse((Path(self.tmp.name) / "adulterado.sqlite").exists())
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
+
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBuscaEmUmPasso(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self._env = os.environ.get("FIO_HOME")
+        os.environ["FIO_HOME"] = self._tmp.name
+
+    def tearDown(self):
+        if self._env is None:
+            os.environ.pop("FIO_HOME", None)
+        else:
+            os.environ["FIO_HOME"] = self._env
+        self._tmp.cleanup()
+
+    def test_reconhece_tipos(self):
+        from fio.busca import reconhecer
+        casos = {"(31) 98888-7777": "telefone", "11.222.333/0001-81": "cnpj",
+                 "A@B.com": "email", "https://www.exemplo.com.br/x": "dominio",
+                 "30120-010": "cep"}
+        for v, tipo in casos.items():
+            self.assertEqual(reconhecer(v).tipo, tipo, v)
+        self.assertEqual(reconhecer("A@B.com").valor, "a@b.com")
+        self.assertEqual(reconhecer("https://www.exemplo.com.br/x").valor, "exemplo.com.br")
+        with self.assertRaises(ValueError):
+            reconhecer("123")
+        with self.assertRaises(ValueError):
+            reconhecer("")
+
+    def test_preparar_exige_base_legal_valida(self):
+        from fio import busca
+        from fio.politica import ViolacaoDeEscopo
+        with self.assertRaises(ValueError):
+            busca.preparar("(31) 98888-7777", "", "t")
+        with self.assertRaises(ViolacaoDeEscopo):
+            busca.preparar("(31) 98888-7777", "inexistente", "t")
+
+    def test_busca_offline_ponta_a_ponta(self):
+        from fio import busca
+        cd, alvo = busca.preparar("(31) 98888-7777", "lgpd-7-i", "t")
+        busca.executar(cd, "t", offline=True)
+        r = busca.resumo(cd)
+        self.assertEqual(r["alvo"]["tipo"], "telefone")
+        self.assertGreaterEqual(r["entidades"], 1)
+        self.assertTrue(r["sem_indice"])
+        self.assertTrue(any("indice" in a.lower() for a in r["avisos"]))
+        self.assertNotIn("dorks", r["alvo"]["atributos"])
+
+    def test_sem_rede_cai_para_offline(self):
+        from fio import busca
+        antes = busca.ha_rede
+        busca.ha_rede = lambda *a, **k: False
+        try:
+            cd, _ = busca.preparar("(31) 98888-7777", "lgpd-7-i", "t")
+            busca.executar(cd, "t")
+        finally:
+            busca.ha_rede = antes
+        self.assertTrue(busca.resumo(cd)["sem_rede"])
+
+    def test_cli_buscar(self):
+        import io
+        import contextlib
+        from fio import cli
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = cli.main(["buscar", "(31) 98888-7777", "--base-legal", "lgpd-7-i", "--offline"])
+        self.assertEqual(rc, 0)
+        self.assertIn("entidades:", buf.getvalue())
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(cli.main(["buscar", "123", "--base-legal", "lgpd-7-i"]), 2)

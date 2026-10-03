@@ -42,6 +42,33 @@ class TestBancadaNavegador(unittest.TestCase):
         else:
             os.environ["FIO_HOME"] = cls._env
 
+    def test_busca_em_um_passo(self):
+        """Cola um telefone, clica Buscar e ve o resultado: sem montar caso."""
+        erros = []
+        with sync_playwright() as pw:
+            nav = pw.chromium.launch()
+            pg = nav.new_page(viewport={"width": 1280, "height": 900})
+            pg.on("pageerror", lambda e: erros.append(str(e)))
+            pg.on("console", lambda m: m.type == "error" and erros.append(m.text))
+            pg.goto("http://127.0.0.1:8793/#t=e2e")
+            pg.wait_for_selector("#bq-v")
+            self.assertGreaterEqual(pg.locator("#bq-bl option").count(), 10)
+            pg.fill("#bq-v", "(31) 98888-7777")
+            pg.click("#bq-go")
+            pg.wait_for_selector("#bq-ver", timeout=90000)
+            self.assertIn("entidades", pg.inner_text("#bq-out"))
+            pg.click("#bq-ver")
+            pg.wait_for_selector("#g circle", timeout=15000)
+            # identificador invalido: erro claro, sem travar
+            pg.click(".nv-i[data-v='painel']")
+            pg.wait_for_selector("#bq-v")
+            pg.fill("#bq-v", "123")
+            pg.click("#bq-go")
+            pg.wait_for_selector(".toast.er")
+            self.assertTrue(pg.locator("#bq-go").is_enabled())
+            nav.close()
+        self.assertEqual([e for e in erros if "favicon" not in e and "status of 400" not in e], [])
+
     def test_jornada_do_leigo(self):
         erros = []
         with sync_playwright() as pw:
@@ -136,7 +163,7 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
                     pass
 
                 def do_GET(self):
-                    alvo = prefixo + "/" + ("workbench/" if "wb" in self.path else "")
+                    alvo = prefixo + "/" + ("simples/" if "simples" in self.path else "")
                     h = (f'<iframe id="f" src="http://127.0.0.1:8792{alvo}#t=simtok" '
                          f'style="width:1200px;height:800px"></iframe>').encode()
                     self.send_response(200)
@@ -153,8 +180,8 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
             try:
                 with sync_playwright() as pw:
                     nav = pw.chromium.launch()
-                    for url, texto in (("http://127.0.0.1:8793/", "Telefone e caso"),
-                                       ("http://127.0.0.1:8793/?wb", "Bem-vindo ao F.I.O. Lab")):
+                    for url, texto in (("http://127.0.0.1:8793/", "Bem-vindo ao F.I.O. Lab"),
+                                       ("http://127.0.0.1:8793/?simples", "Telefone e caso")):
                         pg = nav.new_page(viewport={"width": 1300, "height": 900})
                         pg.on("pageerror", lambda e: erros.append(str(e)))
                         pg.add_init_script(
@@ -163,7 +190,16 @@ class TestBancadaAtrasDeProxy(unittest.TestCase):
                         pg.goto(url)
                         fr = pg.frame_locator("#f")
                         fr.locator(f"text={texto}").first.wait_for(timeout=10000)
-                        if "wb" in url:
+                        if "simples" in url:
+                            # frontend do Colab: a lista de base legal tem de vir
+                            # do /api/estado (dict) e a versao aparecer
+                            fr.locator("#baseLegal option").nth(3).wait_for(
+                                state="attached", timeout=10000)
+                            n = fr.locator("#baseLegal option").count()
+                            assert n >= 10, f"base legal com {n} opcoes"
+                            assert fr.locator("#baseLegal").input_value() == ""
+                            assert "F.I.O." in fr.locator("#versao").inner_text()
+                        if "simples" not in url:
                             fr.locator("#bvdemo").click()
                             fr.locator("#g circle").first.wait_for(timeout=15000)
                         pg.close()

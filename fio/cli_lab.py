@@ -143,6 +143,7 @@ def cmd_lab(a) -> int:
         cfg = Config(coletores=a.coletores.split(",") if a.coletores else None,
                      profundidade=a.profundidade, offline=a.offline,
                      expandir_escopo=a.expandir_escopo, intervalo=a.intervalo,
+                     paralelo=a.paralelo, orcamento=a.orcamento, rapido=a.rapido,
                      relatorio=a.relatorio, laudo=a.laudo, modelo_laudo=a.modelo,
                      descricao=a.descricao or "")
         exp = executar(cd, a.ator or "analista", cfg, log=_p if a.verboso else (lambda s: None))
@@ -258,6 +259,12 @@ def registrar(sub) -> None:
     lab.add_argument("--offline", action="store_true")
     lab.add_argument("--expandir-escopo", action="store_true")
     lab.add_argument("--intervalo", type=float, default=1.5)
+    lab.add_argument("--paralelo", type=int, default=4,
+                     help="pipeline: coletores de rede simultaneos por alvo")
+    lab.add_argument("--orcamento", type=float, default=None, metavar="SEGUNDOS",
+                     help="pipeline: limite de tempo de coleta")
+    lab.add_argument("--rapido", action="store_true",
+                     help="pipeline: modo leve (menos consultas por fonte)")
     lab.add_argument("--relatorio")
     lab.add_argument("--laudo")
     lab.add_argument("--modelo", choices=["laudo", "relint"], default="laudo")

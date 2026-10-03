@@ -44,6 +44,7 @@ class Estado:
     hosts_extra: tuple = ()
     permitir_iframe = False
     modo_colab = False
+    interface_simples = False    # no Colab, a tela completa e a padrao
     fila: Fila | None = None
     porta = 8765
     ator = "bancada"
@@ -58,8 +59,18 @@ def _tarefa_pipeline(caso_id: str, p: dict, log) -> dict:
                  offline=bool(p.get("offline", False)),
                  expandir_escopo=bool(p.get("expandir_escopo", False)),
                  intervalo=float(p.get("intervalo", 1.5)),
+                 rapido=bool(p.get("rapido", False)),
+                 orcamento=float(p["orcamento"]) if p.get("orcamento") else None,
                  descricao=p.get("descricao", "execucao pela bancada"))
-    exp = executar(cd, p.get("ator") or Estado.ator, cfg, log=log)
+    ator = p.get("ator") or Estado.ator
+    if not cfg.offline and p.get("verificar_rede"):
+        from ...busca import ha_rede
+        if not ha_rede():
+            cfg.offline = True
+            log("sem acesso a internet: fontes online puladas")
+            cd.ledger(ator).registrar("rede.indisponivel", alvo=cd.caso_id,
+                                      resumo="sem saida para a internet; busca feita so com dados locais")
+    exp = executar(cd, ator, cfg, log=log)
     return {"experimento": exp.id, "estado": exp.estado, "metricas": exp.metricas,
             "estagios": exp.estagios, "erro": exp.erro}
 
@@ -73,20 +84,21 @@ def _tarefa_avaliar(_caso: str, p: dict, log) -> dict:
 
 
 def _tarefa_indice(_caso: str, p: dict, log) -> dict:
-    """Monta o índice da Receita em segundo plano, sempre na sessão local."""
+    """Instala o indice da Receita na sessao local (veja indice_pronto.instalar)."""
     import os
-    from ...receita_download import montar, validar_ufs
+    from ...receita_download import validar_ufs
+    from ...indice_pronto import instalar
     saida = raiz() / "cnpj.sqlite"
     ufs = validar_ufs({x.strip().upper() for x in str(p.get("ufs", "")).split(",") if x.strip()} or None)
-    mes = str(p.get("mes") or "").strip() or None
     if saida.exists() and not bool(p.get("reconstruir", False)):
         from ...indice import IndiceCNPJ
         with IndiceCNPJ(saida) as idx:
             return {"estado": "existente", "arquivo": str(saida), "meta": idx.meta()}
-    log(f"indice Receita: UF={','.join(sorted(ufs)) if ufs else 'todas'} mes={mes or 'automatico'}")
-    res = montar(saida, ufs=ufs, mes=mes, pasta_tmp=raiz() / "receita-tmp", log=log)
+    res = instalar(saida, ufs, mes=str(p.get("mes") or "").strip() or None,
+                   fonte=str(p.get("fonte") or "auto"), leve=bool(p.get("leve", True)),
+                   log=log, pasta_tmp=raiz() / "receita-tmp")
     os.environ["FIO_INDICE_CNPJ"] = str(saida)
-    return {"estado": "pronto", "arquivo": str(saida), **res}
+    return res
 
 
 # ----------------------------------------------------------------- http
@@ -172,22 +184,33 @@ class Manipulador(BaseHTTPRequestHandler):
         return cd
 
     # -------------------------------------------------------------- rotas
+    @staticmethod
+    def _caminho(bruto: str) -> tuple[str, bool]:
+        """Separa o prefixo /simples/: a tela simples do Colab e a bancada
+        completa compartilham a mesma API, mas a simples usa `./api` relativo
+        a pagina, entao `/simples/api/...` precisa chegar como `/api/...`."""
+        if bruto == "/simples" or bruto.startswith("/simples/"):
+            return (bruto[len("/simples"):] or "/"), True
+        return bruto, False
+
     def do_GET(self):
         if not self._host_ok():
             return self._erro("host nao permitido", 403)
         url = urllib.parse.urlparse(self.path)
         qs = urllib.parse.parse_qs(url.query)
-        if url.path in ("/", "/index.html"):
-            pagina = UI_COLAB if Estado.modo_colab and UI_COLAB.exists() else UI
+        caminho, simples = self._caminho(url.path)
+        if caminho in ("/", "/index.html"):
+            quer_simples = simples or (Estado.modo_colab and Estado.interface_simples)
+            pagina = UI_COLAB if quer_simples and UI_COLAB.exists() else UI
             return self._html(pagina.read_text(encoding="utf-8"))
-        if url.path in ("/workbench", "/workbench/"):
+        if caminho in ("/workbench", "/workbench/"):
             return self._html(UI.read_text(encoding="utf-8"))
-        if not url.path.startswith("/api/"):
+        if not caminho.startswith("/api/"):
             return self._erro("nao encontrado", 404)
         if not self._token_ok(qs):
             return self._erro("token ausente ou invalido", 401)
         try:
-            return self._rota_get(url.path, qs)
+            return self._rota_get(caminho, qs)
         except FileNotFoundError as e:
             return self._erro(f"nao encontrado: {e}", 404)
         except (ValueError, KeyError) as e:
@@ -200,7 +223,7 @@ class Manipulador(BaseHTTPRequestHandler):
         if not self.headers.get("X-FIO-Token") or not self._token_ok({}):
             return self._erro("token ausente ou invalido", 401)
         try:
-            return self._rota_post(url.path, self._corpo())
+            return self._rota_post(self._caminho(url.path)[0], self._corpo())
         except ViolacaoDeEscopo as e:
             return self._erro(f"politica do caso: {e}", 403)
         except FileNotFoundError as e:
@@ -245,6 +268,9 @@ class Manipulador(BaseHTTPRequestHandler):
         if partes[:1] == ["casos"] and len(partes) >= 2:
             cd = self._caso(partes[1])
             sub = partes[2] if len(partes) > 2 else ""
+            if sub == "resumo":
+                from ... import busca
+                return self._json(busca.resumo(cd))
             if sub == "":
                 g = cd.grafo()
                 return self._json({"caso": cd.caso().dict(),
@@ -309,6 +335,20 @@ class Manipulador(BaseHTTPRequestHandler):
         if partes == ["avaliar"]:
             tid = Estado.fila.enfileirar("avaliar", "-", d)
             return self._json({"tarefa": tid}, 202)
+        if partes == ["busca"]:
+            from ... import busca
+            cd, alvo = busca.preparar(
+                str(d.get("valor", "")), str(d.get("base_legal", "")), ator,
+                finalidade=d.get("finalidade") or None, responsavel=d.get("responsavel") or None,
+                ddd=d.get("ddd") or None, dias=int(d.get("dias", 30)))
+            rapido = d.get("modo", "rapido") != "completo"
+            tid = Estado.fila.enfileirar("pipeline", cd.caso_id, {
+                "ator": ator, "offline": bool(d.get("offline")), "rapido": rapido,
+                "orcamento": busca.ORCAMENTO_PADRAO if rapido else None,
+                "verificar_rede": True, "descricao": "busca em um passo"})
+            return self._json({"caso": cd.caso_id, "tarefa": tid,
+                               "alvo": {"tipo": alvo.tipo, "valor": alvo.valor,
+                                        "rotulo": alvo.rotulo or alvo.valor}}, 202)
         if partes == ["demo"]:
             from ...demo import montar
             return self._json(montar(ator, recriar=bool(d.get("recriar"))), 201)
@@ -349,7 +389,7 @@ class Manipulador(BaseHTTPRequestHandler):
 
 def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
            bloquear: bool = True, hosts_extra: list[str] | None = None,
-           modo_colab: bool = False):
+           modo_colab: bool = False, interface_simples: bool = False):
     """modo_colab: o Colab entrega a pagina por um proxy autenticado do
     Google, com Host proprio e dentro de iframe. Nesse modo aceitamos
     qualquer Host e a exibicao em iframe; o token segue obrigatorio."""
@@ -363,6 +403,7 @@ def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
     Estado.hosts_extra = tuple(h.lower() for h in extra)
     Estado.permitir_iframe = modo_colab
     Estado.modo_colab = modo_colab
+    Estado.interface_simples = interface_simples
     Estado.porta = porta
     (raiz() / "lab").mkdir(parents=True, exist_ok=True)
     Estado.fila = Fila(raiz() / "lab" / "fila.sqlite")
@@ -372,8 +413,10 @@ def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
     Estado.fila.iniciar(2)
     srv = ThreadingHTTPServer(("127.0.0.1", porta), Manipulador)
     url = f"http://127.0.0.1:{porta}/#t={Estado.token}"
-    print(f"F.I.O. Lab {__version__} — bancada em {url}")
-    print("o token no endereco e a unica credencial desta sessao; nao compartilhe")
+    # flush: com a saida num pipe (testes, lancadores, Colab) o Python guarda
+    # no buffer e quem le a primeira linha ficaria esperando para sempre
+    print(f"F.I.O. Lab {__version__} — bancada em {url}", flush=True)
+    print("o token no endereco e a unica credencial desta sessao; nao compartilhe", flush=True)
     if abrir:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     if not bloquear:

@@ -2,6 +2,67 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versões semânticas.
 
+## [3.2.0] — 2026-10-03
+
+### Adicionado
+- **Busca em um passo.** Antes, uma pesquisa pedia cinco etapas (criar caso, escolher base legal, incluir alvo, rodar o pipeline, abrir o resultado) e, na prática, muita gente não chegava ao fim. Agora: cole o identificador e clique em **Buscar** (Painel da bancada e tela simplificada do Colab) ou rode `fio buscar "(31) 98888-7777" --base-legal lgpd-7-i`. O tipo (telefone, CNPJ, e-mail, domínio, CEP) é reconhecido sozinho; o caso nasce com finalidade padrão e escopo de 30 dias. A política não afrouxa: a base legal continua obrigatória e não tem valor padrão na CLI.
+- **Resumo da busca** (`GET /api/casos/<id>/resumo`, `fio.busca.resumo`): entidades, vínculos, empresas e pessoas encontradas e, principalmente, **o que faltou** (sem índice da Receita, sem internet, orçamento esgotado) com o próximo passo sugerido.
+- **Verificação de rede** antes da coleta: sem saída para a internet, a busca cai para offline em segundos (com registro na custódia) em vez de ficar "rodando" por minutos esperando timeouts.
+- Módulo `fio/busca.py`, reutilizado pela CLI, pela bancada e pelo caderno do Colab (o caderno não tem mais cópia própria do reconhecimento de tipos).
+
+### Corrigido
+- Campo "Identificador" do novo caso na bancada tinha um `pattern` inválido para o Chrome (flag `v`), gerando erro no console e validação quebrada.
+- Ícone (favicon) ausente gerava 404 a cada abertura.
+- Tela simplificada do Colab: removidos campos que não faziam sentido na busca (ID do caso, título, profundidade); o caso é criado automaticamente.
+
+## [3.1.0] — 2026-10-02
+
+### Adicionado
+- **Índice do CNPJ pronto** (`fio indice baixar --uf MG --pronto`): baixa em **segundos** um arquivo já montado e comprimido (xz) da Release `indice-latest`, com SHA-256 conferido e retomada; várias UFs são mescladas. `fio indice exportar` gera os arquivos (`cnpj-UF.sqlite.xz` + manifesto); o workflow `indice` os publica todo mês (e avisa em vez de falhar se a Receita bloquear o runner).
+- **Modo leve** (`--leve`): índice só com estabelecimentos que têm telefone/e-mail (ou a matriz), sem logradouro/bairro/CNAE. A busca por telefone devolve os mesmos CNPJs do índice completo (testado).
+- **Colab e bancada:** a célula do índice e a **bancada completa** (Fontes e diagnóstico) ganharam o seletor de modo (`auto`/`pronto`/`receita`) e a montagem do índice com progresso. Antes a bancada completa, que o Colab abre por padrão, não tinha como montar o índice.
+- **Coleta de rede em paralelo** (`--paralelo`, padrão 4), **`--orcamento SEGUNDOS`** e **`--rapido`** em `fio investigar` e `fio lab pipeline`.
+- Guia [Pesquisa rápida e leve](docs/guia/desempenho.md).
+
+### Desempenho
+- **Pipeline 10× mais rápido** (mundo sintético de 60 grupos, offline: 40,4 s → 3,8 s): o ledger gravava relendo o arquivo inteiro a cada registro (O(n²)); agora lê só o final. A vizinhança do grafo é cacheada (pontes e caminhos varriam todas as arestas a cada passo) e o `caso.json` é gravado uma vez, não a cada pivô.
+- Cache HTTP e ledger **seguros para threads** (gravação serializada por arquivo).
+
+## [3.0.6] — 2026-10-02
+
+### Alterado
+- **Colab abre a bancada completa por padrão** (painel, grafo, vínculos, observações, custódia: as telas do GIF). Antes abria a tela simplificada e a completa ficava atrás de um botão, então quem chegava pelo Colab não encontrava as telas da demonstração. A tela simples continua disponível (`interface: simples` na célula, ou `/simples/`); a API é a mesma.
+
+## [3.0.5] — 2026-10-02
+
+### Corrigido
+- **Colab: a lista de "Base legal" da tela do Colab vinha vazia** (`/api/estado` devolve um dicionário e a tela chamava `.map` nele; o erro abortava a inicialização inteira, e criar o caso falhava com "base legal '' não reconhecida"). A lista agora vem do estado, começa em "Selecione a base legal…" e a tela exige a escolha. Coberto por teste E2E.
+- **Receita inacessível a partir de nuvem:** quando o servidor da Receita não aceita conexão (timeout), o F.I.O. agora **falha na hora** com a explicação e as saídas, em vez de sondar mês a mês por vários minutos (3 transportes × 15 s × cada mês). Reset de conexão e erros HTTP continuam sendo tentados.
+
+### Adicionado
+- **Colab, célula 6b "Enviar índice pronto":** traz para a sessão um `cnpj.sqlite` montado no seu computador, por upload ou por URL https (com progresso e retomada), validando que é um índice do F.I.O.
+
+## [3.0.4] — 2026-10-02
+
+### Alterado
+- **Colab começa pelo frontend:** a ordem do caderno agora é Instalar › Sessão › **Abrir o F.I.O.** (tela dentro do caderno). Demonstração, verificação das fontes, índice pelo caderno, caso pontual, pesquisa e testes viram seção **Avançado (opcional)**.
+- **"Executar tudo" não dispara trabalho pesado:** índice, benchmark, avaliação sintética e testes só rodam com a caixa **executar** marcada.
+
+### Corrigido
+- **A célula "Montar índice" parecia travada:** baixava alguns GB e processava milhões de linhas sem mostrar nada. Agora roda em segundo plano e a célula **acompanha ao vivo** (arquivo, MB, velocidade, linhas lidas, tempo), a cada 3 s; interromper (■) só para de acompanhar. O downloader avisa a cada 10% **ou a cada 15 s**, e o construtor avisa o progresso a cada ~20 s (`indice.Construtor._pulso`).
+
+## [3.0.3] — 2026-10-02
+
+### Corrigido
+- **CI vermelho em todo push:** a referência da CLI era gerada com `format_usage()`, que quebra linhas conforme o terminal e muda de formato entre versões do Python; o `--checar` do CI (Python 3.12) divergia de quem gerou (3.11). A linha de uso agora é montada pelo gerador e a saída é idêntica no Python 3.10 a 3.13.
+- **Workflow `publicar` vermelho a cada push:** o GitHub Pages precisa ser habilitado uma vez pelo dono do repositório. O job agora verifica isso, emite um aviso com o passo a passo e segue verde, em vez de falhar.
+
+- **Job "Fumaça da CLI" travava até estourar os 10 minutos:** a bancada imprimia o endereço sem `flush`; com a saída num pipe o Python guarda no buffer e quem lê a primeira linha espera para sempre. O servidor agora faz `flush`, e o teste de fumaça lê com prazo de 20 s (falha rápido em vez de travar) e esperava a versão `fio 2.`.
+- **Referência da CLI dependia da pasta de quem gerou** (o padrão de `--saida` era um caminho absoluto); agora é `./lab-saida`.
+
+### Adicionado
+- **Site do projeto** (`docs/index.html`): página inicial com demonstração em GIF, capturas de tela, princípios, tema claro/escuro e responsiva, no lugar do redirecionamento para o manual.
+
 ## [3.0.2] — 2026-10-02
 
 ### Corrigido
