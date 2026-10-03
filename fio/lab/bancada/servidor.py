@@ -395,7 +395,9 @@ def servir(porta: int = 8765, abrir: bool = True, token: str | None = None,
     qualquer Host e a exibicao em iframe; o token segue obrigatorio."""
     import os
     plugins.carregar()
-    Estado.token = token or secrets.token_urlsafe(24)
+    # reabrir a celula do Colab nao pode invalidar a janela ja aberta: o token
+    # so muda quando alguem pede um novo ou na primeira subida do processo
+    Estado.token = token or Estado.token or secrets.token_urlsafe(24)
     extra = list(hosts_extra or []) + [h.strip() for h in
                                        os.environ.get("FIO_HOSTS_PERMITIDOS", "").split(",") if h.strip()]
     if modo_colab:
